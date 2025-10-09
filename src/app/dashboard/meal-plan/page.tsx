@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Utensils } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePetProfile } from '@/hooks/use-pet-profile';
-import { generateMealPlan as generateMealPlanAction, type MealPlanInput } from './actions';
+import { generateMealPlanAction, type MealPlanInput } from './actions';
 import type { MealPlanOutput } from '@/ai/ai-meal-planning';
 
 
