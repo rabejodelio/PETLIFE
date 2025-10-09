@@ -1,3 +1,40 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "hero",
+      "description": "A happy dog with its owner in a park",
+      "imageUrl": "https://picsum.photos/seed/petlifehero/1200/800",
+      "imageHint": "pet owner"
+    },
+    {
+      "id": "wellness1",
+      "description": "A calm dog resting on a couch",
+      "imageUrl": "https://picsum.photos/seed/wellness1/400/300",
+      "imageHint": "calm dog"
+    },
+    {
+      "id": "wellness2",
+      "description": "A cat playing with a toy",
+      "imageUrl": "https://picsum.photos/seed/wellness2/400/300",
+      "imageHint": "playing cat"
+    },
+    {
+      "id": "wellness3",
+      "description": "A person doing yoga with their dog",
+      "imageUrl": "https://picsum.photos/seed/wellness3/400/300",
+      "imageHint": "dog yoga"
+    },
+    {
+      "id": "wellness4",
+      "description": "A cat looking out of a window",
+      "imageUrl": "https://picsum.photos/seed/wellness4/400/300",
+      "imageHint": "curious cat"
+    },
+    {
+      "id": "pet-avatar",
+      "description": "An avatar for a pet",
+      "imageUrl": "https://picsum.photos/seed/petavatar/100/100",
+      "imageHint": "pet avatar"
+    }
+  ]
 }
