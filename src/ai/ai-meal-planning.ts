@@ -1,4 +1,3 @@
-// src/ai/ai-meal-planning.ts
 'use server';
 /**
  * @fileOverview Generates personalized meal plans for pets based on their profile using AI.
@@ -21,12 +20,13 @@ const MealPlanInputSchema = z.object({
   healthObjective: z
     .string()
     .describe(
-      'The primary health objective for the animal (e.g., lose weight, maintain weight, improve joints).'n    ),
+      'The primary health objective for the animal (e.g., lose weight, maintain weight, improve joints).'
+    ),
 });
 export type MealPlanInput = z.infer<typeof MealPlanInputSchema>;
 
 const MealPlanOutputSchema = z.object({
-  mealPlan: z.string().describe('A personalized 7-day meal plan for the pet.'),
+  mealPlan: z.string().describe('A personalized 7-day meal plan for the pet, with each day on a new line. For each day, include "Breakfast:" and "Dinner:" labels.'),
   supplementRecommendation: z
     .string()
     .describe('A recommendation for specific supplements based on the pet profile.'),
@@ -53,8 +53,11 @@ const mealPlanPrompt = ai.definePrompt({
   Allergies: {{{allergies}}}
   Health Objective: {{{healthObjective}}}
 
-  Provide a detailed meal plan, considering the pet's specific needs and health goals.
-  Also, suggest relevant supplements that can support their overall health and well-being. Return both meal plan and supplement recommendations.
+  Provide a detailed 7-day meal plan, considering the pet's specific needs and health goals.
+  Each day of the meal plan should be on a new line, starting with "Day X:".
+  For each day, provide a "Breakfast:" and a "Dinner:" meal.
+  Also, suggest relevant supplements that can support their overall health and well-being.
+  Return both the meal plan and supplement recommendations.
   `,
 });
 

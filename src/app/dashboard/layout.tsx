@@ -59,6 +59,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     { href: '/dashboard/supplements', label: 'Supplements', icon: Pill },
     { href: '/dashboard/activity', label: 'Activity', icon: Footprints },
     { href: '/dashboard/wellness', label: 'Wellness', icon: Heart },
+    { href: '/dashboard/profile', label: 'Profile', icon: User },
   ];
 
   if (loading) {

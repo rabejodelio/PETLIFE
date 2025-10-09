@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { usePetProfile } from '@/hooks/use-pet-profile';
 import { getRecommendations } from './actions';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
 
 export default function SupplementsPage() {
     const { profile } = usePetProfile();
@@ -14,39 +15,39 @@ export default function SupplementsPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    useEffect(() => {
+    const fetchRecommendations = async () => {
         if (profile) {
-            const fetchRecommendations = async () => {
-                setLoading(true);
-                setError(null);
-                
-                const healthNeedsMap = {
-                    lose_weight: 'Weight management and joint support for overweight pets',
-                    maintain_weight: 'General wellness and preventative care',
-                    improve_joints: 'Joint health, mobility support, and inflammation reduction',
-                };
-
-                const input = {
-                    species: profile.species,
-                    age: profile.age,
-                    breed: profile.breed,
-                    weight: profile.weight,
-                    allergies: profile.allergies || 'none',
-                    healthNeeds: healthNeedsMap[profile.healthGoal],
-                };
-
-                const result = await getRecommendations(input);
-
-                if (result.success && result.data) {
-                    setRecommendations(result.data);
-                } else {
-                    setError(result.error || 'An unknown error occurred.');
-                }
-                setLoading(false);
+            setLoading(true);
+            setError(null);
+            
+            const healthNeedsMap = {
+                lose_weight: 'Weight management and joint support for overweight pets',
+                maintain_weight: 'General wellness and preventative care',
+                improve_joints: 'Joint health, mobility support, and inflammation reduction',
             };
 
-            fetchRecommendations();
+            const input = {
+                species: profile.species,
+                age: profile.age,
+                breed: profile.breed,
+                weight: profile.weight,
+                allergies: profile.allergies || 'none',
+                healthNeeds: healthNeedsMap[profile.healthGoal],
+            };
+
+            const result = await getRecommendations(input);
+
+            if (result.success && result.data) {
+                setRecommendations(result.data);
+            } else {
+                setError(result.error || 'An unknown error occurred.');
+            }
+            setLoading(false);
         }
+    };
+
+    useEffect(() => {
+        fetchRecommendations();
     }, [profile]);
 
     return (
@@ -54,7 +55,11 @@ export default function SupplementsPage() {
             <PageHeader
                 title="Supplement Recommendations"
                 description={`AI-powered suggestions for ${profile?.name}'s specific needs.`}
-            />
+            >
+                <Button onClick={fetchRecommendations} disabled={loading}>
+                    {loading ? 'Generating...' : 'Regenerate'}
+                </Button>
+            </PageHeader>
 
             <Card>
                 <CardHeader>
