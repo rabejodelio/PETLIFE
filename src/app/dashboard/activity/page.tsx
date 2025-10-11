@@ -3,26 +3,50 @@
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { usePetProfile } from '@/hooks/use-pet-profile';
-import { Lightbulb, CalendarPlus, Clock } from 'lucide-react';
+import { Lightbulb, Calendar as CalendarIcon, Footprints, Clock, Dumbbell, Wind, ToyBrick } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { getRecommendations } from './actions';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
+import { Calendar } from '@/components/ui/calendar';
+import { format } from 'date-fns';
+
+// Sample logged activities data
+const sampleLoggedActivities = {
+    [format(new Date(), 'yyyy-MM-dd')]: [
+        { type: 'Walk', duration: 30, icon: Footprints },
+        { type: 'Play', duration: 15, icon: ToyBrick },
+    ],
+    [format(new Date(Date.now() - 86400000), 'yyyy-MM-dd')]: [
+        { type: 'Walk', duration: 45, icon: Footprints },
+        { type: 'Training', duration: 10, icon: Dumbbell },
+    ],
+     [format(new Date(Date.now() - 2 * 86400000), 'yyyy-MM-dd')]: [
+        { type: 'Hike', duration: 60, icon: Wind },
+    ],
+};
+
+type Activity = {
+    type: string;
+    duration: number;
+    icon: React.ElementType;
+}
 
 export default function ActivityPage() {
     const { profile } = usePetProfile();
     const [recommendations, setRecommendations] = useState<string[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [showSchedule, setShowSchedule] = useState(false);
-    const { toast } = useToast();
+    const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+    
+    const [loggedActivities, setLoggedActivities] = useState<Record<string, Activity[]>>(sampleLoggedActivities);
+    
+    const dailyActivities = selectedDate ? loggedActivities[format(selectedDate, 'yyyy-MM-dd')] || [] : [];
+
 
     const fetchRecommendations = async () => {
         if (profile) {
             setLoading(true);
             setError(null);
-            setShowSchedule(false);
             const result = await getRecommendations({
                 species: profile.species,
                 breed: profile.breed,
@@ -45,95 +69,91 @@ export default function ActivityPage() {
         }
     }, [profile]);
     
-    const handleScheduleClick = () => {
-        toast({
-            title: "Activités programmées!",
-            description: "Le programme de 7 jours a été créé pour votre animal.",
-        });
-        setShowSchedule(true);
-    };
-    
-    const sampleSchedule = [
-        { day: 'Day 1', am: 'Morning Walk (30 mins)', pm: 'Puzzle Feeder' },
-        { day: 'Day 2', am: 'Fetch Session (15 mins)', pm: 'Short Training' },
-        { day: 'Day 3', am: 'Morning Walk (35 mins)', pm: 'Play with a toy' },
-        { day: 'Day 4', am: 'Sniffari walk (20 mins)', pm: 'Rest Day' },
-        { day: 'Day 5', am: 'Morning Walk (30 mins)', pm: 'Evening Fetch' },
-        { day: 'Day 6', am: 'Visit a new park', pm: 'Gentle Play' },
-        { day: 'Day 7', am: 'Longer Walk (45 mins)', pm: 'Puzzle Feeder' },
-    ];
-
 
     return (
         <div>
             <PageHeader
                 title="Pet Activity"
-                description="AI-powered activity suggestions for your pet."
+                description="AI-powered activity suggestions and history for your pet."
             />
 
-            <div className="grid grid-cols-1 gap-6">
-                <Card className="shadow-md">
-                    <CardHeader className="flex-row items-start gap-4">
-                        <Lightbulb className="w-6 h-6 text-yellow-400 flex-shrink-0 mt-1" />
-                        <div>
-                            <CardTitle className="font-headline">Quick Recommendations</CardTitle>
-                            <CardDescription>AI-powered suggestions to help {profile?.name} reach their goal.</CardDescription>
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        {loading && (
-                            <div className="space-y-3">
-                                <Skeleton className="h-5 w-3/4" />
-                                <Skeleton className="h-5 w-5/6" />
-                                <Skeleton className="h-5 w-4/5" />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2 space-y-6">
+                    <Card className="shadow-md">
+                        <CardHeader className="flex-row items-start gap-4">
+                            <Lightbulb className="w-6 h-6 text-yellow-400 flex-shrink-0 mt-1" />
+                            <div>
+                                <CardTitle className="font-headline">Quick Recommendations</CardTitle>
+                                <CardDescription>AI-powered suggestions to help {profile?.name} reach their goal.</CardDescription>
                             </div>
-                        )}
-                        {error && <p className="text-sm text-destructive">{error}</p>}
-                        {!loading && !error && recommendations.length > 0 && (
-                            <ul className="space-y-2 text-sm text-muted-foreground list-disc list-inside">
-                                {recommendations.map((rec, index) => (
-                                    <li key={index}>{rec}</li>
-                                ))}
-                            </ul>
-                        )}
-                    </CardContent>
-                    {!loading && !error && recommendations.length > 0 && (
-                        <CardFooter>
-                            <Button onClick={handleScheduleClick}>
-                                <CalendarPlus className="mr-2 h-4 w-4" />
-                                Programmer les activités
-                            </Button>
-                        </CardFooter>
-                    )}
-                </Card>
-
-                {showSchedule && (
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="font-headline">Your 7-Day Activity Schedule</CardTitle>
-                            <CardDescription>A weekly plan based on the recommendations to keep {profile?.name} active.</CardDescription>
                         </CardHeader>
-                        <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {sampleSchedule.map((dayPlan, index) => (
-                                <Card key={index} className="shadow-sm bg-muted/30">
-                                    <CardHeader>
-                                        <CardTitle className="text-base font-semibold">{dayPlan.day}</CardTitle>
-                                    </CardHeader>
-                                    <CardContent className="space-y-3 text-sm">
-                                         <div className="flex items-start gap-3">
-                                            <span className="font-semibold text-muted-foreground">AM:</span>
-                                            <p>{dayPlan.am}</p>
-                                        </div>
-                                        <div className="flex items-start gap-3">
-                                            <span className="font-semibold text-muted-foreground">PM:</span>
-                                            <p>{dayPlan.pm}</p>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            ))}
+                        <CardContent>
+                            {loading && (
+                                <div className="space-y-3">
+                                    <Skeleton className="h-5 w-3/4" />
+                                    <Skeleton className="h-5 w-5/6" />
+                                    <Skeleton className="h-5 w-4/5" />
+                                </div>
+                            )}
+                            {error && <p className="text-sm text-destructive">{error}</p>}
+                            {!loading && !error && recommendations.length > 0 && (
+                                <ul className="space-y-2 text-sm text-muted-foreground list-disc list-inside">
+                                    {recommendations.map((rec, index) => (
+                                        <li key={index}>{rec}</li>
+                                    ))}
+                                </ul>
+                            )}
                         </CardContent>
                     </Card>
-                )}
+                     <Card>
+                        <CardHeader>
+                            <CardTitle className="font-headline flex items-center gap-2">
+                                <CalendarIcon className="w-5 h-5 text-muted-foreground" />
+                                Activities for {selectedDate ? format(selectedDate, 'PPP') : 'Today'}
+                            </CardTitle>
+                            <CardDescription>
+                                {dailyActivities.length > 0 
+                                    ? `Here's what ${profile?.name} did on this day.` 
+                                    : `No activities logged for this day.`}
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                             {dailyActivities.length > 0 ? (
+                                <div className="space-y-4">
+                                {dailyActivities.map((activity, index) => (
+                                    <div key={index} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                                        <div className="flex items-center gap-4">
+                                            <activity.icon className="w-6 h-6 text-primary" />
+                                            <span className="font-medium">{activity.type}</span>
+                                        </div>
+                                        <div className="flex items-center gap-2 text-muted-foreground">
+                                            <Clock className="w-4 h-4" />
+                                            <span>{activity.duration} mins</span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                            ) : (
+                                <div className="text-center py-8 text-muted-foreground">
+                                    <p>Select a day to see the activity history.</p>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                </div>
+                <div className="lg:col-span-1">
+                     <Card className="shadow-md">
+                        <CardContent className="p-2">
+                             <Calendar
+                                mode="single"
+                                selected={selectedDate}
+                                onSelect={setSelectedDate}
+                                className="w-full"
+                                disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
+                            />
+                        </CardContent>
+                    </Card>
+                </div>
             </div>
         </div>
     );
