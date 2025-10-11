@@ -1,18 +1,21 @@
 'use client';
 
 import { PageHeader } from '@/components/page-header';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { usePetProfile } from '@/hooks/use-pet-profile';
-import { Lightbulb } from 'lucide-react';
+import { Lightbulb, CalendarPlus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { getRecommendations } from './actions';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 
 export default function ActivityPage() {
     const { profile } = usePetProfile();
     const [recommendations, setRecommendations] = useState<string[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const { toast } = useToast();
 
     const fetchRecommendations = async () => {
         if (profile) {
@@ -39,6 +42,13 @@ export default function ActivityPage() {
             fetchRecommendations();
         }
     }, [profile]);
+    
+    const handleScheduleClick = () => {
+        toast({
+            title: "Activités programmées!",
+            description: "Les recommandations ont été ajoutées à votre calendrier.",
+        });
+    };
 
     return (
         <div>
@@ -73,6 +83,14 @@ export default function ActivityPage() {
                             </ul>
                         )}
                     </CardContent>
+                    {!loading && !error && recommendations.length > 0 && (
+                        <CardFooter>
+                            <Button onClick={handleScheduleClick}>
+                                <CalendarPlus className="mr-2 h-4 w-4" />
+                                Programmer les activités
+                            </Button>
+                        </CardFooter>
+                    )}
                 </Card>
             </div>
         </div>
