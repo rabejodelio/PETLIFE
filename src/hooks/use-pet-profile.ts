@@ -14,7 +14,6 @@ export function usePetProfile() {
   const [loading, setLoading] = useState(true);
 
   const loadData = useCallback((userId: string) => {
-    setLoading(true);
     try {
       const profileItem = window.localStorage.getItem(getPetProfileKey(userId));
       setProfile(profileItem ? JSON.parse(profileItem) : null);
