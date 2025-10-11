@@ -103,7 +103,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <SidebarMenuButton
                   isActive={pathname === item.href && !isLocked}
                   tooltip={item.label}
-                  disabled={isLocked}
                   onClick={isLocked ? () => setIsProDialogOpen(true) : undefined}
                 >
                   {isLocked ? <Lock /> : <item.icon />}
