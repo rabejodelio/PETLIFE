@@ -11,7 +11,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Calendar } from '@/components/ui/calendar';
-import { format } from 'date-fns';
+import { format, differenceInDays } from 'date-fns';
+import { Progress } from '@/components/ui/progress';
 
 const sampleSchedule = [
     { day: "Day 1", am: "30-min brisk walk", pm: "15-min fetch" },
@@ -33,6 +34,7 @@ export default function ActivityPage() {
     const [showSchedule, setShowSchedule] = useState(false);
     const [isCalendarOpen, setIsCalendarOpen] = useState(false);
     const [scheduleStartDate, setScheduleStartDate] = useState<Date>();
+    const [progress, setProgress] = useState(0);
 
     const fetchRecommendations = async () => {
         if (profile) {
@@ -79,6 +81,14 @@ export default function ActivityPage() {
         }
     }, [profile]);
     
+    useEffect(() => {
+        if (showSchedule && scheduleStartDate) {
+            const today = new Date();
+            const daysPassed = differenceInDays(today, scheduleStartDate);
+            const currentProgress = Math.min(Math.max(daysPassed + 1, 0), 7);
+            setProgress((currentProgress / 7) * 100);
+        }
+    }, [showSchedule, scheduleStartDate]);
 
     return (
         <div>
@@ -157,6 +167,11 @@ export default function ActivityPage() {
                                 </Card>
                             ))}
                         </CardContent>
+                        <CardFooter className="flex-col items-start gap-2 pt-6">
+                            <Label>Plan Progress</Label>
+                            <Progress value={progress} className="w-full" />
+                            <p className="text-sm text-muted-foreground">{Math.round(progress)}% complete</p>
+                        </CardFooter>
                     </Card>
                 )}
             </div>
