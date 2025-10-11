@@ -33,7 +33,7 @@ const jaxData: Omit<PetProfile, 'isPro' | 'avatarUrl'> = {
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const { saveProfile, profile } = usePetProfile();
+  const { saveProfile, profile, loading: profileLoading } = usePetProfile();
   const { toast } = useToast();
   const { user, isUserLoading } = useUser();
 
@@ -59,12 +59,7 @@ export default function OnboardingPage() {
   }, [profile, form]);
 
   function onSubmit(data: PetProfile) {
-    const finalData = {
-      ...data,
-      isPro: profile?.isPro || false, // Preserve existing pro status
-      avatarUrl: profile?.avatarUrl || '', // Preserve existing avatar
-    };
-    saveProfile(finalData);
+    saveProfile(data);
     toast({
       title: "Profile Created!",
       description: `Welcome, ${data.name}! Let's get started.`,
@@ -72,7 +67,7 @@ export default function OnboardingPage() {
     router.push('/dashboard');
   }
   
-  if (isUserLoading) {
+  if (isUserLoading || profileLoading) {
     return (
         <div className="flex min-h-screen flex-col items-center justify-center">
             <Logo />
@@ -223,7 +218,7 @@ export default function OnboardingPage() {
                   )}
                 />
 
-                <Button type="submit" size="lg" className="w-full">Create Profile & View Plan</Button>
+                <Button type="submit" size="lg" className="w-full">Create Profile &amp; View Plan</Button>
               </form>
             </Form>
           </CardContent>

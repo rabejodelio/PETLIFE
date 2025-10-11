@@ -8,12 +8,17 @@ const getPetProfileKey = (userId: string) => `petlife-profile-${userId}`;
 const getActivityHistoryKey = (userId: string) => `petlife-activity-history-${userId}`;
 
 export function usePetProfile() {
-  const { user } = useUser();
+  const { user, isUserLoading } = useUser();
   const [profile, setProfile] = useState<PetProfile | null>(null);
   const [activityHistory, setActivityHistory] = useState<ActivityHistory>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (isUserLoading) {
+      setLoading(true);
+      return;
+    }
+    
     if (user) {
       setLoading(true);
       try {
@@ -42,7 +47,7 @@ export function usePetProfile() {
       setActivityHistory({});
       setLoading(false);
     }
-  }, [user]);
+  }, [user, isUserLoading]);
 
   const saveProfile = useCallback((newProfile: PetProfile) => {
     if(user) {
