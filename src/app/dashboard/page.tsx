@@ -1,6 +1,7 @@
+
 'use client';
 
-import { Scale, Heart, Footprints } from 'lucide-react';
+import { Scale, Heart, PawPrint } from 'lucide-react';
 import { PageHeader } from '@/components/page-header';
 import { StatCard } from '@/components/dashboard/stat-card';
 import { WeightChart } from '@/components/dashboard/weight-chart';
@@ -40,7 +41,7 @@ export default function DashboardPage() {
                 <StatCard
                     title="Avg. Daily Activity"
                     value="74 mins"
-                    icon={<Footprints className="h-5 w-5" />}
+                    icon={<PawPrint className="h-5 w-5" />}
                     description="+14 mins from last week"
                 />
             </div>
