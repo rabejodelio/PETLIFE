@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { usePetProfile } from '@/hooks/use-pet-profile';
-import { Footprints, Plus, Lightbulb, Activity as ActivityIcon, Dumbbell, ToyBrick, Wind } from 'lucide-react';
+import { Footprints, Plus, Lightbulb, Activity as ActivityIcon, Dumbbell, ToyBrick, Wind, Disc, Mountain, Waves } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { getRecommendations } from './actions';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -37,6 +37,9 @@ const activityIcons: { [key: string]: React.ReactNode } = {
     'Run': <Wind className="w-5 h-5" />,
     'Play': <ToyBrick className="w-5 h-5" />,
     'Training': <Dumbbell className="w-5 h-5" />,
+    'Fetch': <Disc className="w-5 h-5" />,
+    'Hike': <Mountain className="w-5 h-5" />,
+    'Swimming': <Waves className="w-5 h-5" />,
     'Default': <ActivityIcon className="w-5 h-5" />,
 };
 
@@ -121,6 +124,9 @@ export default function ActivityPage() {
                                                     <SelectItem value="Run">Run</SelectItem>
                                                     <SelectItem value="Play">Play</SelectItem>
                                                     <SelectItem value="Training">Training</SelectItem>
+                                                    <SelectItem value="Fetch">Fetch</SelectItem>
+                                                    <SelectItem value="Hike">Hike</SelectItem>
+                                                    <SelectItem value="Swimming">Swimming</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                             <FormMessage />
