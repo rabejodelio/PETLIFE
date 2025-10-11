@@ -11,7 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Calendar } from '@/components/ui/calendar';
-import { format } from 'date-fns';
+import { format, addDays } from 'date-fns';
 import { Progress } from '@/components/ui/progress';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -26,12 +26,11 @@ const sampleSchedule = [
     { day: "Day 7", am: "Gentle walk", pm: "Cuddle time" },
 ];
 
-const sampleHistory = {
-    [format(new Date(), 'yyyy-MM-dd')]: [
-        { type: 'Brisk Walk', duration: 30, completed: true },
-        { type: 'Fetch', duration: 15, completed: true },
-    ],
-    [format(new Date(Date.now() - 86400000), 'yyyy-MM-dd')]: [
+type Activity = { type: string; duration: number; completed: boolean };
+type ActivityHistory = Record<string, Activity[]>;
+
+const initialHistory: ActivityHistory = {
+    [format(new Date(Date.now() - 2 * 86400000), 'yyyy-MM-dd')]: [
         { type: 'Sniffari', duration: 30, completed: true },
         { type: 'Training', duration: 15, completed: false },
     ],
@@ -52,6 +51,7 @@ export default function ActivityPage() {
     const [completedDays, setCompletedDays] = useState<boolean[]>(Array(7).fill(false));
 
     const [historyDate, setHistoryDate] = useState<Date | undefined>(new Date());
+    const [activityHistory, setActivityHistory] = useState<ActivityHistory>(initialHistory);
 
     const fetchRecommendations = async () => {
         if (profile) {
@@ -79,6 +79,7 @@ export default function ActivityPage() {
         setIsCalendarOpen(false);
         setShowSchedule(true);
         setCompletedDays(Array(7).fill(false)); // Reset progress
+        setActivityHistory(initialHistory); // Reset history when new schedule is made
         toast({
             title: "Schedule Generated!",
             description: `Your 7-day activity plan starting ${format(date, "PPP")} has been created.`,
@@ -86,9 +87,23 @@ export default function ActivityPage() {
     };
 
     const handleDayCompletion = (dayIndex: number) => {
+        if (!scheduleStartDate) return;
+
         const newCompletedDays = [...completedDays];
-        newCompletedDays[dayIndex] = !newCompletedDays[dayIndex];
+        const isCompleted = !newCompletedDays[dayIndex];
+        newCompletedDays[dayIndex] = isCompleted;
         setCompletedDays(newCompletedDays);
+
+        const targetDate = addDays(scheduleStartDate, dayIndex);
+        const dateKey = format(targetDate, 'yyyy-MM-dd');
+        const dayPlan = sampleSchedule[dayIndex];
+        
+        const newHistory = { ...activityHistory };
+        newHistory[dateKey] = [
+            { type: dayPlan.am, duration: 30, completed: isCompleted },
+            { type: dayPlan.pm, duration: 15, completed: isCompleted },
+        ];
+        setActivityHistory(newHistory);
     };
 
     const getDayWithDate = (dayIndex: number) => {
@@ -111,7 +126,7 @@ export default function ActivityPage() {
         setProgress(newProgress);
     }, [completedDays]);
 
-    const todaysActivities = historyDate ? sampleHistory[format(historyDate, 'yyyy-MM-dd')] || [] : [];
+    const todaysActivities = historyDate ? activityHistory[format(historyDate, 'yyyy-MM-dd')] || [] : [];
 
     return (
         <div>
@@ -239,10 +254,14 @@ export default function ActivityPage() {
                                                 <p className="font-medium">{activity.type}</p>
                                                 <p className="text-sm text-muted-foreground">{activity.duration} minutes</p>
                                             </div>
-                                            {activity.completed && (
+                                            {activity.completed ? (
                                                 <div className="flex items-center gap-2 text-green-600">
                                                     <CheckCircle className="w-5 h-5" />
                                                     <span className="text-sm font-medium">Done</span>
+                                                </div>
+                                            ) : (
+                                                <div className="flex items-center gap-2 text-yellow-600">
+                                                    <span className="text-sm font-medium">Pending</span>
                                                 </div>
                                             )}
                                         </li>
