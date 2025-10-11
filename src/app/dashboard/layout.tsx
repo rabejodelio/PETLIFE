@@ -18,6 +18,7 @@ import {
   Home,
   Calendar,
   Sparkles,
+  Lock,
 } from 'lucide-react';
 
 import {
@@ -42,7 +43,7 @@ import { ProSubscriptionDialog } from '@/components/pro-subscription-dialog';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { profile, loading, clearProfile, clearActivityHistory } = usePetProfile();
+  const { profile, loading, clearProfile, clearActivityHistory, saveProfile } = usePetProfile();
   const router = useRouter();
   const [isProDialogOpen, setIsProDialogOpen] = useState(false);
 
@@ -58,15 +59,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     clearActivityHistory();
     router.push('/');
   };
+  
+   const handleProSuccess = () => {
+    if (profile) {
+      saveProfile({ ...profile, isPro: true });
+    }
+  };
 
   const navItems = [
-    { href: '/', label: 'Home', icon: Home },
-    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { href: '/dashboard/meal-plan', label: 'Meal Plan', icon: Salad },
-    { href: '/dashboard/supplements', label: 'Supplements', icon: Pill },
-    { href: '/dashboard/activity', label: 'Activity', icon: PawPrint },
-    { href: '/dashboard/wellness', label: 'Wellness', icon: Heart },
-    { href: '/dashboard/profile', label: 'Profile', icon: User },
+    { href: '/', label: 'Home', icon: Home, pro: false },
+    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, pro: false },
+    { href: '/dashboard/meal-plan', label: 'Meal Plan', icon: Salad, pro: false },
+    { href: '/dashboard/supplements', label: 'Supplements', icon: Pill, pro: true },
+    { href: '/dashboard/activity', label: 'Activity', icon: PawPrint, pro: true },
+    { href: '/dashboard/wellness', label: 'Wellness', icon: Heart, pro: true },
+    { href: '/dashboard/profile', label: 'Profile', icon: User, pro: false },
   ];
 
   if (loading) {
@@ -79,7 +86,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <SidebarProvider>
-      <ProSubscriptionDialog open={isProDialogOpen} onOpenChange={setIsProDialogOpen} />
+      <ProSubscriptionDialog open={isProDialogOpen} onOpenChange={setIsProDialogOpen} onProSuccess={handleProSuccess}/>
       <Sidebar>
         <SidebarHeader>
             <div className="flex items-center justify-between">
@@ -89,25 +96,39 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </SidebarHeader>
         <SidebarContent className="p-2">
           <SidebarMenu>
-            {navItems.map((item) => (
-              <SidebarMenuItem key={item.href}>
-                <Link href={item.href}>
-                  <SidebarMenuButton
-                    isActive={pathname === item.href}
-                    tooltip={item.label}
-                  >
-                    <item.icon />
-                    <span>{item.label}</span>
-                  </SidebarMenuButton>
-                </Link>
-              </SidebarMenuItem>
-            ))}
-             <SidebarMenuItem>
-                <SidebarMenuButton onClick={() => setIsProDialogOpen(true)} variant="outline" className="mt-4 bg-gradient-to-r from-yellow-400 to-orange-500 text-white border-none hover:from-yellow-500 hover:to-orange-600 hover:text-white">
-                  <Sparkles />
-                  <span>Passer Pro</span>
+            {navItems.map((item) => {
+              const isPro = profile?.isPro ?? false;
+              const isLocked = item.pro && !isPro;
+              const linkContent = (
+                <SidebarMenuButton
+                  isActive={pathname === item.href && !isLocked}
+                  tooltip={item.label}
+                  disabled={isLocked}
+                  onClick={isLocked ? () => setIsProDialogOpen(true) : undefined}
+                >
+                  {isLocked ? <Lock /> : <item.icon />}
+                  <span>{item.label}</span>
                 </SidebarMenuButton>
-            </SidebarMenuItem>
+              );
+
+              return (
+                <SidebarMenuItem key={item.href}>
+                  {isLocked ? (
+                    <div>{linkContent}</div>
+                  ) : (
+                    <Link href={item.href}>{linkContent}</Link>
+                  )}
+                </SidebarMenuItem>
+              );
+            })}
+             {!profile?.isPro && (
+                <SidebarMenuItem>
+                    <SidebarMenuButton onClick={() => setIsProDialogOpen(true)} variant="outline" className="mt-4 bg-gradient-to-r from-yellow-400 to-orange-500 text-white border-none hover:from-yellow-500 hover:to-orange-600 hover:text-white">
+                    <Sparkles />
+                    <span>Passer Pro</span>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
           </SidebarMenu>
         </SidebarContent>
         <SidebarFooter>
@@ -119,7 +140,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </AvatarFallback>
             </Avatar>
             <div className="overflow-hidden group-data-[collapsible=icon]:hidden">
-              <p className="font-semibold truncate">{profile?.name}</p>
+              <div className='flex items-center gap-2'>
+                <p className="font-semibold truncate">{profile?.name}</p>
+                {profile?.isPro && <span className="text-xs font-bold bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-2 py-0.5 rounded-full">PRO</span>}
+              </div>
               <p className="text-xs text-muted-foreground truncate">{profile?.breed}</p>
             </div>
           </div>

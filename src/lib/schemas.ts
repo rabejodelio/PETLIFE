@@ -9,4 +9,5 @@ export const petProfileSchema = z.object({
   allergies: z.string().optional(),
   healthGoal: z.enum(['lose_weight', 'maintain_weight', 'improve_joints'], { required_error: 'Please select a health goal.' }),
   avatarUrl: z.string().url().optional(),
+  isPro: z.boolean().optional().default(false),
 });

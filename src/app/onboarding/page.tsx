@@ -19,7 +19,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Logo } from '@/components/logo';
 
 // Pre-filled data for "Jax" as requested
-const jaxData: Omit<PetProfile, 'avatarUrl'> = {
+const jaxData: PetProfile = {
   name: 'Jax',
   species: 'dog',
   breed: 'Beagle',
@@ -27,6 +27,8 @@ const jaxData: Omit<PetProfile, 'avatarUrl'> = {
   weight: 15,
   allergies: 'Chicken',
   healthGoal: 'lose_weight',
+  isPro: false,
+  avatarUrl: '',
 };
 
 export default function OnboardingPage() {
@@ -40,7 +42,12 @@ export default function OnboardingPage() {
   });
 
   function onSubmit(data: PetProfile) {
-    saveProfile(data);
+    const finalData = {
+      ...data,
+      isPro: profile?.isPro || false, // Preserve existing pro status
+      avatarUrl: profile?.avatarUrl || '', // Preserve existing avatar
+    };
+    saveProfile(finalData);
     toast({
       title: "Profile Created!",
       description: `Welcome, ${data.name}! Let's get started.`,
