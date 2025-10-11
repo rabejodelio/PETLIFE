@@ -13,6 +13,23 @@ export function usePetProfile() {
   const [activityHistory, setActivityHistory] = useState<ActivityHistory>({});
   const [loading, setLoading] = useState(true);
 
+  const loadData = useCallback((userId: string) => {
+    setLoading(true);
+    try {
+      const profileItem = window.localStorage.getItem(getPetProfileKey(userId));
+      setProfile(profileItem ? JSON.parse(profileItem) : null);
+      
+      const historyItem = window.localStorage.getItem(getActivityHistoryKey(userId));
+      setActivityHistory(historyItem ? JSON.parse(historyItem) : {});
+    } catch (error) {
+      console.error('Failed to parse data from localStorage', error);
+      setProfile(null);
+      setActivityHistory({});
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (isUserLoading) {
       setLoading(true);
@@ -20,34 +37,13 @@ export function usePetProfile() {
     }
     
     if (user) {
-      setLoading(true);
-      try {
-        const profileItem = window.localStorage.getItem(getPetProfileKey(user.uid));
-        if (profileItem) {
-          setProfile(JSON.parse(profileItem));
-        } else {
-          setProfile(null);
-        }
-        const historyItem = window.localStorage.getItem(getActivityHistoryKey(user.uid));
-         if (historyItem) {
-          setActivityHistory(JSON.parse(historyItem));
-        } else {
-          setActivityHistory({});
-        }
-
-      } catch (error) {
-        console.error('Failed to parse data from localStorage', error);
-        setProfile(null);
-        setActivityHistory({});
-      } finally {
-        setLoading(false);
-      }
+      loadData(user.uid);
     } else {
       setProfile(null);
       setActivityHistory({});
       setLoading(false);
     }
-  }, [user, isUserLoading]);
+  }, [user, isUserLoading, loadData]);
 
   const saveProfile = useCallback((newProfile: PetProfile) => {
     if(user) {
