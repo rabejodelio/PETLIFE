@@ -1,3 +1,4 @@
+
 'use server';
 
 import { getActivityRecommendations, type ActivityRecommendationInput, type ActivityRecommendationOutput } from "@/ai/flows/ai-activity-recommendation";
@@ -11,3 +12,5 @@ export async function getRecommendations(input: ActivityRecommendationInput): Pr
         return { success: false, error: "Failed to generate recommendations." };
     }
 }
+
+    
