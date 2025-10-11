@@ -6,180 +6,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Bone, Cat, Pencil, Camera } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useRef, useState, useEffect } from "react";
+import { useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { petProfileSchema } from '@/lib/schemas';
-import type { PetProfile } from '@/lib/types';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-
-function EditProfileForm({ profile, onSave, onCancel }: { profile: PetProfile, onSave: (data: PetProfile) => void, onCancel: () => void }) {
-    const form = useForm<PetProfile>({
-        resolver: zodResolver(petProfileSchema),
-        defaultValues: profile,
-    });
-
-    function onSubmit(data: PetProfile) {
-        onSave(data);
-    }
-
-    return (
-        <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                    <FormField
-                        control={form.control}
-                        name="name"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Pet's Name</FormLabel>
-                                <FormControl>
-                                    <Input placeholder="e.g., Jax" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="species"
-                        render={({ field }) => (
-                            <FormItem className="space-y-3">
-                                <FormLabel>Species</FormLabel>
-                                <FormControl>
-                                    <RadioGroup
-                                        onValueChange={field.onChange}
-                                        defaultValue={field.value}
-                                        className="flex items-center space-x-4"
-                                    >
-                                        <FormItem className="flex items-center space-x-2 space-y-0">
-                                            <FormControl>
-                                                <RadioGroupItem value="dog" id="dog-edit" />
-                                            </FormControl>
-                                            <Label htmlFor="dog-edit" className="flex items-center gap-2 font-normal">
-                                                <Bone className="h-5 w-5" /> Dog
-                                            </Label>
-                                        </FormItem>
-                                        <FormItem className="flex items-center space-x-2 space-y-0">
-                                            <FormControl>
-                                                <RadioGroupItem value="cat" id="cat-edit" />
-                                            </FormControl>
-                                            <Label htmlFor="cat-edit" className="flex items-center gap-2 font-normal">
-                                                <Cat className="h-5 w-5" /> Cat
-                                            </Label>
-                                        </FormItem>
-                                    </RadioGroup>
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                </div>
-                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-                    <FormField
-                        control={form.control}
-                        name="breed"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Breed</FormLabel>
-                                <FormControl>
-                                    <Input placeholder="e.g., Beagle" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="age"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Age (years)</FormLabel>
-                                <FormControl>
-                                    <Input type="number" placeholder="e.g., 4" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10))} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="weight"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Weight (kg)</FormLabel>
-                                <FormControl>
-                                    <Input type="number" step="0.1" placeholder="e.g., 15" {...field} onChange={e => field.onChange(parseFloat(e.target.value))} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                </div>
-                 <FormField
-                    control={form.control}
-                    name="healthGoal"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Main Health Goal</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                <FormControl>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select a goal" />
-                                    </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                    <SelectItem value="lose_weight">Lose Weight</SelectItem>
-                                    <SelectItem value="maintain_weight">Maintain Weight</SelectItem>
-                                    <SelectItem value="improve_joints">Improve Joints</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                 <FormField
-                    control={form.control}
-                    name="allergies"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Known Allergies</FormLabel>
-                            <FormControl>
-                                <Textarea placeholder="List any known allergies, e.g., Chicken, grains" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-
-                <DialogFooter>
-                    <Button type="button" variant="ghost" onClick={onCancel}>Cancel</Button>
-                    <Button type="submit">Save Changes</Button>
-                </DialogFooter>
-            </form>
-        </Form>
-    );
-}
+import Link from "next/link";
 
 
 export default function ProfilePage() {
     const { profile, loading, saveProfile } = usePetProfile();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { toast } = useToast();
-    const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-
-    useEffect(() => {
-        if (!isEditDialogOpen) {
-            // Potentially refresh data or handle other state resets when dialog closes
-        }
-    }, [isEditDialogOpen]);
 
     const healthGoalMap = {
         lose_weight: 'Lose Weight',
@@ -215,21 +50,13 @@ export default function ProfilePage() {
         }
     };
 
-    const handleSaveProfile = (data: PetProfile) => {
-        saveProfile(data);
-        toast({
-            title: "Profile Updated!",
-            description: "Your pet's information has been saved.",
-        });
-        setIsEditDialogOpen(false);
-    };
 
     if (loading) {
         return <div>Loading profile...</div>;
     }
 
     if (!profile) {
-        return <div>No profile found.</div>;
+        return <div>No profile found. Please create one from the onboarding page.</div>;
     }
 
     return (
@@ -238,26 +65,11 @@ export default function ProfilePage() {
                 title="Pet Profile"
                 description="View and manage your pet's details."
             >
-                <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-                    <DialogTrigger asChild>
-                        <Button variant="outline">
-                            <Pencil className="mr-2 h-4 w-4" /> Edit Profile
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-xl">
-                        <DialogHeader>
-                            <DialogTitle>Edit Pet Profile</DialogTitle>
-                            <DialogDescription>
-                                Make changes to {profile.name}'s profile here. Click save when you're done.
-                            </DialogDescription>
-                        </DialogHeader>
-                        <EditProfileForm
-                            profile={profile}
-                            onSave={handleSaveProfile}
-                            onCancel={() => setIsEditDialogOpen(false)}
-                        />
-                    </DialogContent>
-                </Dialog>
+                <Button variant="outline" asChild>
+                    <Link href="/onboarding">
+                        <Pencil className="mr-2 h-4 w-4" /> Edit Profile
+                    </Link>
+                </Button>
             </PageHeader>
             <Card>
                 <CardHeader className="flex flex-col sm:flex-row items-center gap-6">
