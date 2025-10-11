@@ -183,7 +183,13 @@ export default function ActivityPage() {
                         <CardFooter className="flex-col items-start gap-2 pt-6">
                             <Label>Plan Progress</Label>
                             <Progress value={progress} className="w-full" />
-                            <p className="text-sm text-muted-foreground">{Math.round(progress)}% complete</p>
+                            {progress < 100 ? (
+                                <p className="text-sm text-muted-foreground">{Math.round(progress)}% complete</p>
+                            ) : (
+                                <p className="text-sm text-primary font-medium mt-2">
+                                    🎉 Plan complete! Time to schedule a new week of activities.
+                                </p>
+                            )}
                         </CardFooter>
                     </Card>
                 )}
