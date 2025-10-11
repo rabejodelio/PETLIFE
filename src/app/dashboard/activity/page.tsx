@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { usePetProfile } from '@/hooks/use-pet-profile';
-import { Footprints, Plus, Lightbulb, Activity as ActivityIcon, Dumbbell, ToyBrick, Wind, Disc, Mountain, Waves, Play } from 'lucide-react';
+import { Footprints, Plus, Lightbulb, Activity as ActivityIcon, Dumbbell, ToyBrick, Wind, Disc, Mountain, Waves } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { getRecommendations } from './actions';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -177,11 +177,8 @@ export default function ActivityPage() {
                             ) : (
                                 <ul className="space-y-3 text-sm">
                                     {recommendations.map((rec, i) => (
-                                        <li key={i} className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50">
+                                        <li key={i} className="flex items-start justify-between p-2 rounded-md hover:bg-muted/50">
                                             <span>{rec}</span>
-                                            <Button size="sm" variant="outline">
-                                                <Play className="mr-2 h-4 w-4" /> Play Activity
-                                            </Button>
                                         </li>
                                     ))}
                                 </ul>
