@@ -98,6 +98,14 @@ export function ProSubscriptionDialog({ open, onOpenChange, onProSuccess }: ProS
           </ul>
         </div>
         <DialogFooter className="flex-col gap-4">
+             <Button 
+                type="button" 
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white" 
+                onClick={handleSubscribe} 
+                disabled={isLoading}
+              >
+                {isLoading ? 'Redirection...' : 'S\'abonner avec PayPal'}
+              </Button>
             <div className="relative">
                 <div className="absolute inset-0 flex items-center">
                     <span className="w-full border-t" />
@@ -110,19 +118,11 @@ export function ProSubscriptionDialog({ open, onOpenChange, onProSuccess }: ProS
             </div>
             <div className='flex flex-col space-y-2'>
                 <Label htmlFor="promo-code" className='text-left'>Code promotionnel</Label>
-                <div className='flex gap-2'>
-                    <Input id="promo-code" placeholder="petlife7296" value={promoCode} onChange={(e) => setPromoCode(e.target.value)} />
+                <div className='flex gap-2 w-full'>
+                    <Input id="promo-code" placeholder="petlife7296" value={promoCode} onChange={(e) => setPromoCode(e.target.value)} className="flex-grow" />
                     <Button type="button" variant="outline" onClick={handlePromoCode}>Appliquer</Button>
                 </div>
             </div>
-          <Button 
-            type="button" 
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white" 
-            onClick={handleSubscribe} 
-            disabled={isLoading}
-          >
-            {isLoading ? 'Redirection...' : 'S\'abonner avec PayPal'}
-          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
