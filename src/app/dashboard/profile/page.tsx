@@ -1,3 +1,4 @@
+
 'use client';
 
 import { usePetProfile } from "@/hooks/use-pet-profile";
@@ -5,11 +6,14 @@ import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
-import { Pencil } from "lucide-react";
+import { Bone, Cat, Pencil } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { PlaceHolderImages } from "@/lib/placeholder-images";
 
 export default function ProfilePage() {
     const { profile, loading } = usePetProfile();
     const router = useRouter();
+    const petAvatar = PlaceHolderImages.find((img) => img.id === 'pet-avatar');
 
     const healthGoalMap = {
         lose_weight: 'Lose Weight',
@@ -36,12 +40,20 @@ export default function ProfilePage() {
                 </Button>
             </PageHeader>
             <Card>
-                <CardHeader>
-                    <CardTitle className="font-headline text-2xl">{profile.name}</CardTitle>
-                    <CardDescription>{profile.breed}</CardDescription>
+                <CardHeader className="flex flex-row items-center gap-4">
+                    <Avatar className="h-20 w-20">
+                        {petAvatar && <AvatarImage src={petAvatar.imageUrl} alt={profile.name} />}
+                        <AvatarFallback>
+                            {profile.species === 'dog' ? <Bone/> : <Cat/>}
+                        </AvatarFallback>
+                    </Avatar>
+                    <div>
+                        <CardTitle className="font-headline text-3xl">{profile.name}</CardTitle>
+                        <CardDescription className="text-base">{profile.breed}</CardDescription>
+                    </div>
                 </CardHeader>
                 <CardContent>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-6 text-sm">
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-6 text-sm mt-4">
                         <div className="space-y-1">
                             <h4 className="font-semibold text-muted-foreground">Species</h4>
                             <p className="capitalize">{profile.species}</p>
