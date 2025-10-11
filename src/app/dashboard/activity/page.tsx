@@ -11,9 +11,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Calendar } from '@/components/ui/calendar';
-import { format, differenceInDays } from 'date-fns';
+import { format } from 'date-fns';
 import { Progress } from '@/components/ui/progress';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const sampleSchedule = [
     { day: "Day 1", am: "30-min brisk walk", pm: "15-min fetch" },
@@ -36,6 +37,7 @@ export default function ActivityPage() {
     const [isCalendarOpen, setIsCalendarOpen] = useState(false);
     const [scheduleStartDate, setScheduleStartDate] = useState<Date>();
     const [progress, setProgress] = useState(0);
+    const [completedDays, setCompletedDays] = useState<boolean[]>(Array(7).fill(false));
 
     const fetchRecommendations = async () => {
         if (profile) {
@@ -62,10 +64,17 @@ export default function ActivityPage() {
         setScheduleStartDate(date);
         setIsCalendarOpen(false);
         setShowSchedule(true);
+        setCompletedDays(Array(7).fill(false)); // Reset progress
         toast({
             title: "Schedule Generated!",
             description: `Your 7-day activity plan starting ${format(date, "PPP")} has been created.`,
         });
+    };
+
+    const handleDayCompletion = (dayIndex: number) => {
+        const newCompletedDays = [...completedDays];
+        newCompletedDays[dayIndex] = !newCompletedDays[dayIndex];
+        setCompletedDays(newCompletedDays);
     };
 
     const getDayWithDate = (dayIndex: number) => {
@@ -83,13 +92,10 @@ export default function ActivityPage() {
     }, [profile]);
     
     useEffect(() => {
-        if (showSchedule && scheduleStartDate) {
-            const today = new Date();
-            const daysPassed = differenceInDays(today, scheduleStartDate);
-            const currentProgress = Math.min(Math.max(daysPassed + 1, 0), 7);
-            setProgress((currentProgress / 7) * 100);
-        }
-    }, [showSchedule, scheduleStartDate]);
+        const completedCount = completedDays.filter(Boolean).length;
+        const newProgress = (completedCount / 7) * 100;
+        setProgress(newProgress);
+    }, [completedDays]);
 
     return (
         <div>
@@ -158,8 +164,14 @@ export default function ActivityPage() {
                         <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             {sampleSchedule.map((dayPlan, index) => (
                                 <Card key={dayPlan.day} className="bg-muted/30">
-                                    <CardHeader className="p-4">
+                                    <CardHeader className="p-4 flex flex-row items-center justify-between">
                                         <CardTitle className="text-base font-semibold">{getDayWithDate(index)}</CardTitle>
+                                        <Checkbox
+                                            id={`day-${index}`}
+                                            checked={completedDays[index]}
+                                            onCheckedChange={() => handleDayCompletion(index)}
+                                            aria-label={`Mark ${dayPlan.day} as complete`}
+                                        />
                                     </CardHeader>
                                     <CardContent className="p-4 pt-0 text-sm space-y-2">
                                          <p><span className="font-semibold text-muted-foreground">AM:</span> {dayPlan.am}</p>
