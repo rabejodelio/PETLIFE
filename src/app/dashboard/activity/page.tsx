@@ -48,15 +48,19 @@ export default function ActivityPage() {
     const handleScheduleClick = () => {
         toast({
             title: "Activités programmées!",
-            description: "Les recommandations ont été ajoutées à votre calendrier.",
+            description: "Le programme de 7 jours a été créé pour votre animal.",
         });
         setShowSchedule(true);
     };
     
     const sampleSchedule = [
-        { time: '08:00 AM', activity: 'Morning Walk (30 mins)' },
-        { time: '01:00 PM', activity: 'Puzzle Feeder Challenge' },
-        { time: '06:00 PM', activity: 'Evening Fetch Session (15 mins)' },
+        { day: 'Day 1', am: 'Morning Walk (30 mins)', pm: 'Puzzle Feeder' },
+        { day: 'Day 2', am: 'Fetch Session (15 mins)', pm: 'Short Training' },
+        { day: 'Day 3', am: 'Morning Walk (35 mins)', pm: 'Play with a toy' },
+        { day: 'Day 4', am: 'Sniffari walk (20 mins)', pm: 'Rest Day' },
+        { day: 'Day 5', am: 'Morning Walk (30 mins)', pm: 'Evening Fetch' },
+        { day: 'Day 6', am: 'Visit a new park', pm: 'Gentle Play' },
+        { day: 'Day 7', am: 'Longer Walk (45 mins)', pm: 'Puzzle Feeder' },
     ];
 
 
@@ -104,23 +108,29 @@ export default function ActivityPage() {
                 </Card>
 
                 {showSchedule && (
-                     <Card className="shadow-md">
+                    <Card>
                         <CardHeader>
-                            <CardTitle className="font-headline">Your Schedule for Today</CardTitle>
-                             <CardDescription>A plan based on the recommendations to keep {profile?.name} active.</CardDescription>
+                            <CardTitle className="font-headline">Your 7-Day Activity Schedule</CardTitle>
+                            <CardDescription>A weekly plan based on the recommendations to keep {profile?.name} active.</CardDescription>
                         </CardHeader>
-                        <CardContent>
-                            <ul className="space-y-4">
-                                {sampleSchedule.map((item, index) => (
-                                <li key={index} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                                    <span className="font-medium">{item.activity}</span>
-                                    <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                                        <Clock className="h-4 w-4" />
-                                        <span>{item.time}</span>
-                                    </div>
-                                </li>
-                                ))}
-                            </ul>
+                        <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {sampleSchedule.map((dayPlan, index) => (
+                                <Card key={index} className="shadow-sm bg-muted/30">
+                                    <CardHeader>
+                                        <CardTitle className="text-base font-semibold">{dayPlan.day}</CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="space-y-3 text-sm">
+                                         <div className="flex items-start gap-3">
+                                            <span className="font-semibold text-muted-foreground">AM:</span>
+                                            <p>{dayPlan.am}</p>
+                                        </div>
+                                        <div className="flex items-start gap-3">
+                                            <span className="font-semibold text-muted-foreground">PM:</span>
+                                            <p>{dayPlan.pm}</p>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            ))}
                         </CardContent>
                     </Card>
                 )}
