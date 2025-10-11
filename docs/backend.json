@@ -1,0 +1,205 @@
+{
+  "entities": {
+    "Pet": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Pet",
+      "type": "object",
+      "description": "Represents a pet registered in the PetLife application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Pet entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User who owns the pet. (Relationship: User 1:N Pet)"
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the pet."
+        },
+        "species": {
+          "type": "string",
+          "description": "The species of the pet (e.g., dog, cat)."
+        },
+        "breed": {
+          "type": "string",
+          "description": "The breed of the pet."
+        },
+        "age": {
+          "type": "number",
+          "description": "The age of the pet in years."
+        },
+        "weight": {
+          "type": "number",
+          "description": "The weight of the pet in kilograms."
+        },
+        "weightGoal": {
+          "type": "string",
+          "description": "The primary goal: Lose Weight, Maintain weight, improve articulations"
+        },
+        "allergies": {
+          "type": "string",
+          "description": "The allergies of the pet"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "name",
+        "species",
+        "breed",
+        "age",
+        "weight",
+        "weightGoal",
+        "allergies"
+      ]
+    },
+    "Activity": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Activity",
+      "type": "object",
+      "description": "Represents an activity performed by a pet.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Activity entity."
+        },
+        "petId": {
+          "type": "string",
+          "description": "Reference to the Pet that performed the activity. (Relationship: Pet 1:N Activity)"
+        },
+        "type": {
+          "type": "string",
+          "description": "The type of activity (e.g., walk, run, play)."
+        },
+        "duration": {
+          "type": "number",
+          "description": "The duration of the activity in minutes."
+        },
+        "distance": {
+          "type": "number",
+          "description": "The distance covered during the activity in meters."
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "The date and time when the activity was performed.",
+          "format": "date-time"
+        },
+        "notes": {
+          "type": "string",
+          "description": "Any additional notes about the activity."
+        }
+      },
+      "required": [
+        "id",
+        "petId",
+        "type",
+        "duration",
+        "timestamp"
+      ]
+    },
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user of the PetLife application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the User entity."
+        },
+        "email": {
+          "type": "string",
+          "description": "The email address of the user.",
+          "format": "email"
+        },
+        "firstName": {
+          "type": "string",
+          "description": "The first name of the user."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "The last name of the user."
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "firstName",
+        "lastName"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profiles.  Each document represents a registered user in the PetLife application.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/pets/{petId}",
+        "definition": {
+          "entityName": "Pet",
+          "schema": {
+            "$ref": "#/backend/entities/Pet"
+          },
+          "description": "Stores pet profiles associated with a specific user. Each document represents a pet owned by the user.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            },
+            {
+              "name": "petId",
+              "description": "The unique identifier for the pet."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/pets/{petId}/activities/{activityId}",
+        "definition": {
+          "entityName": "Activity",
+          "schema": {
+            "$ref": "#/backend/entities/Activity"
+          },
+          "description": "Stores activity data for a specific pet.  Each document represents an activity performed by the pet.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            },
+            {
+              "name": "petId",
+              "description": "The unique identifier for the pet."
+            },
+            {
+              "name": "activityId",
+              "description": "The unique identifier for the activity."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to support the PetLife application's core features, focusing on personalization, health tracking, and user engagement. It leverages path-based ownership for pets and their activities, ensuring data isolation and simplified security rules. Activities are stored as a subcollection of Pets. This enables efficient querying of activities for a specific pet and maintains authorization independence by implicitly linking activities to their respective pet owners via the document path. The structure segregates user data, pet profiles, and activities into distinct collections, promoting a homogeneous security posture within each collection.\n\nAuthorization Independence: Ownership is enforced through hierarchical paths (`/users/{userId}/pets/{petId}/activities/{activityId}`). No `get()` calls are needed in security rules because the relationship between users, pets, and activities is inherent in the structure.\n\nQAPs: The structure supports secure `list` operations by organizing data into collections with consistent security requirements. Listing activities is secured by the path-based ownership under a given pet, which is secured under a given user."
+  }
+}
