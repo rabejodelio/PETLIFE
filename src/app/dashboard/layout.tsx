@@ -14,6 +14,7 @@ import {
   LogOut,
   Bone,
   Cat,
+  Home,
 } from 'lucide-react';
 
 import {
@@ -54,6 +55,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   };
 
   const navItems = [
+    { href: '/', label: 'Home', icon: Home },
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/dashboard/meal-plan', label: 'Meal Plan', icon: Salad },
     { href: '/dashboard/supplements', label: 'Supplements', icon: Pill },
