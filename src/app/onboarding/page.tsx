@@ -60,6 +60,7 @@ export default function OnboardingPage() {
 
   function onSubmit(data: PetProfile) {
     if (user) {
+        // Ensure isPro is true when creating the profile to unlock features
         saveProfile({ ...data, isPro: true });
         toast({
             title: "Profile Created!",
