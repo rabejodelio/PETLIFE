@@ -3,16 +3,9 @@
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig } from '@/components/ui/chart';
-
-const chartData = [
-    { day: 'Mon', minutes: 55 },
-    { day: 'Tue', minutes: 70 },
-    { day: 'Wed', minutes: 45 },
-    { day: 'Thu', minutes: 80 },
-    { day: 'Fri', minutes: 60 },
-    { day: 'Sat', minutes: 110 },
-    { day: 'Sun', minutes: 90 },
-];
+import { format, subDays } from 'date-fns';
+import type { ActivityHistory } from '@/lib/types';
+import { useMemo } from 'react';
 
 const chartConfig = {
     minutes: {
@@ -21,7 +14,31 @@ const chartConfig = {
     },
 } satisfies ChartConfig;
 
-export function ActivityChart() {
+type ActivityChartProps = {
+    activityHistory: ActivityHistory;
+};
+
+export function ActivityChart({ activityHistory }: ActivityChartProps) {
+    const chartData = useMemo(() => {
+        const today = new Date();
+        const data = [];
+        for (let i = 6; i >= 0; i--) {
+            const date = subDays(today, i);
+            const dateKey = format(date, 'yyyy-MM-dd');
+            const dayActivities = activityHistory[dateKey] || [];
+            const totalMinutes = dayActivities
+                .filter(activity => activity.completed)
+                .reduce((sum, activity) => sum + activity.duration, 0);
+
+            data.push({
+                day: format(date, 'E'), // e.g., "Mon", "Tue"
+                minutes: totalMinutes,
+            });
+        }
+        return data;
+    }, [activityHistory]);
+
+
     return (
         <Card className="shadow-md">
             <CardHeader>

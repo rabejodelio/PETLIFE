@@ -1,23 +1,32 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import type { PetProfile } from '@/lib/types';
+import type { PetProfile, ActivityHistory } from '@/lib/types';
 
 const PET_PROFILE_KEY = 'petlife-profile';
+const ACTIVITY_HISTORY_KEY = 'petlife-activity-history';
+
 
 export function usePetProfile() {
   const [profile, setProfile] = useState<PetProfile | null>(null);
+  const [activityHistory, setActivityHistory] = useState<ActivityHistory>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     try {
-      const item = window.localStorage.getItem(PET_PROFILE_KEY);
-      if (item) {
-        setProfile(JSON.parse(item));
+      const profileItem = window.localStorage.getItem(PET_PROFILE_KEY);
+      if (profileItem) {
+        setProfile(JSON.parse(profileItem));
       }
+      const historyItem = window.localStorage.getItem(ACTIVITY_HISTORY_KEY);
+       if (historyItem) {
+        setActivityHistory(JSON.parse(historyItem));
+      }
+
     } catch (error) {
-      console.error('Failed to parse pet profile from localStorage', error);
+      console.error('Failed to parse data from localStorage', error);
       setProfile(null);
+      setActivityHistory({});
     } finally {
       setLoading(false);
     }
@@ -41,5 +50,23 @@ export function usePetProfile() {
     }
   }, []);
 
-  return { profile, saveProfile, clearProfile, loading };
+  const saveActivityHistory = useCallback((newHistory: ActivityHistory) => {
+    try {
+        window.localStorage.setItem(ACTIVITY_HISTORY_KEY, JSON.stringify(newHistory));
+        setActivityHistory(newHistory);
+    } catch (error) {
+        console.error('Failed to save activity history to localStorage', error);
+    }
+  }, []);
+
+  const clearActivityHistory = useCallback(() => {
+    try {
+        window.localStorage.removeItem(ACTIVITY_HISTORY_KEY);
+        setActivityHistory({});
+    } catch (error) {
+        console.error('Failed to clear activity history from localStorage', error);
+    }
+  }, []);
+
+  return { profile, saveProfile, clearProfile, loading, activityHistory, setActivityHistory: saveActivityHistory, clearActivityHistory };
 }

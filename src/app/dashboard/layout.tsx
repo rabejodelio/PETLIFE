@@ -40,7 +40,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { profile, loading, clearProfile } = usePetProfile();
+  const { profile, loading, clearProfile, clearActivityHistory } = usePetProfile();
   const router = useRouter();
 
   useEffect(() => {
@@ -51,6 +51,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const handleLogout = () => {
     clearProfile();
+    clearActivityHistory();
     router.push('/');
   };
 

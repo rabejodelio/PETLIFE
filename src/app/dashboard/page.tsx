@@ -9,7 +9,7 @@ import { usePetProfile } from '@/hooks/use-pet-profile';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function DashboardPage() {
-    const { profile } = usePetProfile();
+    const { profile, activityHistory } = usePetProfile();
 
     const healthGoalMap = {
         lose_weight: 'Lose Weight',
@@ -47,7 +47,7 @@ export default function DashboardPage() {
 
             <div className="grid gap-6 lg:grid-cols-2">
                 <WeightChart />
-                <ActivityChart />
+                <ActivityChart activityHistory={activityHistory} />
             </div>
 
              <Card className="mt-6 shadow-md">

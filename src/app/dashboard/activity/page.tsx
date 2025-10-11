@@ -15,6 +15,7 @@ import { format, addDays } from 'date-fns';
 import { Progress } from '@/components/ui/progress';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
+import type { ActivityHistory } from '@/lib/types';
 
 const sampleSchedule = [
     { day: "Day 1", am: "30-min brisk walk", pm: "15-min fetch" },
@@ -26,19 +27,8 @@ const sampleSchedule = [
     { day: "Day 7", am: "Gentle walk", pm: "Cuddle time" },
 ];
 
-type Activity = { type: string; duration: number; completed: boolean };
-type ActivityHistory = Record<string, Activity[]>;
-
-const initialHistory: ActivityHistory = {
-    [format(new Date(Date.now() - 2 * 86400000), 'yyyy-MM-dd')]: [
-        { type: 'Sniffari', duration: 30, completed: true },
-        { type: 'Training', duration: 15, completed: false },
-    ],
-};
-
-
 export default function ActivityPage() {
-    const { profile } = usePetProfile();
+    const { profile, saveProfile, activityHistory, setActivityHistory } = usePetProfile();
     const [recommendations, setRecommendations] = useState<string[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -51,7 +41,6 @@ export default function ActivityPage() {
     const [completedDays, setCompletedDays] = useState<boolean[]>(Array(7).fill(false));
 
     const [historyDate, setHistoryDate] = useState<Date | undefined>(new Date());
-    const [activityHistory, setActivityHistory] = useState<ActivityHistory>(initialHistory);
 
     const fetchRecommendations = async () => {
         if (profile) {
@@ -79,7 +68,7 @@ export default function ActivityPage() {
         setIsCalendarOpen(false);
         setShowSchedule(true);
         setCompletedDays(Array(7).fill(false)); // Reset progress
-        setActivityHistory(initialHistory); // Reset history when new schedule is made
+        
         toast({
             title: "Schedule Generated!",
             description: `Your 7-day activity plan starting ${format(date, "PPP")} has been created.`,
