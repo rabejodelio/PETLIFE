@@ -1,10 +1,8 @@
-
 'use client';
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import Image from 'next/image';
 import {
   LayoutDashboard,
   Salad,
@@ -16,7 +14,6 @@ import {
   Bone,
   Cat,
   Home,
-  Calendar,
   Sparkles,
   Lock,
 } from 'lucide-react';
@@ -32,20 +29,26 @@ import {
   SidebarMenuButton,
   SidebarInset,
   SidebarTrigger,
+  SidebarGroup,
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { usePetProfile } from '@/hooks/use-pet-profile';
 import { Logo } from '@/components/logo';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { Skeleton } from '@/components/ui/skeleton';
 import { ProSubscriptionDialog } from '@/components/pro-subscription-dialog';
+import { Input } from '@/components/ui/input';
+import { useToast } from '@/hooks/use-toast';
+import { Label } from '@/components/ui/label';
+
+const PRO_CODE = "petlife7296";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { profile, loading, clearProfile, clearActivityHistory, saveProfile } = usePetProfile();
   const router = useRouter();
+  const { toast } = useToast();
   const [isProDialogOpen, setIsProDialogOpen] = useState(false);
+  const [promoCode, setPromoCode] = useState('');
 
 
   useEffect(() => {
@@ -65,6 +68,24 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       saveProfile({ ...profile, isPro: true });
     }
   };
+
+  const handlePromoCode = () => {
+    if (promoCode === PRO_CODE) {
+      handleProSuccess();
+      toast({
+        title: 'Félicitations !',
+        description: 'Vous avez débloqué l\'accès Pro.',
+      });
+      setPromoCode('');
+    } else {
+      toast({
+        variant: 'destructive',
+        title: 'Code invalide',
+        description: 'Le code que vous avez entré n\'est pas valide.',
+      });
+    }
+  };
+
 
   const navItems = [
     { href: '/', label: 'Home', icon: Home, pro: false },
@@ -113,7 +134,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               return (
                 <SidebarMenuItem key={item.href}>
                   {isLocked ? (
-                    <div>{linkContent}</div>
+                    <div className="w-full">{linkContent}</div>
                   ) : (
                     <Link href={item.href}>{linkContent}</Link>
                   )}
@@ -121,12 +142,35 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               );
             })}
              {!profile?.isPro && (
-                <SidebarMenuItem>
-                    <SidebarMenuButton onClick={() => setIsProDialogOpen(true)} variant="outline" className="mt-4 bg-gradient-to-r from-yellow-400 to-orange-500 text-white border-none hover:from-yellow-500 hover:to-orange-600 hover:text-white">
-                    <Sparkles />
-                    <span>Passer Pro</span>
-                    </SidebarMenuButton>
-                </SidebarMenuItem>
+                <SidebarGroup className="p-0 mt-4 space-y-2">
+                    <SidebarMenuItem>
+                        <SidebarMenuButton onClick={() => setIsProDialogOpen(true)} variant="outline" className="w-full justify-center bg-gradient-to-r from-yellow-400 to-orange-500 text-white border-none hover:from-yellow-500 hover:to-orange-600 hover:text-white">
+                            <Sparkles />
+                            <span>Passer Pro</span>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem className='px-2'>
+                        <div className="relative">
+                            <div className="absolute inset-0 flex items-center">
+                                <span className="w-full border-t" />
+                            </div>
+                            <div className="relative flex justify-center text-xs uppercase">
+                                <span className="bg-sidebar px-2 text-muted-foreground">
+                                OU
+                                </span>
+                            </div>
+                        </div>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem className='px-2'>
+                        <div className='flex flex-col space-y-2'>
+                            <Label htmlFor="promo-code" className='text-left text-xs px-1 text-muted-foreground'>Code promotionnel</Label>
+                            <div className='flex gap-2 w-full'>
+                                <Input id="promo-code" placeholder="petlife7296" value={promoCode} onChange={(e) => setPromoCode(e.target.value)} className="flex-grow bg-background/50 h-9" />
+                                <Button type="button" variant="secondary" onClick={handlePromoCode} className="h-9">Appliquer</Button>
+                            </div>
+                        </div>
+                    </SidebarMenuItem>
+                </SidebarGroup>
               )}
           </SidebarMenu>
         </SidebarContent>
