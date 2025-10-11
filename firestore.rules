@@ -1,119 +1,165 @@
-/**
- * @fileoverview Firestore Security Rules for PetLife application.
- *
- * Core Philosophy:
- * This ruleset enforces a strict user-ownership model, ensuring that users can only access and modify their own data.
- * All data is nested under /users/{userId}, establishing a clear hierarchy of ownership.
- *
- * Data Structure:
- * - /users/{userId}: Stores user profiles.
- * - /users/{userId}/pets/{petId}: Stores pet profiles owned by a specific user.
- * - /users/{userId}/pets/{petId}/activities/{activityId}: Stores activity data for a specific pet.
- *
- * Key Security Decisions:
- * - Users can only create, read, update, and delete their own user document.
- * - Users can only manage pets and activities associated with their user ID.
- * - Listing of users is disallowed.
- * - No data shape validation is performed beyond verifying the user ID on create operations.
- *
- * Denormalization for Authorization:
- * The data structure inherently denormalizes user ownership through path-based hierarchy,
- * avoiding the need for costly `get()` calls to determine ownership.
- * The userId is present in all documents beneath the /users/{userId} path.
- */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Controls access to user profiles.
+     * @description Controls access to user profile documents.
      * @path /users/{userId}
-     * @allow (create) - Authenticated user can create their own profile if the userId matches their auth UID.
-     * @allow (get, update, delete) - Authenticated user can only access their own profile.
-     * @deny (list) - Listing all users is not allowed.
-     * @deny (create) - An unauthenticated user cannot create a user profile.
-     * @deny (update) - An unauthenticated user cannot update a user profile.
-     * @deny (delete) - An unauthenticated user cannot delete a user profile.
-     * @principle Enforces document ownership for all operations.
+     * @allow (create) - Authenticated user with matching userId can create their own profile.
+     * @allow (get, list, update, delete) - Authenticated user with matching userId can read, update, or delete their own profile.
+     * @deny (create) - Authenticated user cannot create a profile with a mismatched userId.
+     * @deny (get, list, update, delete) - Authenticated user cannot read, update, or delete another user's profile.
+     * @principle Enforces document ownership for all operations on user profiles.
      */
     match /users/{userId} {
+      // isOwner() function checks if the request.auth.uid matches the {userId} in the path
+      function isOwner(userId) {
+        return request.auth != null && request.auth.uid == userId;
+      }
+
+      // isExistingOwner() function checks if the user is the owner of the document, and the document exists
+      function isExistingOwner(userId) {
+        return isOwner(userId) && get(/databases/$(database)/documents/users/$(userId)).data != null;
+      }
+
+      // isSignedIn() function checks if the user is signed in
       function isSignedIn() {
         return request.auth != null;
-      }
-
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
-
-      function isExistingOwner(userId) {
-          return isOwner(userId) && resource != null;
       }
 
       allow get: if isOwner(userId);
       allow list: if false;
-      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
-      allow delete: if isExistingOwner(userId);
-    }
-
-    /**
-     * @description Controls access to pet profiles for a specific user.
-     * @path /users/{userId}/pets/{petId}
-     * @allow (create) - Authenticated user can create a pet profile under their user ID if the userId matches.
-     * @allow (get, list, update, delete) - Authenticated user can only access and manage pets associated with their user ID.
-     * @deny (create) - An unauthenticated user cannot create a pet profile.
-     * @deny (update) - An unauthenticated user cannot update a pet profile if not the owner.
-     * @deny (delete) - An unauthenticated user cannot delete a pet profile if not the owner.
-     * @principle Restricts access to a user's own pet data.
-     */
-    match /users/{userId}/pets/{petId} {
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
-
-      function isExistingOwner(userId) {
-          return isOwner(userId) && resource != null;
-      }
-
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.userId == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
-      allow delete: if isExistingOwner(userId);
-    }
-
-    /**
-     * @description Controls access to activity data for a specific pet of a specific user.
-     * @path /users/{userId}/pets/{petId}/activities/{activityId}
-     * @allow (create) - Authenticated user can create an activity under their pet's profile if the userId matches.
-     * @allow (get, list, update, delete) - Authenticated user can only access and manage activities associated with their user ID and pet ID.
-     * @deny (create) - An unauthenticated user cannot create an activity.
-     * @deny (update) - An unauthenticated user cannot update an activity if not the owner.
-     * @deny (delete) - An unauthenticated user cannot delete an activity if not the owner.
-     * @principle Restricts access to a user's own pet activity data.
-     */
-    match /users/{userId}/pets/{petId}/activities/{activityId} {
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
-
-      function isExistingOwner(userId) {
-          return isOwner(userId) && resource != null;
-      }
-
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isSignedIn() && isOwner(userId);
+      allow create: if isSignedIn() && request.auth.uid == userId;
       allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Controls access to pet profile documents.
+     * @path /users/{userId}/pets/{petId}
+     * @allow (create) - Authenticated user with matching userId can create a pet profile for themselves.
+     * @allow (get, list, update, delete) - Authenticated user with matching userId can read, update, or delete their own pet profiles.
+     * @deny (create) - Authenticated user cannot create a pet profile for another user.
+     * @deny (get, list, update, delete) - Authenticated user cannot read, update, or delete another user's pet profile.
+     * @principle Enforces document ownership for all operations on pet profiles.
+     */
+    match /users/{userId}/pets/{petId} {
+      // isPetOwner() function checks if the request.auth.uid matches the {userId} in the path
+      function isPetOwner(userId) {
+        return request.auth != null && request.auth.uid == userId;
+      }
+
+      // isExistingPetOwner() function checks if the user is the owner of the document, and the document exists
+      function isExistingPetOwner(userId, petId) {
+        return isPetOwner(userId) && get(/databases/$(database)/documents/users/$(userId)/pets/$(petId)).data != null;
+      }
+
+      // isSignedIn() function checks if the user is signed in
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      allow get: if isPetOwner(userId);
+      allow list: if false;
+      allow create: if isPetOwner(userId);
+      allow update: if isExistingPetOwner(userId, petId);
+      allow delete: if isExistingPetOwner(userId, petId);
+    }
+
+    /**
+     * @description Controls access to meal plan documents.
+     * @path /users/{userId}/pets/{petId}/mealPlans/{mealPlanId}
+     * @allow (create) - Authenticated user with matching userId can create a meal plan for their pet.
+     * @allow (get, list, update, delete) - Authenticated user with matching userId can read, update, or delete their own pet's meal plans.
+     * @deny (create) - Authenticated user cannot create a meal plan for another user's pet.
+     * @deny (get, list, update, delete) - Authenticated user cannot read, update, or delete another user's pet's meal plans.
+     * @principle Enforces document ownership for all operations on meal plan documents.
+     */
+    match /users/{userId}/pets/{petId}/mealPlans/{mealPlanId} {
+      // isPetOwner() function checks if the request.auth.uid matches the {userId} in the path
+      function isPetOwner(userId) {
+        return request.auth != null && request.auth.uid == userId;
+      }
+
+      // isExistingPetOwner() function checks if the user is the owner of the document, and the document exists
+      function isExistingPetOwner(userId, petId, mealPlanId) {
+        return isPetOwner(userId) && get(/databases/$(database)/documents/users/$(userId)/pets/$(petId)/mealPlans/$(mealPlanId)).data != null;
+      }
+
+      // isSignedIn() function checks if the user is signed in
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      allow get: if isPetOwner(userId);
+      allow list: if false;
+      allow create: if isPetOwner(userId);
+      allow update: if isExistingPetOwner(userId, petId, mealPlanId);
+      allow delete: if isExistingPetOwner(userId, petId, mealPlanId);
+    }
+
+    /**
+     * @description Controls access to supplement recommendation documents.
+     * @path /users/{userId}/pets/{petId}/supplementRecommendations/{supplementRecommendationId}
+     * @allow (create) - Authenticated user with matching userId can create a supplement recommendation for their pet.
+     * @allow (get, list, update, delete) - Authenticated user with matching userId can read, update, or delete their own pet's supplement recommendations.
+     * @deny (create) - Authenticated user cannot create a supplement recommendation for another user's pet.
+     * @deny (get, list, update, or delete) - Authenticated user cannot read, update, or delete another user's pet's supplement recommendations.
+     * @principle Enforces document ownership for all operations on supplement recommendation documents.
+     */
+    match /users/{userId}/pets/{petId}/supplementRecommendations/{supplementRecommendationId} {
+      // isPetOwner() function checks if the request.auth.uid matches the {userId} in the path
+      function isPetOwner(userId) {
+        return request.auth != null && request.auth.uid == userId;
+      }
+
+      // isExistingPetOwner() function checks if the user is the owner of the document, and the document exists
+      function isExistingPetOwner(userId, petId, supplementRecommendationId) {
+        return isPetOwner(userId) && get(/databases/$(database)/documents/users/$(userId)/pets/$(petId)/supplementRecommendations/$(supplementRecommendationId)).data != null;
+      }
+
+      // isSignedIn() function checks if the user is signed in
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      allow get: if isPetOwner(userId);
+      allow list: if false;
+      allow create: if isPetOwner(userId);
+      allow update: if isExistingPetOwner(userId, petId, supplementRecommendationId);
+      allow delete: if isExistingPetOwner(userId, petId, supplementRecommendationId);
+    }
+
+    /**
+     * @description Controls access to activity record documents.
+     * @path /users/{userId}/pets/{petId}/activityRecords/{activityRecordId}
+     * @allow (create) - Authenticated user with matching userId can create an activity record for their pet.
+     * @allow (get, list, update, delete) - Authenticated user with matching userId can read, update, or delete their own pet's activity records.
+     * @deny (create) - Authenticated user cannot create an activity record for another user's pet.
+     * @deny (get, list, update, delete) - Authenticated user cannot read, update, or delete another user's pet's activity records.
+     * @principle Enforces document ownership for all operations on activity record documents.
+     */
+    match /users/{userId}/pets/{petId}/activityRecords/{activityRecordId} {
+      // isPetOwner() function checks if the request.auth.uid matches the {userId} in the path
+      function isPetOwner(userId) {
+        return request.auth != null && request.auth.uid == userId;
+      }
+
+      // isExistingPetOwner() function checks if the user is the owner of the document, and the document exists
+      function isExistingPetOwner(userId, petId, activityRecordId) {
+        return isPetOwner(userId) && get(/databases/$(database)/documents/users/$(userId)/pets/$(petId)/activityRecords/$(activityRecordId)).data != null;
+      }
+
+      // isSignedIn() function checks if the user is signed in
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      allow get: if isPetOwner(userId);
+      allow list: if false;
+      allow create: if isPetOwner(userId);
+      allow update: if isExistingPetOwner(userId, petId, activityRecordId);
+      allow delete: if isExistingPetOwner(userId, petId, activityRecordId);
     }
   }
 }

@@ -1,104 +1,5 @@
 {
   "entities": {
-    "Pet": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Pet",
-      "type": "object",
-      "description": "Represents a pet registered in the PetLife application.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the Pet entity."
-        },
-        "userId": {
-          "type": "string",
-          "description": "Reference to the User who owns the pet. (Relationship: User 1:N Pet)"
-        },
-        "name": {
-          "type": "string",
-          "description": "The name of the pet."
-        },
-        "species": {
-          "type": "string",
-          "description": "The species of the pet (e.g., dog, cat)."
-        },
-        "breed": {
-          "type": "string",
-          "description": "The breed of the pet."
-        },
-        "age": {
-          "type": "number",
-          "description": "The age of the pet in years."
-        },
-        "weight": {
-          "type": "number",
-          "description": "The weight of the pet in kilograms."
-        },
-        "weightGoal": {
-          "type": "string",
-          "description": "The primary goal: Lose Weight, Maintain weight, improve articulations"
-        },
-        "allergies": {
-          "type": "string",
-          "description": "The allergies of the pet"
-        }
-      },
-      "required": [
-        "id",
-        "userId",
-        "name",
-        "species",
-        "breed",
-        "age",
-        "weight",
-        "weightGoal",
-        "allergies"
-      ]
-    },
-    "Activity": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Activity",
-      "type": "object",
-      "description": "Represents an activity performed by a pet.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the Activity entity."
-        },
-        "petId": {
-          "type": "string",
-          "description": "Reference to the Pet that performed the activity. (Relationship: Pet 1:N Activity)"
-        },
-        "type": {
-          "type": "string",
-          "description": "The type of activity (e.g., walk, run, play)."
-        },
-        "duration": {
-          "type": "number",
-          "description": "The duration of the activity in minutes."
-        },
-        "distance": {
-          "type": "number",
-          "description": "The distance covered during the activity in meters."
-        },
-        "timestamp": {
-          "type": "string",
-          "description": "The date and time when the activity was performed.",
-          "format": "date-time"
-        },
-        "notes": {
-          "type": "string",
-          "description": "Any additional notes about the activity."
-        }
-      },
-      "required": [
-        "id",
-        "petId",
-        "type",
-        "duration",
-        "timestamp"
-      ]
-    },
     "User": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "User",
@@ -107,27 +8,176 @@
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the User entity."
+          "description": "Unique identifier for the user."
         },
         "email": {
           "type": "string",
-          "description": "The email address of the user.",
+          "description": "User's email address.",
           "format": "email"
-        },
-        "firstName": {
-          "type": "string",
-          "description": "The first name of the user."
-        },
-        "lastName": {
-          "type": "string",
-          "description": "The last name of the user."
         }
       },
       "required": [
         "id",
-        "email",
-        "firstName",
-        "lastName"
+        "email"
+      ]
+    },
+    "Pet": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Pet",
+      "type": "object",
+      "description": "Represents a pet profile within the PetLife application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the pet."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N Pet)"
+        },
+        "name": {
+          "type": "string",
+          "description": "Pet's name."
+        },
+        "species": {
+          "type": "string",
+          "description": "Species of the pet (e.g., dog, cat)."
+        },
+        "age": {
+          "type": "number",
+          "description": "Pet's age in years."
+        },
+        "breed": {
+          "type": "string",
+          "description": "Pet's breed."
+        },
+        "weight": {
+          "type": "number",
+          "description": "Pet's current weight in kilograms."
+        },
+        "weightGoal": {
+          "type": "string",
+          "description": "Pet's weight goal (e.g., lose weight, maintain weight, gain weight)."
+        },
+        "allergies": {
+          "type": "array",
+          "description": "A list of the pet's known allergies.",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "name",
+        "species",
+        "age",
+        "breed",
+        "weight",
+        "weightGoal"
+      ]
+    },
+    "MealPlan": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "MealPlan",
+      "type": "object",
+      "description": "Represents a meal plan for a pet.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the meal plan."
+        },
+        "petId": {
+          "type": "string",
+          "description": "Reference to Pet. (Relationship: Pet 1:N MealPlan)"
+        },
+        "date": {
+          "type": "string",
+          "description": "Date for which the meal plan is applicable.",
+          "format": "date-time"
+        },
+        "mealDetails": {
+          "type": "string",
+          "description": "A json string containing details of the meal plan."
+        }
+      },
+      "required": [
+        "id",
+        "petId",
+        "date",
+        "mealDetails"
+      ]
+    },
+    "SupplementRecommendation": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "SupplementRecommendation",
+      "type": "object",
+      "description": "Represents a supplement recommendation for a pet.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the supplement recommendation."
+        },
+        "petId": {
+          "type": "string",
+          "description": "Reference to Pet. (Relationship: Pet 1:N SupplementRecommendation)"
+        },
+        "supplementName": {
+          "type": "string",
+          "description": "Name of the recommended supplement."
+        },
+        "dosage": {
+          "type": "string",
+          "description": "Recommended dosage of the supplement."
+        },
+        "reason": {
+          "type": "string",
+          "description": "Reason for recommending the supplement."
+        }
+      },
+      "required": [
+        "id",
+        "petId",
+        "supplementName",
+        "dosage",
+        "reason"
+      ]
+    },
+    "ActivityRecord": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ActivityRecord",
+      "type": "object",
+      "description": "Represents an activity record for a pet.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the activity record."
+        },
+        "petId": {
+          "type": "string",
+          "description": "Reference to Pet. (Relationship: Pet 1:N ActivityRecord)"
+        },
+        "date": {
+          "type": "string",
+          "description": "Date of the activity record.",
+          "format": "date-time"
+        },
+        "activityType": {
+          "type": "string",
+          "description": "Type of activity (e.g., walk, run, play)."
+        },
+        "duration": {
+          "type": "number",
+          "description": "Duration of the activity in minutes."
+        }
+      },
+      "required": [
+        "id",
+        "petId",
+        "date",
+        "activityType",
+        "duration"
       ]
     }
   },
@@ -146,7 +196,7 @@
           "schema": {
             "$ref": "#/backend/entities/User"
           },
-          "description": "Stores user profiles.  Each document represents a registered user in the PetLife application.",
+          "description": "Stores user profiles. Uses path-based ownership for private user data.",
           "params": [
             {
               "name": "userId",
@@ -162,7 +212,7 @@
           "schema": {
             "$ref": "#/backend/entities/Pet"
           },
-          "description": "Stores pet profiles associated with a specific user. Each document represents a pet owned by the user.",
+          "description": "Stores pet profiles owned by a specific user. Uses path-based ownership for private pet data.",
           "params": [
             {
               "name": "userId",
@@ -176,13 +226,13 @@
         }
       },
       {
-        "path": "/users/{userId}/pets/{petId}/activities/{activityId}",
+        "path": "/users/{userId}/pets/{petId}/mealPlans/{mealPlanId}",
         "definition": {
-          "entityName": "Activity",
+          "entityName": "MealPlan",
           "schema": {
-            "$ref": "#/backend/entities/Activity"
+            "$ref": "#/backend/entities/MealPlan"
           },
-          "description": "Stores activity data for a specific pet.  Each document represents an activity performed by the pet.",
+          "description": "Stores meal plans for a specific pet. Uses path-based ownership for meal plan data.",
           "params": [
             {
               "name": "userId",
@@ -193,13 +243,61 @@
               "description": "The unique identifier for the pet."
             },
             {
-              "name": "activityId",
-              "description": "The unique identifier for the activity."
+              "name": "mealPlanId",
+              "description": "The unique identifier for the meal plan."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/pets/{petId}/supplementRecommendations/{supplementRecommendationId}",
+        "definition": {
+          "entityName": "SupplementRecommendation",
+          "schema": {
+            "$ref": "#/backend/entities/SupplementRecommendation"
+          },
+          "description": "Stores supplement recommendations for a specific pet. Uses path-based ownership for supplement recommendation data.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            },
+            {
+              "name": "petId",
+              "description": "The unique identifier for the pet."
+            },
+            {
+              "name": "supplementRecommendationId",
+              "description": "The unique identifier for the supplement recommendation."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/pets/{petId}/activityRecords/{activityRecordId}",
+        "definition": {
+          "entityName": "ActivityRecord",
+          "schema": {
+            "$ref": "#/backend/entities/ActivityRecord"
+          },
+          "description": "Stores activity records for a specific pet. Uses path-based ownership for activity record data.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            },
+            {
+              "name": "petId",
+              "description": "The unique identifier for the pet."
+            },
+            {
+              "name": "activityRecordId",
+              "description": "The unique identifier for the activity record."
             }
           ]
         }
       }
     ],
-    "reasoning": "The Firestore structure is designed to support the PetLife application's core features, focusing on personalization, health tracking, and user engagement. It leverages path-based ownership for pets and their activities, ensuring data isolation and simplified security rules. Activities are stored as a subcollection of Pets. This enables efficient querying of activities for a specific pet and maintains authorization independence by implicitly linking activities to their respective pet owners via the document path. The structure segregates user data, pet profiles, and activities into distinct collections, promoting a homogeneous security posture within each collection.\n\nAuthorization Independence: Ownership is enforced through hierarchical paths (`/users/{userId}/pets/{petId}/activities/{activityId}`). No `get()` calls are needed in security rules because the relationship between users, pets, and activities is inherent in the structure.\n\nQAPs: The structure supports secure `list` operations by organizing data into collections with consistent security requirements. Listing activities is secured by the path-based ownership under a given pet, which is secured under a given user."
+    "reasoning": "The Firestore structure is designed to ensure authorization independence, clarity, and scalability for the PetLife application. User and Pet data are stored in hierarchical paths to establish clear ownership. Meal Plans, Supplement Recommendations, and Activity Records are stored as subcollections under each Pet document to facilitate easy querying and management of data specific to each pet. This structure avoids the need for `get()` calls in security rules, enabling atomic operations. Segregation into subcollections allows for homogeneous security postures for each entity. This design also supports the required QAPs by using clear path-based ownership and dedicated subcollections, making list operations secure."
   }
 }
