@@ -4,7 +4,7 @@ import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { usePetProfile } from '@/hooks/use-pet-profile';
-import { Lightbulb } from 'lucide-react';
+import { Lightbulb, Calendar as CalendarIcon, CheckCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { getRecommendations } from './actions';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -26,6 +26,18 @@ const sampleSchedule = [
     { day: "Day 7", am: "Gentle walk", pm: "Cuddle time" },
 ];
 
+const sampleHistory = {
+    [format(new Date(), 'yyyy-MM-dd')]: [
+        { type: 'Brisk Walk', duration: 30, completed: true },
+        { type: 'Fetch', duration: 15, completed: true },
+    ],
+    [format(new Date(Date.now() - 86400000), 'yyyy-MM-dd')]: [
+        { type: 'Sniffari', duration: 30, completed: true },
+        { type: 'Training', duration: 15, completed: false },
+    ],
+};
+
+
 export default function ActivityPage() {
     const { profile } = usePetProfile();
     const [recommendations, setRecommendations] = useState<string[]>([]);
@@ -39,15 +51,17 @@ export default function ActivityPage() {
     const [progress, setProgress] = useState(0);
     const [completedDays, setCompletedDays] = useState<boolean[]>(Array(7).fill(false));
 
+    const [historyDate, setHistoryDate] = useState<Date | undefined>(new Date());
+
     const fetchRecommendations = async () => {
         if (profile) {
             setLoading(true);
             setError(null);
             const result = await getRecommendations({
-                species: profile.species,
+                species: profile.species as 'dog' | 'cat',
                 breed: profile.breed,
                 age: profile.age,
-                healthGoal: profile.healthGoal,
+                healthGoal: profile.healthGoal as 'lose_weight' | 'maintain_weight' | 'improve_joints',
             });
 
             if (result.success && result.data) {
@@ -96,6 +110,8 @@ export default function ActivityPage() {
         const newProgress = (completedCount / 7) * 100;
         setProgress(newProgress);
     }, [completedDays]);
+
+    const todaysActivities = historyDate ? sampleHistory[format(historyDate, 'yyyy-MM-dd')] || [] : [];
 
     return (
         <div>
@@ -193,6 +209,51 @@ export default function ActivityPage() {
                         </CardFooter>
                     </Card>
                 )}
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="font-headline flex items-center gap-2">
+                            <CalendarIcon className="w-5 h-5" />
+                            Activity History
+                        </CardTitle>
+                        <CardDescription>Select a date to view logged activities.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="grid md:grid-cols-2 gap-6">
+                       <div className="flex justify-center md:justify-start">
+                            <Calendar
+                                mode="single"
+                                selected={historyDate}
+                                onSelect={setHistoryDate}
+                                className="rounded-md border"
+                            />
+                       </div>
+                       <div>
+                            <h3 className="font-semibold mb-4">
+                                Activities for {historyDate ? format(historyDate, "PPP") : "..."}
+                            </h3>
+                            {todaysActivities.length > 0 ? (
+                                <ul className="space-y-3">
+                                    {todaysActivities.map((activity, index) => (
+                                        <li key={index} className="flex items-center justify-between p-3 rounded-md bg-muted/50">
+                                            <div>
+                                                <p className="font-medium">{activity.type}</p>
+                                                <p className="text-sm text-muted-foreground">{activity.duration} minutes</p>
+                                            </div>
+                                            {activity.completed && (
+                                                <div className="flex items-center gap-2 text-green-600">
+                                                    <CheckCircle className="w-5 h-5" />
+                                                    <span className="text-sm font-medium">Done</span>
+                                                </div>
+                                            )}
+                                        </li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <p className="text-sm text-muted-foreground text-center md:text-left mt-8">No activities logged for this day.</p>
+                            )}
+                       </div>
+                    </CardContent>
+                </Card>
             </div>
         </div>
     );
