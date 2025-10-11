@@ -1,17 +1,21 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Pill, Lightbulb } from 'lucide-react';
+import { Pill, Lightbulb, ChevronDown } from 'lucide-react';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { usePetProfile } from '@/hooks/use-pet-profile';
 import { getRecommendations } from './actions';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import type { SupplementRecommendationOutput } from '@/ai/flows/ai-supplement-recommendations';
+
+type Recommendation = SupplementRecommendationOutput['recommendations'][0];
 
 export default function SupplementsPage() {
     const { profile } = usePetProfile();
-    const [recommendations, setRecommendations] = useState<string[]>([]);
+    const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -38,7 +42,7 @@ export default function SupplementsPage() {
             const result = await getRecommendations(input);
 
             if (result.success && result.data) {
-                setRecommendations(result.data);
+                setRecommendations(result.data.recommendations);
             } else {
                 setError(result.error || 'An unknown error occurred.');
             }
@@ -64,7 +68,7 @@ export default function SupplementsPage() {
             <Card>
                 <CardHeader>
                     <CardTitle className="font-headline">Recommended for {profile?.name}</CardTitle>
-                    <CardDescription>Based on age, breed, and health goals.</CardDescription>
+                    <CardDescription>Based on age, breed, and health goals. Click on each one to learn more.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     {loading && (
@@ -92,16 +96,23 @@ export default function SupplementsPage() {
                         </Card>
                     )}
                     {!loading && !error && (
-                        <ul className="space-y-4">
+                        <Accordion type="single" collapsible className="w-full">
                             {recommendations.map((rec, index) => (
-                                <li key={index} className="flex items-center gap-4">
-                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                                        <Pill className="h-5 w-5 text-primary" />
-                                    </div>
-                                    <span className="text-lg font-medium">{rec}</span>
-                                </li>
+                                <AccordionItem value={`item-${index}`} key={index}>
+                                    <AccordionTrigger>
+                                        <div className="flex items-center gap-4">
+                                             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+                                                <Pill className="h-5 w-5 text-primary" />
+                                            </div>
+                                            <span className="text-lg font-medium text-left">{rec.name}</span>
+                                        </div>
+                                    </AccordionTrigger>
+                                    <AccordionContent className="pl-16 text-muted-foreground">
+                                        {rec.explanation}
+                                    </AccordionContent>
+                                </AccordionItem>
                             ))}
-                        </ul>
+                        </Accordion>
                     )}
                 </CardContent>
             </Card>

@@ -21,7 +21,14 @@ const SupplementRecommendationInputSchema = z.object({
 export type SupplementRecommendationInput = z.infer<typeof SupplementRecommendationInputSchema>;
 
 const SupplementRecommendationOutputSchema = z.object({
-  recommendations: z.array(z.string()).describe('A list of supplement recommendations tailored to the pet.'),
+  recommendations: z
+    .array(
+      z.object({
+        name: z.string().describe('The name of the supplement.'),
+        explanation: z.string().describe('A brief explanation of why this supplement is recommended for the pet.'),
+      })
+    )
+    .describe('A list of supplement recommendations tailored to the pet, each with an explanation.'),
 });
 export type SupplementRecommendationOutput = z.infer<typeof SupplementRecommendationOutputSchema>;
 
@@ -44,7 +51,7 @@ const supplementRecommendationPrompt = ai.definePrompt({
   Allergies: {{{allergies}}}
   Health Needs: {{{healthNeeds}}}
 
-  Provide the recommendations as a list of supplement names.`, 
+  For each supplement, provide its name and a concise explanation for why it's being recommended.`, 
 });
 
 const supplementRecommendationFlow = ai.defineFlow(
