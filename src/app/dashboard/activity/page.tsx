@@ -3,7 +3,7 @@
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { usePetProfile } from '@/hooks/use-pet-profile';
-import { Lightbulb, CalendarPlus } from 'lucide-react';
+import { Lightbulb, CalendarPlus, Clock } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { getRecommendations } from './actions';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -15,12 +15,14 @@ export default function ActivityPage() {
     const [recommendations, setRecommendations] = useState<string[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [showSchedule, setShowSchedule] = useState(false);
     const { toast } = useToast();
 
     const fetchRecommendations = async () => {
         if (profile) {
             setLoading(true);
             setError(null);
+            setShowSchedule(false);
             const result = await getRecommendations({
                 species: profile.species,
                 breed: profile.breed,
@@ -48,7 +50,15 @@ export default function ActivityPage() {
             title: "Activités programmées!",
             description: "Les recommandations ont été ajoutées à votre calendrier.",
         });
+        setShowSchedule(true);
     };
+    
+    const sampleSchedule = [
+        { time: '08:00 AM', activity: 'Morning Walk (30 mins)' },
+        { time: '01:00 PM', activity: 'Puzzle Feeder Challenge' },
+        { time: '06:00 PM', activity: 'Evening Fetch Session (15 mins)' },
+    ];
+
 
     return (
         <div>
@@ -92,6 +102,28 @@ export default function ActivityPage() {
                         </CardFooter>
                     )}
                 </Card>
+
+                {showSchedule && (
+                     <Card className="shadow-md">
+                        <CardHeader>
+                            <CardTitle className="font-headline">Your Schedule for Today</CardTitle>
+                             <CardDescription>A plan based on the recommendations to keep {profile?.name} active.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <ul className="space-y-4">
+                                {sampleSchedule.map((item, index) => (
+                                <li key={index} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                                    <span className="font-medium">{item.activity}</span>
+                                    <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                                        <Clock className="h-4 w-4" />
+                                        <span>{item.time}</span>
+                                    </div>
+                                </li>
+                                ))}
+                            </ul>
+                        </CardContent>
+                    </Card>
+                )}
             </div>
         </div>
     );
