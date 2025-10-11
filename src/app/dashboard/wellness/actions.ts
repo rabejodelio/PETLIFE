@@ -1,24 +1,8 @@
 'use server';
 
-import { getWellnessTipsFlow } from "@/ai/flows/ai-wellness-tips";
-import { z } from 'zod';
+import { getWellnessTipsFlow, WellnessTipsInput, WellnessTipsOutput } from "@/ai/flows/ai-wellness-tips";
 
-export const WellnessTipsInputSchema = z.object({
-  species: z.enum(['dog', 'cat']),
-});
-export type WellnessTipsInput = z.infer<typeof WellnessTipsInputSchema>;
-
-const WellnessTipSchema = z.object({
-  title: z.string(),
-  description: z.string(),
-});
-export type WellnessTip = z.infer<typeof WellnessTipSchema>;
-
-export const WellnessTipsOutputSchema = z.object({
-  tips: z.array(WellnessTipSchema),
-});
-export type WellnessTipsOutput = z.infer<typeof WellnessTipsOutputSchema>;
-
+export { type WellnessTipsInput, type WellnessTipsOutput };
 
 export async function getWellnessTipsAction(input: WellnessTipsInput): Promise<{ success: boolean; data?: WellnessTipsOutput; error?: string }> {
     try {

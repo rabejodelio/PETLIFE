@@ -6,9 +6,23 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { usePetProfile } from '@/hooks/use-pet-profile';
 import { getWellnessTipsAction } from './actions';
-import type { WellnessTip } from './actions';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Lightbulb } from 'lucide-react';
+import { z } from 'zod';
+
+const WellnessTipSchema = z.object({
+  title: z.string().describe('The title of the wellness tip.'),
+  description: z.string().describe('The detailed description of the tip, providing actionable advice.'),
+});
+export type WellnessTip = z.infer<typeof WellnessTipSchema>;
+
+export const WellnessTipsOutputSchema = z.object({
+  tips: z
+    .array(WellnessTipSchema)
+    .min(4)
+    .max(6)
+    .describe('A list of 4 to 6 wellness tips for the specified pet species.'),
+});
 
 export default function WellnessPage() {
     const { profile } = usePetProfile();

@@ -11,7 +11,7 @@ import {z} from 'genkit';
 const WellnessTipsInputSchema = z.object({
   species: z.enum(['dog', 'cat']).describe('The species of the pet (dog or cat).'),
 });
-type WellnessTipsInput = z.infer<typeof WellnessTipsInputSchema>;
+export type WellnessTipsInput = z.infer<typeof WellnessTipsInputSchema>;
 
 const WellnessTipSchema = z.object({
   title: z.string().describe('The title of the wellness tip.'),
@@ -25,7 +25,7 @@ const WellnessTipsOutputSchema = z.object({
     .max(6)
     .describe('A list of 4 to 6 wellness tips for the specified pet species.'),
 });
-type WellnessTipsOutput = z.infer<typeof WellnessTipsOutputSchema>;
+export type WellnessTipsOutput = z.infer<typeof WellnessTipsOutputSchema>;
 
 
 const wellnessTipsPrompt = ai.definePrompt({
