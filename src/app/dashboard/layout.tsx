@@ -16,7 +16,6 @@ import {
   Home,
   Sparkles,
   Lock,
-  Users,
 } from 'lucide-react';
 
 import {
@@ -101,7 +100,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     { href: '/dashboard/activity', label: 'Activity', icon: PawPrint, pro: true },
     { href: '/dashboard/wellness', label: 'Wellness', icon: Heart, pro: true },
     { href: '/dashboard/profile', label: 'Profile', icon: User, pro: false },
-    { href: '/dashboard/users', label: 'Users', icon: Users, pro: false },
   ];
 
   if (isUserLoading || loading) {
