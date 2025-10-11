@@ -1,3 +1,4 @@
+
 'use client';
 
 import { PageHeader } from '@/components/page-header';
@@ -48,35 +49,36 @@ export default function ActivityPage() {
                 description={`Monitor and log ${profile?.name}'s daily exercise.`}
             />
 
+            <Card className="mb-6">
+                <CardHeader className="flex-row items-start gap-4">
+                    <Lightbulb className="w-6 h-6 text-accent-foreground flex-shrink-0 mt-1" />
+                    <div>
+                        <CardTitle className="font-headline">Quick Recommendations</CardTitle>
+                        <CardDescription>
+                            AI-powered suggestions to help {profile?.name} reach their goal.
+                        </CardDescription>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    {loadingRecs ? (
+                        <div className="space-y-3">
+                            <Skeleton className="h-5 w-3/4" />
+                            <Skeleton className="h-5 w-2/3" />
+                            <Skeleton className="h-5 w-4/5" />
+                        </div>
+                    ) : (
+                        <ul className="space-y-2 text-sm list-disc list-inside">
+                            {recommendations.map((rec, i) => (
+                                <li key={i}>{rec}</li>
+                            ))}
+                        </ul>
+                    )}
+                </CardContent>
+            </Card>
+
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 space-y-6">
                     <ActivityChart />
-                    <Card>
-                        <CardHeader className="flex-row items-start gap-4">
-                            <Lightbulb className="w-6 h-6 text-accent-foreground flex-shrink-0 mt-1" />
-                            <div>
-                                <CardTitle className="font-headline">Quick Recommendations</CardTitle>
-                                <CardDescription>
-                                    AI-powered suggestions to help {profile?.name} reach their goal.
-                                </CardDescription>
-                            </div>
-                        </CardHeader>
-                        <CardContent>
-                            {loadingRecs ? (
-                                <div className="space-y-3">
-                                    <Skeleton className="h-5 w-3/4" />
-                                    <Skeleton className="h-5 w-2/3" />
-                                    <Skeleton className="h-5 w-4/5" />
-                                </div>
-                            ) : (
-                                <ul className="space-y-2 text-sm list-disc list-inside">
-                                    {recommendations.map((rec, i) => (
-                                        <li key={i}>{rec}</li>
-                                    ))}
-                                </ul>
-                            )}
-                        </CardContent>
-                    </Card>
                 </div>
                 <div className="space-y-6">
                     <Card>
