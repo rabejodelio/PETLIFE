@@ -9,16 +9,19 @@ import { useEffect, useState } from 'react';
 import { getRecommendations } from './actions';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Calendar } from '@/components/ui/calendar';
+import { format } from 'date-fns';
 
 const sampleSchedule = [
-    { day: "Monday", am: "30-min brisk walk", pm: "15-min fetch" },
-    { day: "Tuesday", am: "Puzzle feeder", pm: "20-min active play" },
-    { day: "Wednesday", am: "30-min sniffari", pm: "15-min training" },
-    { day: "Thursday", am: "45-min park visit", pm: "10-min tug-of-war" },
-    { day: "Friday", am: "30-min walk", pm: "20-min fetch" },
-    { day: "Saturday", am: "Long hike (60 mins)", pm: "Relaxed evening" },
-    { day: "Sunday", am: "Gentle walk", pm: "Cuddle time" },
-]
+    { day: "Day 1", am: "30-min brisk walk", pm: "15-min fetch" },
+    { day: "Day 2", am: "Puzzle feeder", pm: "20-min active play" },
+    { day: "Day 3", am: "30-min sniffari", pm: "15-min training" },
+    { day: "Day 4", am: "45-min park visit", pm: "10-min tug-of-war" },
+    { day: "Day 5", am: "30-min walk", pm: "20-min fetch" },
+    { day: "Day 6", am: "Long hike (60 mins)", pm: "Relaxed evening" },
+    { day: "Day 7", am: "Gentle walk", pm: "Cuddle time" },
+];
 
 export default function ActivityPage() {
     const { profile } = usePetProfile();
@@ -28,7 +31,8 @@ export default function ActivityPage() {
     const { toast } = useToast();
     
     const [showSchedule, setShowSchedule] = useState(false);
-    
+    const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+    const [scheduleStartDate, setScheduleStartDate] = useState<Date>();
 
     const fetchRecommendations = async () => {
         if (profile) {
@@ -50,13 +54,24 @@ export default function ActivityPage() {
         }
     };
 
-    const handleScheduleClick = () => {
+    const handleDateSelect = (date: Date | undefined) => {
+        if (!date) return;
+        setScheduleStartDate(date);
+        setIsCalendarOpen(false);
         setShowSchedule(true);
         toast({
             title: "Schedule Generated!",
-            description: "Your 7-day activity plan has been created below.",
+            description: `Your 7-day activity plan starting ${format(date, "PPP")} has been created.`,
         });
     };
+
+    const getDayWithDate = (dayIndex: number) => {
+        if (!scheduleStartDate) return sampleSchedule[dayIndex].day;
+        const date = new Date(scheduleStartDate);
+        date.setDate(scheduleStartDate.getDate() + dayIndex);
+        return `${sampleSchedule[dayIndex].day} (${format(date, 'MMM d')})`;
+    }
+
 
     useEffect(() => {
         if(profile) {
@@ -99,21 +114,41 @@ export default function ActivityPage() {
                         )}
                     </CardContent>
                     <CardFooter>
-                        <Button onClick={handleScheduleClick}>Schedule Activities</Button>
+                        <Button onClick={() => setIsCalendarOpen(true)}>Schedule Activities</Button>
                     </CardFooter>
                 </Card>
+
+                 <Dialog open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+                    <DialogContent className="sm:max-w-[425px]">
+                        <DialogHeader>
+                        <DialogTitle>Select a start date</DialogTitle>
+                        <DialogDescription>
+                            Choose the date you want your 7-day activity plan to begin.
+                        </DialogDescription>
+                        </DialogHeader>
+                        <div className="flex justify-center">
+                            <Calendar
+                                mode="single"
+                                selected={scheduleStartDate}
+                                onSelect={handleDateSelect}
+                                disabled={(date) => date < new Date(new Date().setHours(0,0,0,0))}
+                                initialFocus
+                            />
+                        </div>
+                    </DialogContent>
+                </Dialog>
 
                 {showSchedule && (
                      <Card>
                         <CardHeader>
                             <CardTitle className="font-headline">Your 7-Day Activity Plan</CardTitle>
-                            <CardDescription>A week of engaging activities for {profile?.name}.</CardDescription>
+                            <CardDescription>A week of engaging activities for {profile?.name} starting {scheduleStartDate && format(scheduleStartDate, 'PPP')}.</CardDescription>
                         </CardHeader>
                         <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {sampleSchedule.map((dayPlan) => (
+                            {sampleSchedule.map((dayPlan, index) => (
                                 <Card key={dayPlan.day} className="bg-muted/30">
                                     <CardHeader className="p-4">
-                                        <CardTitle className="text-base font-semibold">{dayPlan.day}</CardTitle>
+                                        <CardTitle className="text-base font-semibold">{getDayWithDate(index)}</CardTitle>
                                     </CardHeader>
                                     <CardContent className="p-4 pt-0 text-sm space-y-2">
                                          <p><span className="font-semibold text-muted-foreground">AM:</span> {dayPlan.am}</p>
