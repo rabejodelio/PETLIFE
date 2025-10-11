@@ -9,7 +9,6 @@ import { Label } from "@/components/ui/label";
 import { useAuth, initiateEmailSignIn } from "@/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
-import { AuthError } from "firebase/auth";
 
 export default function LoginPage() {
     const router = useRouter();
@@ -29,13 +28,14 @@ export default function LoginPage() {
                 description: "Redirecting to your dashboard...",
             });
             router.push("/dashboard");
-        } catch (error) {
+        } catch (error: any) {
             console.error("Login Error:", error);
             let description = "An unexpected error occurred. Please try again.";
-            if (error instanceof AuthError) {
+            if (error.code) {
                 switch (error.code) {
                     case 'auth/user-not-found':
                     case 'auth/wrong-password':
+                    case 'auth/invalid-credential':
                         description = "Invalid email or password.";
                         break;
                     case 'auth/invalid-email':

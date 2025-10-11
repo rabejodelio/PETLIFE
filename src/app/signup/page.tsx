@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { useAuth, useFirestore, setDocumentNonBlocking } from "@/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
-import { createUserWithEmailAndPassword, AuthError } from "firebase/auth";
+import { createUserWithEmailAndPassword } from "firebase/auth";
 import { doc } from "firebase/firestore";
 
 export default function SignupPage() {
@@ -37,10 +37,10 @@ export default function SignupPage() {
                 description: "Redirecting you to pet onboarding.",
             });
             router.push("/onboarding");
-        } catch (error) {
+        } catch (error: any) {
             console.error("Signup Error:", error);
             let description = "An unexpected error occurred. Please try again.";
-            if (error instanceof AuthError) {
+            if (error.code) {
                 switch (error.code) {
                     case 'auth/email-already-in-use':
                         description = "This email is already registered. Please log in.";
