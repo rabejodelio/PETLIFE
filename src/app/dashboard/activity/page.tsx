@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { usePetProfile } from '@/hooks/use-pet-profile';
-import { Footprints, Plus, Lightbulb, Activity as ActivityIcon, Dumbbell, Toy, Wind } from 'lucide-react';
+import { Footprints, Plus, Lightbulb, Activity as ActivityIcon, Dumbbell, ToyBrick, Wind } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { getRecommendations } from './actions';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -35,7 +35,7 @@ type Activity = { type: string; duration: number; time: string };
 const activityIcons: { [key: string]: React.ReactNode } = {
     'Walk': <Footprints className="w-5 h-5" />,
     'Run': <Wind className="w-5 h-5" />,
-    'Play': <Toy className="w-5 h-5" />,
+    'Play': <ToyBrick className="w-5 h-5" />,
     'Training': <Dumbbell className="w-5 h-5" />,
     'Default': <ActivityIcon className="w-5 h-5" />,
 };
@@ -211,5 +211,3 @@ export default function ActivityPage() {
         </div>
     );
 }
-
-    
