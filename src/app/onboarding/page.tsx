@@ -59,13 +59,21 @@ export default function OnboardingPage() {
   }, [profile, form]);
 
   function onSubmit(data: PetProfile) {
-    saveProfile(data);
-    toast({
-      title: "Profile Created!",
-      description: `Welcome, ${data.name}! Let's get started.`,
-    });
-    router.push('/dashboard');
-  }
+    if (user) {
+        saveProfile({ ...data, isPro: true });
+        toast({
+            title: "Profile Created!",
+            description: `Welcome, ${data.name}! Let's get started.`,
+        });
+        router.push('/dashboard');
+    } else {
+        toast({
+            variant: "destructive",
+            title: "Authentication Error",
+            description: "You must be logged in to create a profile.",
+        });
+    }
+}
   
   if (isUserLoading || profileLoading) {
     return (
@@ -218,7 +226,7 @@ export default function OnboardingPage() {
                   )}
                 />
 
-                <Button type="submit" size="lg" className="w-full">Create Profile &amp; View Plan</Button>
+                <Button type="submit" size="lg" className="w-full">Create Profile & View Plan</Button>
               </form>
             </Form>
           </CardContent>
