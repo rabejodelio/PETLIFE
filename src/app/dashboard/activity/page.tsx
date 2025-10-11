@@ -1,6 +1,7 @@
 'use client';
 
 import { PageHeader } from '@/components/page-header';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { usePetProfile } from '@/hooks/use-pet-profile';
 import { Lightbulb, Calendar as CalendarIcon, Footprints, Clock, Dumbbell, Wind, ToyBrick } from 'lucide-react';
@@ -9,6 +10,7 @@ import { getRecommendations } from './actions';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
+import { useToast } from '@/hooks/use-toast';
 
 // Sample logged activities data
 const sampleLoggedActivities = {
@@ -31,14 +33,26 @@ type Activity = {
     icon: React.ElementType;
 }
 
+const sampleSchedule = [
+    { day: "Monday", am: "30-min brisk walk", pm: "15-min fetch" },
+    { day: "Tuesday", am: "Puzzle feeder", pm: "20-min active play" },
+    { day: "Wednesday", am: "30-min sniffari", pm: "15-min training" },
+    { day: "Thursday", am: "45-min park visit", pm: "10-min tug-of-war" },
+    { day: "Friday", am: "30-min walk", pm: "20-min fetch" },
+    { day: "Saturday", am: "Long hike (60 mins)", pm: "Relaxed evening" },
+    { day: "Sunday", am: "Gentle walk", pm: "Cuddle time" },
+]
+
 export default function ActivityPage() {
     const { profile } = usePetProfile();
     const [recommendations, setRecommendations] = useState<string[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+    const { toast } = useToast();
     
     const [loggedActivities, setLoggedActivities] = useState<Record<string, Activity[]>>(sampleLoggedActivities);
+    const [showSchedule, setShowSchedule] = useState(false);
     
     const dailyActivities = selectedDate ? loggedActivities[format(selectedDate, 'yyyy-MM-dd')] || [] : [];
 
@@ -61,6 +75,14 @@ export default function ActivityPage() {
             }
             setLoading(false);
         }
+    };
+
+    const handleScheduleClick = () => {
+        setShowSchedule(true);
+        toast({
+            title: "Schedule Generated!",
+            description: "Your 7-day activity plan has been created below.",
+        });
     };
 
     useEffect(() => {
@@ -104,12 +126,38 @@ export default function ActivityPage() {
                                 </ul>
                             )}
                         </CardContent>
+                        <CardFooter>
+                            <Button onClick={handleScheduleClick}>Schedule Activities</Button>
+                        </CardFooter>
                     </Card>
+
+                    {showSchedule && (
+                         <Card>
+                            <CardHeader>
+                                <CardTitle className="font-headline">Your 7-Day Activity Plan</CardTitle>
+                                <CardDescription>A week of engaging activities for {profile?.name}.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {sampleSchedule.map((dayPlan) => (
+                                    <Card key={dayPlan.day} className="bg-muted/30">
+                                        <CardHeader className="p-4">
+                                            <CardTitle className="text-base font-semibold">{dayPlan.day}</CardTitle>
+                                        </CardHeader>
+                                        <CardContent className="p-4 pt-0 text-sm space-y-2">
+                                             <p><span className="font-semibold text-muted-foreground">AM:</span> {dayPlan.am}</p>
+                                             <p><span className="font-semibold text-muted-foreground">PM:</span> {dayPlan.pm}</p>
+                                        </CardContent>
+                                    </Card>
+                                ))}
+                            </CardContent>
+                        </Card>
+                    )}
+
                      <Card>
                         <CardHeader>
                             <CardTitle className="font-headline flex items-center gap-2">
                                 <CalendarIcon className="w-5 h-5 text-muted-foreground" />
-                                Activities for {selectedDate ? format(selectedDate, 'PPP') : 'Today'}
+                                Activity History for {selectedDate ? format(selectedDate, 'PPP') : 'Today'}
                             </CardTitle>
                             <CardDescription>
                                 {dailyActivities.length > 0 
