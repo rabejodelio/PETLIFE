@@ -83,27 +83,6 @@ export default function ActivityPage() {
                 <div className="space-y-6">
                     <Card>
                         <CardHeader>
-                            <CardTitle className="font-headline">Log New Activity</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                             <Select>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select activity type" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="walk">Walk</SelectItem>
-                                    <SelectItem value="run">Run</SelectItem>
-                                    <SelectItem value="play">Play</SelectItem>
-                                    <SelectItem value="training">Training</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <Input type="number" placeholder="Duration in minutes" />
-                            <Button className="w-full"><Plus className="mr-2 h-4 w-4" /> Log Activity</Button>
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardHeader>
                             <CardTitle className="font-headline">Today's Activities</CardTitle>
                         </CardHeader>
                         <CardContent>
