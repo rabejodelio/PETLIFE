@@ -1,165 +1,170 @@
+/**
+ * @fileoverview Firestore Security Rules for PetLife application.
+ *
+ * Core Philosophy:
+ * This ruleset enforces a strict user-ownership model for all data. Each user has full control over their own data,
+ * and no user can access another user's data.  All data is nested under /users/{userId}.
+ *
+ * Data Structure:
+ * The data is structured hierarchically: /users/{userId}/pets/{petId}/...
+ * This structure allows for simple, path-based authorization rules.
+ *
+ * Key Security Decisions:
+ * - Users can only access their own data.
+ * - No listing of the top-level `/users` collection is allowed to prevent user enumeration.
+ */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Controls access to user profile documents.
-     * @path /users/{userId}
-     * @allow (create) - Authenticated user with matching userId can create their own profile.
-     * @allow (get, list, update, delete) - Authenticated user with matching userId can read, update, or delete their own profile.
-     * @deny (create) - Authenticated user cannot create a profile with a mismatched userId.
-     * @deny (get, list, update, delete) - Authenticated user cannot read, update, or delete another user's profile.
-     * @principle Enforces document ownership for all operations on user profiles.
+     * @description Protects the top-level /users collection.  No listing is allowed.
+     * @path /databases/{database}/documents/users
+     * @allow (get) A request to read a specific user document if the user is authenticated.
+     * @deny (list) A request to list all users in the /users collection, regardless of authentication.
+     * @principle Prevents user enumeration.
      */
-    match /users/{userId} {
-      // isOwner() function checks if the request.auth.uid matches the {userId} in the path
-      function isOwner(userId) {
-        return request.auth != null && request.auth.uid == userId;
-      }
-
-      // isExistingOwner() function checks if the user is the owner of the document, and the document exists
-      function isExistingOwner(userId) {
-        return isOwner(userId) && get(/databases/$(database)/documents/users/$(userId)).data != null;
-      }
-
-      // isSignedIn() function checks if the user is signed in
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
-      allow get: if isOwner(userId);
+    match /users {
+      // No one should be able to list all users.
       allow list: if false;
-      allow create: if isSignedIn() && request.auth.uid == userId;
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
-    }
 
-    /**
-     * @description Controls access to pet profile documents.
-     * @path /users/{userId}/pets/{petId}
-     * @allow (create) - Authenticated user with matching userId can create a pet profile for themselves.
-     * @allow (get, list, update, delete) - Authenticated user with matching userId can read, update, or delete their own pet profiles.
-     * @deny (create) - Authenticated user cannot create a pet profile for another user.
-     * @deny (get, list, update, delete) - Authenticated user cannot read, update, or delete another user's pet profile.
-     * @principle Enforces document ownership for all operations on pet profiles.
-     */
-    match /users/{userId}/pets/{petId} {
-      // isPetOwner() function checks if the request.auth.uid matches the {userId} in the path
-      function isPetOwner(userId) {
-        return request.auth != null && request.auth.uid == userId;
+      match /{userId} {
+        /**
+         * @description Controls access to individual user documents.
+         * @path /databases/{database}/documents/users/{userId}
+         * @allow (get) A request to read the user document if the user is the owner.
+         * @allow (create) A request to create a user document if the user ID matches the authenticated user ID.
+         * @allow (update) A request to update the user document if the user is the owner and the user ID is immutable.
+         * @allow (delete) A request to delete the user document if the user is the owner and the user document exists.
+         * @deny (create) A request to create a user document if the user is not the owner.
+         * @deny (update) A request to update the user document if the user is not the owner.
+         * @deny (delete) A request to delete the user document if the user is not the owner or the user document does not exists.
+         * @principle Enforces document ownership for all operations.
+         */
+        allow get: if isSignedIn() && isOwner(userId);
+        allow create: if isSignedIn() && isOwner(userId) && request.resource.data.id == userId;
+        allow update: if isSignedIn() && isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+        allow delete: if isSignedIn() && isExistingOwner(userId);
+
+        match /pets/{petId} {
+          /**
+           * @description Controls access to individual pet documents.
+           * @path /databases/{database}/documents/users/{userId}/pets/{petId}
+           * @allow (get) A request to read the pet document if the user is the owner.
+           * @allow (list) A request to list pet documents if the user is the owner.
+           * @allow (create) A request to create a pet document if the user is the owner.
+           * @allow (update) A request to update the pet document if the user is the owner and the user ID is immutable.
+           * @allow (delete) A request to delete the pet document if the user is the owner and the pet document exists.
+           * @deny (create) A request to create a pet document if the user is not the owner.
+           * @deny (update) A request to update the pet document if the user is not the owner.
+           * @deny (delete) A request to delete the pet document if the user is not the owner or the pet document does not exists.
+           * @principle Enforces document ownership for all operations.
+           */
+          allow get: if isSignedIn() && isOwner(userId);
+          allow list: if isSignedIn() && isOwner(userId);
+          allow create: if isSignedIn() && isOwner(userId) && request.resource.data.userId == userId;
+          allow update: if isSignedIn() && isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+          allow delete: if isSignedIn() && isExistingOwner(userId);
+
+          match /mealPlans/{mealPlanId} {
+            /**
+             * @description Controls access to individual meal plan documents.
+             * @path /databases/{database}/documents/users/{userId}/pets/{petId}/mealPlans/{mealPlanId}
+             * @allow (get) A request to read the meal plan document if the user is the owner.
+             * @allow (list) A request to list meal plan documents if the user is the owner.
+             * @allow (create) A request to create a meal plan document if the user is the owner.
+             * @allow (update) A request to update the meal plan document if the user is the owner.
+             * @allow (delete) A request to delete the meal plan document if the user is the owner and the meal plan document exists.
+             * @deny (create) A request to create a meal plan document if the user is not the owner.
+             * @deny (update) A request to update the meal plan document if the user is not the owner.
+             * @deny (delete) A request to delete the meal plan document if the user is not the owner or the meal plan document does not exists.
+             * @principle Enforces document ownership for all operations.
+             */
+            allow get: if isSignedIn() && isOwner(userId);
+            allow list: if isSignedIn() && isOwner(userId);
+            allow create: if isSignedIn() && isOwner(userId) && getPetId(request.resource.data.petId) == petId;
+            allow update: if isSignedIn() && isExistingOwner(userId) && getPetId(request.resource.data.petId) == petId;
+            allow delete: if isSignedIn() && isExistingOwner(userId);
+          }
+
+          match /supplementRecommendations/{supplementRecommendationId} {
+            /**
+             * @description Controls access to individual supplement recommendation documents.
+             * @path /databases/{database}/documents/users/{userId}/pets/{petId}/supplementRecommendations/{supplementRecommendationId}
+             * @allow (get) A request to read the supplement recommendation document if the user is the owner.
+             * @allow (list) A request to list supplement recommendation documents if the user is the owner.
+             * @allow (create) A request to create a supplement recommendation document if the user is the owner.
+             * @allow (update) A request to update the supplement recommendation document if the user is the owner.
+             * @allow (delete) A request to delete the supplement recommendation document if the user is the owner and the supplement recommendation document exists.
+             * @deny (create) A request to create a supplement recommendation document if the user is not the owner.
+             * @deny (update) A request to update the supplement recommendation document if the user is not the owner.
+             * @deny (delete) A request to delete the supplement recommendation document if the user is not the owner or the supplement recommendation document does not exists.
+             * @principle Enforces document ownership for all operations.
+             */
+            allow get: if isSignedIn() && isOwner(userId);
+            allow list: if isSignedIn() && isOwner(userId);
+            allow create: if isSignedIn() && isOwner(userId) && getPetId(request.resource.data.petId) == petId;
+            allow update: if isSignedIn() && isExistingOwner(userId) && getPetId(request.resource.data.petId) == petId;
+            allow delete: if isSignedIn() && isExistingOwner(userId);
+          }
+
+          match /activityRecords/{activityRecordId} {
+            /**
+             * @description Controls access to individual activity record documents.
+             * @path /databases/{database}/documents/users/{userId}/pets/{petId}/activityRecords/{activityRecordId}
+             * @allow (get) A request to read the activity record document if the user is the owner.
+             * @allow (list) A request to list activity record documents if the user is the owner.
+             * @allow (create) A request to create an activity record document if the user is the owner.
+             * @allow (update) A request to update the activity record document if the user is the owner.
+             * @allow (delete) A request to delete the activity record document if the user is the owner and the activity record document exists.
+             * @deny (create) A request to create an activity record document if the user is not the owner.
+             * @deny (update) A request to update the activity record document if the user is not the owner.
+             * @deny (delete) A request to delete the activity record document if the user is not the owner or the activity record document does not exists.
+             * @principle Enforces document ownership for all operations.
+             */
+            allow get: if isSignedIn() && isOwner(userId);
+            allow list: if isSignedIn() && isOwner(userId);
+            allow create: if isSignedIn() && isOwner(userId) && getPetId(request.resource.data.petId) == petId;
+            allow update: if isSignedIn() && isExistingOwner(userId) && getPetId(request.resource.data.petId) == petId;
+            allow delete: if isSignedIn() && isExistingOwner(userId);
+          }
+        }
       }
-
-      // isExistingPetOwner() function checks if the user is the owner of the document, and the document exists
-      function isExistingPetOwner(userId, petId) {
-        return isPetOwner(userId) && get(/databases/$(database)/documents/users/$(userId)/pets/$(petId)).data != null;
-      }
-
-      // isSignedIn() function checks if the user is signed in
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
-      allow get: if isPetOwner(userId);
-      allow list: if false;
-      allow create: if isPetOwner(userId);
-      allow update: if isExistingPetOwner(userId, petId);
-      allow delete: if isExistingPetOwner(userId, petId);
-    }
-
-    /**
-     * @description Controls access to meal plan documents.
-     * @path /users/{userId}/pets/{petId}/mealPlans/{mealPlanId}
-     * @allow (create) - Authenticated user with matching userId can create a meal plan for their pet.
-     * @allow (get, list, update, delete) - Authenticated user with matching userId can read, update, or delete their own pet's meal plans.
-     * @deny (create) - Authenticated user cannot create a meal plan for another user's pet.
-     * @deny (get, list, update, delete) - Authenticated user cannot read, update, or delete another user's pet's meal plans.
-     * @principle Enforces document ownership for all operations on meal plan documents.
-     */
-    match /users/{userId}/pets/{petId}/mealPlans/{mealPlanId} {
-      // isPetOwner() function checks if the request.auth.uid matches the {userId} in the path
-      function isPetOwner(userId) {
-        return request.auth != null && request.auth.uid == userId;
-      }
-
-      // isExistingPetOwner() function checks if the user is the owner of the document, and the document exists
-      function isExistingPetOwner(userId, petId, mealPlanId) {
-        return isPetOwner(userId) && get(/databases/$(database)/documents/users/$(userId)/pets/$(petId)/mealPlans/$(mealPlanId)).data != null;
-      }
-
-      // isSignedIn() function checks if the user is signed in
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
-      allow get: if isPetOwner(userId);
-      allow list: if false;
-      allow create: if isPetOwner(userId);
-      allow update: if isExistingPetOwner(userId, petId, mealPlanId);
-      allow delete: if isExistingPetOwner(userId, petId, mealPlanId);
-    }
-
-    /**
-     * @description Controls access to supplement recommendation documents.
-     * @path /users/{userId}/pets/{petId}/supplementRecommendations/{supplementRecommendationId}
-     * @allow (create) - Authenticated user with matching userId can create a supplement recommendation for their pet.
-     * @allow (get, list, update, delete) - Authenticated user with matching userId can read, update, or delete their own pet's supplement recommendations.
-     * @deny (create) - Authenticated user cannot create a supplement recommendation for another user's pet.
-     * @deny (get, list, update, or delete) - Authenticated user cannot read, update, or delete another user's pet's supplement recommendations.
-     * @principle Enforces document ownership for all operations on supplement recommendation documents.
-     */
-    match /users/{userId}/pets/{petId}/supplementRecommendations/{supplementRecommendationId} {
-      // isPetOwner() function checks if the request.auth.uid matches the {userId} in the path
-      function isPetOwner(userId) {
-        return request.auth != null && request.auth.uid == userId;
-      }
-
-      // isExistingPetOwner() function checks if the user is the owner of the document, and the document exists
-      function isExistingPetOwner(userId, petId, supplementRecommendationId) {
-        return isPetOwner(userId) && get(/databases/$(database)/documents/users/$(userId)/pets/$(petId)/supplementRecommendations/$(supplementRecommendationId)).data != null;
-      }
-
-      // isSignedIn() function checks if the user is signed in
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
-      allow get: if isPetOwner(userId);
-      allow list: if false;
-      allow create: if isPetOwner(userId);
-      allow update: if isExistingPetOwner(userId, petId, supplementRecommendationId);
-      allow delete: if isExistingPetOwner(userId, petId, supplementRecommendationId);
-    }
-
-    /**
-     * @description Controls access to activity record documents.
-     * @path /users/{userId}/pets/{petId}/activityRecords/{activityRecordId}
-     * @allow (create) - Authenticated user with matching userId can create an activity record for their pet.
-     * @allow (get, list, update, delete) - Authenticated user with matching userId can read, update, or delete their own pet's activity records.
-     * @deny (create) - Authenticated user cannot create an activity record for another user's pet.
-     * @deny (get, list, update, delete) - Authenticated user cannot read, update, or delete another user's pet's activity records.
-     * @principle Enforces document ownership for all operations on activity record documents.
-     */
-    match /users/{userId}/pets/{petId}/activityRecords/{activityRecordId} {
-      // isPetOwner() function checks if the request.auth.uid matches the {userId} in the path
-      function isPetOwner(userId) {
-        return request.auth != null && request.auth.uid == userId;
-      }
-
-      // isExistingPetOwner() function checks if the user is the owner of the document, and the document exists
-      function isExistingPetOwner(userId, petId, activityRecordId) {
-        return isPetOwner(userId) && get(/databases/$(database)/documents/users/$(userId)/pets/$(petId)/activityRecords/$(activityRecordId)).data != null;
-      }
-
-      // isSignedIn() function checks if the user is signed in
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
-      allow get: if isPetOwner(userId);
-      allow list: if false;
-      allow create: if isPetOwner(userId);
-      allow update: if isExistingPetOwner(userId, petId, activityRecordId);
-      allow delete: if isExistingPetOwner(userId, petId, activityRecordId);
     }
   }
+}
+
+/**
+ * @description Checks if the user is signed in.
+ * @return {boolean} True if the user is signed in, false otherwise.
+ */
+function isSignedIn() {
+  return request.auth != null;
+}
+
+/**
+ * @description Checks if the user ID matches the authenticated user ID.
+ * @param {string} userId The user ID to check.
+ * @return {boolean} True if the user ID matches the authenticated user ID, false otherwise.
+ */
+function isOwner(userId) {
+  return request.auth.uid == userId;
+}
+
+/**
+ * @description Checks if the user is the owner of an existing document.
+ * @param {string} userId The user ID to check.
+ * @return {boolean} True if the user is the owner and the document exists, false otherwise.
+ */
+function isExistingOwner(userId) {
+  return isOwner(userId) && resource != null;
+}
+
+/**
+ * @description Gets petId from the resource data
+ * @param {string} petId The petId to check
+ * @return {boolean} True if the petId matches the petId passed to match statement, false otherwise.
+ */
+function getPetId(petId) {
+    return petId
 }
