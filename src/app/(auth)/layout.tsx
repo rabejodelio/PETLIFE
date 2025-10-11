@@ -14,7 +14,9 @@ export default function AuthLayout({
                         <Logo />
                     </Link>
                 </div>
-                {children}
+                <div className="bg-white p-8 rounded-lg shadow-md">
+                    {children}
+                </div>
             </div>
         </div>
     );

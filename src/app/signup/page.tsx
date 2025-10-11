@@ -6,15 +6,61 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useAuth, useFirestore, setDocumentNonBlocking } from "@/firebase";
+import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
+import { createUserWithEmailAndPassword, AuthError } from "firebase/auth";
+import { doc } from "firebase/firestore";
 
 export default function SignupPage() {
     const router = useRouter();
+    const auth = useAuth();
+    const firestore = useFirestore();
+    const { toast } = useToast();
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
 
-    const handleSignup = (e: React.FormEvent) => {
+    const handleSignup = async (e: React.FormEvent) => {
         e.preventDefault();
-        // In a real app, you'd handle user creation here.
-        // For this demo, we'll just redirect to the onboarding.
-        router.push("/onboarding");
+        setIsLoading(true);
+        try {
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            const user = userCredential.user;
+
+            // Store user email in Firestore
+            const userDocRef = doc(firestore, 'users', user.uid);
+            setDocumentNonBlocking(userDocRef, { email: user.email }, { merge: true });
+
+            toast({
+                title: "Account Created!",
+                description: "Redirecting you to pet onboarding.",
+            });
+            router.push("/onboarding");
+        } catch (error) {
+            console.error("Signup Error:", error);
+            let description = "An unexpected error occurred. Please try again.";
+            if (error instanceof AuthError) {
+                switch (error.code) {
+                    case 'auth/email-already-in-use':
+                        description = "This email is already registered. Please log in.";
+                        break;
+                    case 'auth/weak-password':
+                        description = "Password is too weak. It should be at least 6 characters.";
+                        break;
+                    case 'auth/invalid-email':
+                        description = "Please enter a valid email address.";
+                        break;
+                }
+            }
+            toast({
+                variant: "destructive",
+                title: "Signup Failed",
+                description,
+            });
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -27,13 +73,13 @@ export default function SignupPage() {
                 <form onSubmit={handleSignup} className="space-y-4">
                     <div className="space-y-2">
                         <Label htmlFor="email">Email</Label>
-                        <Input id="email" type="email" placeholder="you@example.com" required />
+                        <Input id="email" type="email" placeholder="you@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="password">Password</Label>
-                        <Input id="password" type="password" required />
+                        <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
                     </div>
-                    <Button type="submit" className="w-full">Create Account</Button>
+                    <Button type="submit" className="w-full" disabled={isLoading}>{isLoading ? "Creating Account..." : "Create Account"}</Button>
                 </form>
                 <div className="mt-4 text-center text-sm">
                     Already have an account?{" "}

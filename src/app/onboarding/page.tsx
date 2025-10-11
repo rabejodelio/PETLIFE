@@ -17,9 +17,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Logo } from '@/components/logo';
+import { useUser } from '@/firebase';
+import { useEffect } from 'react';
 
 // Pre-filled data for "Jax" as requested
-const jaxData: PetProfile = {
+const jaxData: Omit<PetProfile, 'isPro' | 'avatarUrl'> = {
   name: 'Jax',
   species: 'dog',
   breed: 'Beagle',
@@ -27,19 +29,34 @@ const jaxData: PetProfile = {
   weight: 15,
   allergies: 'Chicken',
   healthGoal: 'lose_weight',
-  isPro: false,
-  avatarUrl: '',
 };
 
 export default function OnboardingPage() {
   const router = useRouter();
   const { saveProfile, profile } = usePetProfile();
   const { toast } = useToast();
+  const { user, isUserLoading } = useUser();
 
   const form = useForm<PetProfile>({
     resolver: zodResolver(petProfileSchema),
-    defaultValues: profile || jaxData,
+    defaultValues: profile || {
+      ...jaxData,
+      isPro: false,
+      avatarUrl: '',
+    },
   });
+  
+  useEffect(() => {
+    if (!isUserLoading && !user) {
+      router.push('/login');
+    }
+  }, [isUserLoading, user, router]);
+
+  useEffect(() => {
+    if(profile) {
+      form.reset(profile);
+    }
+  }, [profile, form]);
 
   function onSubmit(data: PetProfile) {
     const finalData = {
@@ -53,6 +70,14 @@ export default function OnboardingPage() {
       description: `Welcome, ${data.name}! Let's get started.`,
     });
     router.push('/dashboard');
+  }
+  
+  if (isUserLoading) {
+    return (
+        <div className="flex min-h-screen flex-col items-center justify-center">
+            <Logo />
+        </div>
+    )
   }
 
   return (

@@ -16,6 +16,7 @@ import {
   Home,
   Sparkles,
   Lock,
+  Users,
 } from 'lucide-react';
 
 import {
@@ -39,6 +40,8 @@ import { ProSubscriptionDialog } from '@/components/pro-subscription-dialog';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Label } from '@/components/ui/label';
+import { useAuth, useUser } from '@/firebase';
+import { signOut } from 'firebase/auth';
 
 const PRO_CODE = "petlife7296";
 
@@ -49,15 +52,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { toast } = useToast();
   const [isProDialogOpen, setIsProDialogOpen] = useState(false);
   const [promoCode, setPromoCode] = useState('');
+  const { user, isUserLoading } = useUser();
+  const auth = useAuth();
 
 
   useEffect(() => {
-    if (!loading && !profile) {
-      router.push('/onboarding');
+    if (!isUserLoading && !user) {
+      router.push('/login');
     }
-  }, [loading, profile, router]);
+  }, [isUserLoading, user, router]);
 
   const handleLogout = () => {
+    signOut(auth);
     clearProfile();
     clearActivityHistory();
     router.push('/');
@@ -95,9 +101,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     { href: '/dashboard/activity', label: 'Activity', icon: PawPrint, pro: true },
     { href: '/dashboard/wellness', label: 'Wellness', icon: Heart, pro: true },
     { href: '/dashboard/profile', label: 'Profile', icon: User, pro: false },
+    { href: '/dashboard/users', label: 'Users', icon: Users, pro: false },
   ];
 
-  if (loading) {
+  if (isUserLoading || loading) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <Logo />
@@ -120,11 +127,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             {navItems.map((item) => {
               const isPro = profile?.isPro ?? false;
               const isLocked = item.pro && !isPro;
+              
               const linkContent = (
                 <SidebarMenuButton
-                  isActive={pathname === item.href && !isLocked}
+                  isActive={pathname === item.href}
                   tooltip={item.label}
-                  onClick={isLocked ? () => setIsProDialogOpen(true) : undefined}
+                  onClick={(e) => {
+                    if (isLocked) {
+                      e.preventDefault();
+                      setIsProDialogOpen(true);
+                    }
+                  }}
                 >
                   {isLocked ? <Lock /> : <item.icon />}
                   <span>{item.label}</span>
@@ -134,7 +147,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               return (
                 <SidebarMenuItem key={item.href}>
                   {isLocked ? (
-                    <div className="w-full">{linkContent}</div>
+                    <div className="w-full cursor-pointer">{linkContent}</div>
                   ) : (
                     <Link href={item.href}>{linkContent}</Link>
                   )}
@@ -184,10 +197,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </Avatar>
             <div className="overflow-hidden group-data-[collapsible=icon]:hidden">
               <div className='flex items-center gap-2'>
-                <p className="font-semibold truncate">{profile?.name}</p>
+                <p className="font-semibold truncate">{profile?.name || user?.email}</p>
                 {profile?.isPro && <span className="text-xs font-bold bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-2 py-0.5 rounded-full">PRO</span>}
               </div>
-              <p className="text-xs text-muted-foreground truncate">{profile?.breed}</p>
+              <p className="text-xs text-muted-foreground truncate">{profile?.breed || 'No pet profile'}</p>
             </div>
           </div>
           <Button variant="ghost" className="justify-start w-full" onClick={handleLogout}>
@@ -198,7 +211,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </Sidebar>
       <SidebarInset>
         <div className="p-4 sm:p-6 lg:p-8">
-            {profile ? children : <div>Loading profile...</div>}
+            {user ? children : <div>Loading...</div>}
         </div>
       </SidebarInset>
     </SidebarProvider>

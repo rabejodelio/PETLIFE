@@ -2,71 +2,91 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import type { PetProfile, ActivityHistory } from '@/lib/types';
+import { useUser } from '@/firebase';
 
-const PET_PROFILE_KEY = 'petlife-profile';
-const ACTIVITY_HISTORY_KEY = 'petlife-activity-history';
-
+const getPetProfileKey = (userId: string) => `petlife-profile-${userId}`;
+const getActivityHistoryKey = (userId: string) => `petlife-activity-history-${userId}`;
 
 export function usePetProfile() {
+  const { user } = useUser();
   const [profile, setProfile] = useState<PetProfile | null>(null);
   const [activityHistory, setActivityHistory] = useState<ActivityHistory>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    try {
-      const profileItem = window.localStorage.getItem(PET_PROFILE_KEY);
-      if (profileItem) {
-        setProfile(JSON.parse(profileItem));
-      }
-      const historyItem = window.localStorage.getItem(ACTIVITY_HISTORY_KEY);
-       if (historyItem) {
-        setActivityHistory(JSON.parse(historyItem));
-      }
+    if (user) {
+      setLoading(true);
+      try {
+        const profileItem = window.localStorage.getItem(getPetProfileKey(user.uid));
+        if (profileItem) {
+          setProfile(JSON.parse(profileItem));
+        } else {
+          setProfile(null);
+        }
+        const historyItem = window.localStorage.getItem(getActivityHistoryKey(user.uid));
+         if (historyItem) {
+          setActivityHistory(JSON.parse(historyItem));
+        } else {
+          setActivityHistory({});
+        }
 
-    } catch (error) {
-      console.error('Failed to parse data from localStorage', error);
+      } catch (error) {
+        console.error('Failed to parse data from localStorage', error);
+        setProfile(null);
+        setActivityHistory({});
+      } finally {
+        setLoading(false);
+      }
+    } else {
       setProfile(null);
       setActivityHistory({});
-    } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user]);
 
   const saveProfile = useCallback((newProfile: PetProfile) => {
-    try {
-      window.localStorage.setItem(PET_PROFILE_KEY, JSON.stringify(newProfile));
-      setProfile(newProfile);
-    } catch (error) {
-      console.error('Failed to save pet profile to localStorage', error);
+    if(user) {
+      try {
+        window.localStorage.setItem(getPetProfileKey(user.uid), JSON.stringify(newProfile));
+        setProfile(newProfile);
+      } catch (error) {
+        console.error('Failed to save pet profile to localStorage', error);
+      }
     }
-  }, []);
+  }, [user]);
   
   const clearProfile = useCallback(() => {
-    try {
-      window.localStorage.removeItem(PET_PROFILE_KEY);
-      setProfile(null);
-    } catch (error) {
-      console.error('Failed to clear pet profile from localStorage', error);
+    if(user) {
+      try {
+        window.localStorage.removeItem(getPetProfileKey(user.uid));
+        setProfile(null);
+      } catch (error) {
+        console.error('Failed to clear pet profile from localStorage', error);
+      }
     }
-  }, []);
+  }, [user]);
 
   const saveActivityHistory = useCallback((newHistory: ActivityHistory) => {
-    try {
-        window.localStorage.setItem(ACTIVITY_HISTORY_KEY, JSON.stringify(newHistory));
-        setActivityHistory(newHistory);
-    } catch (error) {
-        console.error('Failed to save activity history to localStorage', error);
+    if(user) {
+      try {
+          window.localStorage.setItem(getActivityHistoryKey(user.uid), JSON.stringify(newHistory));
+          setActivityHistory(newHistory);
+      } catch (error) {
+          console.error('Failed to save activity history to localStorage', error);
+      }
     }
-  }, []);
+  }, [user]);
 
   const clearActivityHistory = useCallback(() => {
-    try {
-        window.localStorage.removeItem(ACTIVITY_HISTORY_KEY);
-        setActivityHistory({});
-    } catch (error) {
-        console.error('Failed to clear activity history from localStorage', error);
+    if (user) {
+      try {
+          window.localStorage.removeItem(getActivityHistoryKey(user.uid));
+          setActivityHistory({});
+      } catch (error) {
+          console.error('Failed to clear activity history from localStorage', error);
+      }
     }
-  }, []);
+  }, [user]);
 
   return { profile, saveProfile, clearProfile, loading, activityHistory, setActivityHistory: saveActivityHistory, clearActivityHistory };
 }
