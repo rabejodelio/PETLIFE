@@ -1,4 +1,3 @@
-
 'use client';
 
 import { usePetProfile } from "@/hooks/use-pet-profile";
@@ -6,19 +5,49 @@ import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
-import { Bone, Cat, Pencil } from "lucide-react";
+import { Bone, Cat, Pencil, Camera } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { PlaceHolderImages } from "@/lib/placeholder-images";
+import { useRef } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function ProfilePage() {
-    const { profile, loading } = usePetProfile();
+    const { profile, loading, saveProfile } = usePetProfile();
     const router = useRouter();
-    const petAvatar = PlaceHolderImages.find((img) => img.id === 'pet-avatar');
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const { toast } = useToast();
 
     const healthGoalMap = {
         lose_weight: 'Lose Weight',
         maintain_weight: 'Maintain Weight',
         improve_joints: 'Improve Joints',
+    };
+
+    const handleAvatarClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file && profile) {
+            if (file.size > 2 * 1024 * 1024) { // 2MB limit
+                toast({
+                    variant: "destructive",
+                    title: "File too large",
+                    description: "Please select an image smaller than 2MB.",
+                });
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const imageUrl = e.target?.result as string;
+                saveProfile({ ...profile, avatarUrl: imageUrl });
+                toast({
+                    title: "Profile picture updated!",
+                    description: "Your pet's new photo has been saved.",
+                });
+            };
+            reader.readAsDataURL(file);
+        }
     };
 
     if (loading) {
@@ -40,13 +69,25 @@ export default function ProfilePage() {
                 </Button>
             </PageHeader>
             <Card>
-                <CardHeader className="flex flex-row items-center gap-4">
-                    <Avatar className="h-20 w-20">
-                        {petAvatar && <AvatarImage src={petAvatar.imageUrl} alt={profile.name} />}
-                        <AvatarFallback>
-                            {profile.species === 'dog' ? <Bone/> : <Cat/>}
-                        </AvatarFallback>
-                    </Avatar>
+                <CardHeader className="flex flex-col sm:flex-row items-center gap-6">
+                     <div className="relative group">
+                        <Avatar className="h-24 w-24 cursor-pointer" onClick={handleAvatarClick}>
+                            <AvatarImage src={profile.avatarUrl} alt={profile.name} />
+                            <AvatarFallback>
+                                {profile.species === 'dog' ? <Bone className="h-10 w-10"/> : <Cat className="h-10 w-10"/>}
+                            </AvatarFallback>
+                        </Avatar>
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer" onClick={handleAvatarClick}>
+                             <Camera className="h-8 w-8 text-white" />
+                        </div>
+                        <input 
+                            type="file" 
+                            ref={fileInputRef} 
+                            className="hidden" 
+                            accept="image/png, image/jpeg, image/gif"
+                            onChange={handleFileChange}
+                        />
+                    </div>
                     <div>
                         <CardTitle className="font-headline text-3xl">{profile.name}</CardTitle>
                         <CardDescription className="text-base">{profile.breed}</CardDescription>

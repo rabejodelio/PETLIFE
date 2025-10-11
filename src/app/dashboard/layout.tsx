@@ -43,8 +43,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { profile, loading, clearProfile } = usePetProfile();
   const router = useRouter();
 
-  const petAvatar = PlaceHolderImages.find((img) => img.id === 'pet-avatar');
-
   useEffect(() => {
     if (!loading && !profile) {
       router.push('/onboarding');
@@ -103,7 +101,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <SidebarFooter>
           <div className="flex items-center gap-3 p-2">
             <Avatar className="h-10 w-10">
-              {petAvatar && <AvatarImage src={petAvatar.imageUrl} alt={profile?.name} />}
+              {profile?.avatarUrl && <AvatarImage src={profile.avatarUrl} alt={profile?.name} />}
               <AvatarFallback>
                 {profile?.species === 'dog' ? <Bone/> : <Cat/>}
               </AvatarFallback>

@@ -8,4 +8,5 @@ export const petProfileSchema = z.object({
   weight: z.coerce.number().min(0.1, 'Weight must be a positive number.').max(100, 'Weight seems a bit high!'),
   allergies: z.string().optional(),
   healthGoal: z.enum(['lose_weight', 'maintain_weight', 'improve_joints'], { required_error: 'Please select a health goal.' }),
+  avatarUrl: z.string().url().optional(),
 });

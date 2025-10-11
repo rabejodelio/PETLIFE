@@ -19,7 +19,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Logo } from '@/components/logo';
 
 // Pre-filled data for "Jax" as requested
-const jaxData: PetProfile = {
+const jaxData: Omit<PetProfile, 'avatarUrl'> = {
   name: 'Jax',
   species: 'dog',
   breed: 'Beagle',
@@ -31,12 +31,12 @@ const jaxData: PetProfile = {
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const { saveProfile } = usePetProfile();
+  const { saveProfile, profile } = usePetProfile();
   const { toast } = useToast();
 
   const form = useForm<PetProfile>({
     resolver: zodResolver(petProfileSchema),
-    defaultValues: jaxData,
+    defaultValues: profile || jaxData,
   });
 
   function onSubmit(data: PetProfile) {
