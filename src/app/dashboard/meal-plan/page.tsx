@@ -4,13 +4,16 @@ import { useState, useEffect, useRef } from 'react';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Utensils } from 'lucide-react';
+import { Utensils, ChevronDown } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePetProfile } from '@/hooks/use-pet-profile';
 import { generateMealPlanAction, type MealPlanInput } from './actions';
 import type { MealPlanOutput } from '@/ai/ai-meal-planning';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { cn } from '@/lib/utils';
+
 
 export default function MealPlanPage() {
     const [loading, setLoading] = useState(false);
@@ -20,6 +23,7 @@ export default function MealPlanPage() {
     const [error, setError] = useState<string | null>(null);
     const ingredientRef = useRef<HTMLTextAreaElement>(null);
     const [isGenerating, setIsGenerating] = useState(false);
+    const [isRecommendationOpen, setIsRecommendationOpen] = useState(false);
 
     const handleGenerate = async (firstLoad = false) => {
         if (!profile) return;
@@ -162,19 +166,34 @@ export default function MealPlanPage() {
                     })}
                 </div>
             )}
-             <Card className="mt-6 bg-accent/50 border-accent">
-                <CardHeader className="flex-row items-center gap-4">
-                    <Utensils className="w-8 h-8 text-accent-foreground" />
-                    <div>
-                        <CardTitle className="font-headline">Supplement Recommendation</CardTitle>
-                         {isGenerating && !supplementRecommendation ? <Skeleton className="h-5 w-3/4 mt-1" /> : 
-                            <CardDescription className="text-accent-foreground/80">
-                                {supplementRecommendation || 'Generate a plan to see supplement recommendations.'}
-                            </CardDescription>
-                         }
-                    </div>
-                </CardHeader>
-            </Card>
+            <Collapsible open={isRecommendationOpen} onOpenChange={setIsRecommendationOpen} className="mt-6">
+                 <Card className="bg-accent/50 border-accent">
+                    <CollapsibleTrigger asChild>
+                        <div className="flex justify-between items-center p-6 cursor-pointer">
+                            <div className="flex items-center gap-4">
+                                <Utensils className="w-8 h-8 text-accent-foreground" />
+                                <div>
+                                    <CardTitle className="font-headline">Supplement Recommendation</CardTitle>
+                                    <CardDescription className="text-accent-foreground/80">Click to view</CardDescription>
+                                </div>
+                            </div>
+                            <Button variant="ghost" size="sm" className="w-9 p-0">
+                                <ChevronDown className={cn("h-6 w-6 transition-transform", isRecommendationOpen && "rotate-180")} />
+                                <span className="sr-only">Toggle</span>
+                            </Button>
+                        </div>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                        <CardContent className="pt-0">
+                             {isGenerating && !supplementRecommendation ? <Skeleton className="h-5 w-3/4 mt-1" /> : 
+                                <p className="text-accent-foreground/90">
+                                    {supplementRecommendation || 'Generate a plan to see supplement recommendations.'}
+                                </p>
+                             }
+                        </CardContent>
+                    </CollapsibleContent>
+                </Card>
+            </Collapsible>
         </div>
     );
 }
