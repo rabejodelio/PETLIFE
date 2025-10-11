@@ -22,6 +22,7 @@ const MealPlanInputSchema = z.object({
     .describe(
       'The primary health objective for the animal (e.g., lose weight, maintain weight, improve joints).'
     ),
+  ingredientPreferences: z.string().describe("The user's current food brands/types for nutritional adjustments."),
 });
 export type MealPlanInput = z.infer<typeof MealPlanInputSchema>;
 
@@ -44,6 +45,7 @@ const mealPlanPrompt = ai.definePrompt({
   prompt: `You are an AI assistant specialized in creating personalized meal plans and supplement recommendations for pets.
 
   Based on the following information about the pet, generate a 7-day meal plan and a supplement recommendation.
+  Take into account the user's current food preferences when creating the plan, making adjustments or suggesting alternatives if needed for the health objective.
 
   Animal Name: {{{animalName}}}
   Species: {{{species}}}
@@ -52,10 +54,12 @@ const mealPlanPrompt = ai.definePrompt({
   Weight: {{{weight}}} kg
   Allergies: {{{allergies}}}
   Health Objective: {{{healthObjective}}}
+  Current Food/Ingredient Preferences: {{{ingredientPreferences}}}
 
   Provide a detailed 7-day meal plan, considering the pet's specific needs and health goals.
   Each day of the meal plan should be on a new line, starting with "Day X:".
-  For each day, provide a "Breakfast:" and a "Dinner:" meal.
+  For each day, provide a "Breakfast:" and a "Dinner:" meal. The meals can be recipes or suggestions of commercial products.
+  
   Also, suggest relevant supplements that can support their overall health and well-being.
   Return both the meal plan and supplement recommendations.
   `,

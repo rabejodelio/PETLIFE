@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -9,7 +9,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { usePetProfile } from '@/hooks/use-pet-profile';
 import { generateMealPlanAction, type MealPlanInput } from './actions';
 import type { MealPlanOutput } from '@/ai/ai-meal-planning';
-
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 
 export default function MealPlanPage() {
     const [loading, setLoading] = useState(false);
@@ -17,10 +18,20 @@ export default function MealPlanPage() {
     const [mealPlan, setMealPlan] = useState<string | null>(null);
     const [supplementRecommendation, setSupplementRecommendation] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const ingredientRef = useRef<HTMLTextAreaElement>(null);
+    const [isGenerating, setIsGenerating] = useState(false);
 
-    const handleGenerate = async () => {
+    const handleGenerate = async (firstLoad = false) => {
         if (!profile) return;
-        setLoading(true);
+        
+        // On first load, don't show loading spinners, just generate silently
+        if (!firstLoad) {
+            setIsGenerating(true);
+            setLoading(true);
+        } else {
+            setIsGenerating(true);
+        }
+
         setError(null);
 
         const input: MealPlanInput = {
@@ -30,7 +41,8 @@ export default function MealPlanPage() {
             breed: profile.breed,
             weight: profile.weight,
             allergies: profile.allergies || 'none',
-            healthObjective: profile.healthGoal === 'lose_weight' ? 'lose weight' : profile.healthGoal === 'maintain_weight' ? 'maintain weight' : 'improve joints'
+            healthObjective: profile.healthGoal === 'lose_weight' ? 'lose weight' : profile.healthGoal === 'maintain_weight' ? 'maintain weight' : 'improve joints',
+            ingredientPreferences: ingredientRef.current?.value || 'Any high-quality food',
         };
 
         const result = await generateMealPlanAction(input);
@@ -40,13 +52,18 @@ export default function MealPlanPage() {
             setSupplementRecommendation(result.data.supplementRecommendation);
         } else {
             setError(result.error || 'An unknown error occurred.');
+            setMealPlan(null);
+            setSupplementRecommendation(null);
         }
 
         setLoading(false);
+        setIsGenerating(false);
     };
 
     useEffect(() => {
-        handleGenerate();
+        if (profile) {
+            handleGenerate(true);
+        }
     }, [profile]);
     
     const parsedMealPlan = mealPlan?.split('\n').filter(day => day.trim().startsWith('Day'));
@@ -57,10 +74,32 @@ export default function MealPlanPage() {
                 title="Your 7-Day Meal Plan"
                 description={`A tailored nutrition plan for ${profile?.name} to help achieve their health goals.`}
             >
-                <Button onClick={handleGenerate} disabled={loading}>
-                    {loading ? 'Generating...' : 'Generate New Plan'}
+                <Button onClick={() => handleGenerate(false)} disabled={isGenerating}>
+                    {isGenerating ? 'Generating...' : 'Regenerate Plan'}
                 </Button>
             </PageHeader>
+            <div className="mb-6">
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="font-headline">Ingredient Preferences</CardTitle>
+                        <CardDescription>
+                            List your pet's current food brands or any ingredients you'd like to include.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                         <div className="grid w-full gap-1.5">
+                            <Label htmlFor="ingredient-prefs">Current Brands / Ingredients</Label>
+                            <Textarea 
+                                id="ingredient-prefs" 
+                                ref={ingredientRef}
+                                placeholder="e.g., Hill's Science Diet Adult, cooked sweet potato, salmon oil"
+                                defaultValue="Any high-quality food"
+                            />
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+
             {loading && (
                 <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
                     {Array.from({ length: 7 }).map((_, i) => (
@@ -81,7 +120,7 @@ export default function MealPlanPage() {
              {error && (
                  <Card className="bg-destructive/10 border-destructive">
                     <CardHeader>
-                        <CardTitle className="text-destructive">Error</CardTitle>
+                        <CardTitle className="text-destructive">Error Generating Plan</CardTitle>
                         <CardDescription className="text-destructive/80">{error}</CardDescription>
                     </CardHeader>
                 </Card>
@@ -89,16 +128,22 @@ export default function MealPlanPage() {
             {!loading && !error && mealPlan && (
                 <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
                     {parsedMealPlan?.map((dayPlan, index) => {
-                       const parts = dayPlan.split(':');
-                       const day = parts[0]?.replace('Day ', '').trim();
-                       const meals = parts.slice(1).join(':').split('Dinner:');
-                       const breakfast = meals[0]?.replace('Breakfast:', '').trim();
-                       const dinner = meals[1]?.trim();
+                       const dayMatch = dayPlan.match(/Day\s*\d+/);
+                       if (!dayMatch) return null;
+
+                       const day = dayMatch[0];
+                       const content = dayPlan.substring(dayMatch[0].length + 1).trim();
+
+                       const breakfastMatch = content.match(/Breakfast:(.*?)(Dinner:|$)/i);
+                       const dinnerMatch = content.match(/Dinner:(.*)/i);
+                       
+                       const breakfast = breakfastMatch ? breakfastMatch[1].trim() : 'Not specified';
+                       const dinner = dinnerMatch ? dinnerMatch[1].trim() : 'Not specified';
 
                         return (
                         <Card key={index} className="shadow-md">
                             <CardHeader>
-                                <CardTitle className="font-headline">Day {day}</CardTitle>
+                                <CardTitle className="font-headline">{day}</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-3">
                                 <div className="flex items-start gap-3">
@@ -120,9 +165,9 @@ export default function MealPlanPage() {
                     <Utensils className="w-8 h-8 text-accent-foreground" />
                     <div>
                         <CardTitle className="font-headline">Supplement Recommendation</CardTitle>
-                         {loading ? <Skeleton className="h-5 w-3/4 mt-1" /> : 
+                         {isGenerating && !supplementRecommendation ? <Skeleton className="h-5 w-3/4 mt-1" /> : 
                             <CardDescription className="text-accent-foreground/80">
-                                {supplementRecommendation}
+                                {supplementRecommendation || 'Generate a plan to see supplement recommendations.'}
                             </CardDescription>
                          }
                     </div>
