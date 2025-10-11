@@ -27,7 +27,7 @@ const MealPlanInputSchema = z.object({
 export type MealPlanInput = z.infer<typeof MealPlanInputSchema>;
 
 const MealPlanOutputSchema = z.object({
-  mealPlan: z.string().describe('A personalized 7-day meal plan for the pet, with each day on a new line. For each day, include "Breakfast:" and "Dinner:" labels.'),
+  mealPlan: z.string().describe('A personalized 7-day meal plan for the pet. For each day, include "Breakfast:" and "Dinner:" labels.'),
   supplementRecommendation: z
     .string()
     .describe('A recommendation for specific supplements based on the pet profile.'),
@@ -57,7 +57,7 @@ const mealPlanPrompt = ai.definePrompt({
   Current Food/Ingredient Preferences: {{{ingredientPreferences}}}
 
   Provide a detailed 7-day meal plan, considering the pet's specific needs and health goals.
-  Each day of the meal plan should be on a new line, starting with "Day X:".
+  Start each day with "Day X:", for example, "Day 1:", "Day 2:", etc.
   For each day, provide a "Breakfast:" and a "Dinner:" meal. The meals can be recipes or suggestions of commercial products.
   
   Also, suggest relevant supplements that can support their overall health and well-being.

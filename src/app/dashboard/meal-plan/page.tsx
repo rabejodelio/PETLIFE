@@ -66,7 +66,14 @@ export default function MealPlanPage() {
         }
     }, [profile]);
     
-    const parsedMealPlan = mealPlan?.split('\n').filter(day => day.trim().startsWith('Day'));
+    const parsedMealPlan = mealPlan
+        ?.split(/Day\s*\d+:/)
+        .filter(s => s.trim() !== '')
+        .map((plan, index) => ({
+            day: `Day ${index + 1}`,
+            plan: plan.trim()
+        }));
+
 
     return (
         <div>
@@ -100,8 +107,8 @@ export default function MealPlanPage() {
                 </Card>
             </div>
 
-            {loading && (
-                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+            {(isGenerating && !mealPlan) && (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                     {Array.from({ length: 7 }).map((_, i) => (
                         <Card key={i} className="shadow-md">
                             <CardHeader>
@@ -121,21 +128,16 @@ export default function MealPlanPage() {
                  <Card className="bg-destructive/10 border-destructive">
                     <CardHeader>
                         <CardTitle className="text-destructive">Error Generating Plan</CardTitle>
+
                         <CardDescription className="text-destructive/80">{error}</CardDescription>
                     </CardHeader>
                 </Card>
             )}
-            {!loading && !error && mealPlan && (
-                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+            {!isGenerating && mealPlan && (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                     {parsedMealPlan?.map((dayPlan, index) => {
-                       const dayMatch = dayPlan.match(/Day\s*\d+/);
-                       if (!dayMatch) return null;
-
-                       const day = dayMatch[0];
-                       const content = dayPlan.substring(dayMatch[0].length + 1).trim();
-
-                       const breakfastMatch = content.match(/Breakfast:(.*?)(Dinner:|$)/i);
-                       const dinnerMatch = content.match(/Dinner:(.*)/i);
+                       const breakfastMatch = dayPlan.plan.match(/Breakfast:(.*?)(Dinner:|$)/is);
+                       const dinnerMatch = dayPlan.plan.match(/Dinner:(.*)/is);
                        
                        const breakfast = breakfastMatch ? breakfastMatch[1].trim() : 'Not specified';
                        const dinner = dinnerMatch ? dinnerMatch[1].trim() : 'Not specified';
@@ -143,7 +145,7 @@ export default function MealPlanPage() {
                         return (
                         <Card key={index} className="shadow-md">
                             <CardHeader>
-                                <CardTitle className="font-headline">{day}</CardTitle>
+                                <CardTitle className="font-headline">{dayPlan.day}</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-3">
                                 <div className="flex items-start gap-3">
