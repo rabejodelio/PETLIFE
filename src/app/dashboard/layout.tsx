@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import Image from 'next/image';
@@ -17,6 +17,7 @@ import {
   Cat,
   Home,
   Calendar,
+  Sparkles,
 } from 'lucide-react';
 
 import {
@@ -37,11 +38,14 @@ import { usePetProfile } from '@/hooks/use-pet-profile';
 import { Logo } from '@/components/logo';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ProSubscriptionDialog } from '@/components/pro-subscription-dialog';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { profile, loading, clearProfile, clearActivityHistory } = usePetProfile();
   const router = useRouter();
+  const [isProDialogOpen, setIsProDialogOpen] = useState(false);
+
 
   useEffect(() => {
     if (!loading && !profile) {
@@ -75,6 +79,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <SidebarProvider>
+      <ProSubscriptionDialog open={isProDialogOpen} onOpenChange={setIsProDialogOpen} />
       <Sidebar>
         <SidebarHeader>
             <div className="flex items-center justify-between">
@@ -97,6 +102,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 </Link>
               </SidebarMenuItem>
             ))}
+             <SidebarMenuItem>
+                <SidebarMenuButton onClick={() => setIsProDialogOpen(true)} variant="outline" className="mt-4 bg-gradient-to-r from-yellow-400 to-orange-500 text-white border-none hover:from-yellow-500 hover:to-orange-600 hover:text-white">
+                  <Sparkles />
+                  <span>Passer Pro</span>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
           </SidebarMenu>
         </SidebarContent>
         <SidebarFooter>

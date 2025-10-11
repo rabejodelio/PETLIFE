@@ -1,0 +1,91 @@
+
+'use client';
+
+import { useState } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Sparkles, CheckCircle } from 'lucide-react';
+import { createPayPalSubscription } from '@/app/actions/paypal';
+import { useToast } from '@/hooks/use-toast';
+
+type ProSubscriptionDialogProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+};
+
+export function ProSubscriptionDialog({ open, onOpenChange }: ProSubscriptionDialogProps) {
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
+
+  const handleSubscribe = async () => {
+    setIsLoading(true);
+    const result = await createPayPalSubscription();
+    
+    if (result.success && result.redirectUrl) {
+      // In a real app, we would redirect the user to PayPal
+      window.location.href = result.redirectUrl;
+    } else {
+      toast({
+        variant: 'destructive',
+        title: 'Erreur de paiement',
+        description: result.error || 'Impossible de créer l\'abonnement PayPal. Veuillez réessayer.',
+      });
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <div className="flex justify-center mb-4">
+            <div className="w-16 h-16 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 flex items-center justify-center">
+              <Sparkles className="w-8 h-8 text-white" />
+            </div>
+          </div>
+          <DialogTitle className="text-center text-2xl font-headline">Passez à PetLife Pro</DialogTitle>
+          <DialogDescription className="text-center">
+            Débloquez des fonctionnalités exclusives pour prendre soin de votre animal.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="py-4 space-y-4">
+            <div className="text-center">
+                <span className="text-4xl font-bold">10€</span>
+                <span className="text-muted-foreground">/mois</span>
+            </div>
+          <ul className="space-y-2 text-sm text-muted-foreground">
+            <li className="flex items-center gap-2">
+              <CheckCircle className="w-4 h-4 text-primary" />
+              <span>Analyses et recommandations IA illimitées</span>
+            </li>
+            <li className="flex items-center gap-2">
+              <CheckCircle className="w-4 h-4 text-primary" />
+              <span>Suivi de santé avancé</span>
+            </li>
+            <li className="flex items-center gap-2">
+              <CheckCircle className="w-4 h-4 text-primary" />
+              <span>Support prioritaire</span>
+            </li>
+          </ul>
+        </div>
+        <DialogFooter>
+          <Button 
+            type="button" 
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white" 
+            onClick={handleSubscribe} 
+            disabled={isLoading}
+          >
+            {isLoading ? 'Redirection...' : 'S\'abonner avec PayPal'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
