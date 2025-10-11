@@ -80,27 +80,6 @@ export default function ActivityPage() {
                 <div className="lg:col-span-2 space-y-6">
                 </div>
                 <div className="space-y-6">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="font-headline">Today's Activities</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <ul className="space-y-3">
-                                {recentActivities.map((act, i) => (
-                                    <li key={i} className="flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <Footprints className="h-4 w-4 text-muted-foreground" />
-                                            <div>
-                                                <p className="font-semibold">{act.type}</p>
-                                                <p className="text-xs text-muted-foreground">{act.duration}</p>
-                                            </div>
-                                        </div>
-                                        <p className="text-sm text-muted-foreground">{act.time}</p>
-                                    </li>
-                                ))}
-                            </ul>
-                        </CardContent>
-                    </Card>
                 </div>
             </div>
         </div>
