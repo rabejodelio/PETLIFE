@@ -15,6 +15,7 @@ import {
   Bone,
   Cat,
   Home,
+  Calendar,
 } from 'lucide-react';
 
 import {
@@ -60,6 +61,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     { href: '/dashboard/meal-plan', label: 'Meal Plan', icon: Salad },
     { href: '/dashboard/supplements', label: 'Supplements', icon: Pill },
     { href: '/dashboard/activity', label: 'Activity', icon: Footprints },
+    { href: '/dashboard/schedule', label: 'Schedule', icon: Calendar },
     { href: '/dashboard/wellness', label: 'Wellness', icon: Heart },
     { href: '/dashboard/profile', label: 'Profile', icon: User },
   ];
