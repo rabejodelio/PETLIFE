@@ -165,7 +165,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         <div className='flex flex-col space-y-2'>
                             <Label htmlFor="promo-code" className='text-left text-xs px-1 text-muted-foreground'>Code promotionnel</Label>
                             <div className='flex gap-2 w-full'>
-                                <Input id="promo-code" placeholder="petlife7296" value={promoCode} onChange={(e) => setPromoCode(e.target.value)} className="flex-grow bg-background/50 h-9" />
+                                <Input id="promo-code" placeholder="Entrez votre code" value={promoCode} onChange={(e) => setPromoCode(e.target.value)} className="flex-grow bg-background/50 h-9" />
                                 <Button type="button" variant="secondary" onClick={handlePromoCode} className="h-9">Appliquer</Button>
                             </div>
                         </div>
