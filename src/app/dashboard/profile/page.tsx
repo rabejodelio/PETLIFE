@@ -103,7 +103,7 @@ function EditProfileForm({ profile, onSave, onCancel }: { profile: PetProfile, o
                             <FormItem>
                                 <FormLabel>Age (years)</FormLabel>
                                 <FormControl>
-                                    <Input type="number" placeholder="e.g., 4" {...field} />
+                                    <Input type="number" placeholder="e.g., 4" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10))} />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -116,7 +116,7 @@ function EditProfileForm({ profile, onSave, onCancel }: { profile: PetProfile, o
                             <FormItem>
                                 <FormLabel>Weight (kg)</FormLabel>
                                 <FormControl>
-                                    <Input type="number" step="0.1" placeholder="e.g., 15" {...field} />
+                                    <Input type="number" step="0.1" placeholder="e.g., 15" {...field} onChange={e => field.onChange(parseFloat(e.target.value))} />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
