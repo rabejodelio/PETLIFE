@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Calendar } from '@/components/ui/calendar';
 import { format, differenceInDays } from 'date-fns';
 import { Progress } from '@/components/ui/progress';
+import { Label } from '@/components/ui/label';
 
 const sampleSchedule = [
     { day: "Day 1", am: "30-min brisk walk", pm: "15-min fetch" },
