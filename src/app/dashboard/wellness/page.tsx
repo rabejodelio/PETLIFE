@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { usePetProfile } from '@/hooks/use-pet-profile';
 import { getWellnessTipsAction } from './actions';
-import type { WellnessTip } from '@/ai/flows/ai-wellness-tips';
+import type { WellnessTip } from './actions';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Lightbulb } from 'lucide-react';
 
