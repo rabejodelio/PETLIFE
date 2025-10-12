@@ -3,6 +3,9 @@
 
 import { headers } from 'next/headers';
 
+// This tells Next.js to always render this route dynamically.
+export const dynamic = 'force-dynamic';
+
 // This is a simplified server action.
 // In a real-world scenario, you would use the PayPal REST API SDK
 // to create a subscription plan and an order.
@@ -78,7 +81,7 @@ export async function createPayPalSubscription(): Promise<{ success: boolean; re
     }
     
     // Log the full response if the link is not found
-    console.error("PayPal subscription response did not contain an approval link:", subscription);
+    console.error("PayPal error: a response was received, but it did not contain an approval link.", subscription);
     return { success: false, error: 'Could not find PayPal approval link.' };
 
   } catch (error) {
