@@ -17,9 +17,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Logo } from '@/components/logo';
-import { useUser, useFirestore, addDocumentNonBlocking } from '@/firebase';
-import { useEffect } from 'react';
-import { collection } from 'firebase/firestore';
+import { useUser, useFirestore } from '@/firebase';
+import { useEffect, useState } from 'react';
+import { collection, addDoc } from 'firebase/firestore';
 
 const jaxData: Omit<PetProfile, 'isPro' | 'avatarUrl'> = {
   name: 'Jax',
@@ -33,10 +33,11 @@ const jaxData: Omit<PetProfile, 'isPro' | 'avatarUrl'> = {
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const { saveProfile, profile, loading: profileLoading } = usePetProfile();
+  const { profile, loading: profileLoading } = usePetProfile();
   const { toast } = useToast();
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<PetProfile>({
     resolver: zodResolver(petProfileSchema),
@@ -59,22 +60,35 @@ export default function OnboardingPage() {
     }
   }, [profile, form]);
 
-  function onSubmit(data: PetProfile) {
-    if (user && firestore) {
-        const petsCollectionRef = collection(firestore, 'users', user.uid, 'pets');
-        addDocumentNonBlocking(petsCollectionRef, { ...data, isPro: true });
-        
-        toast({
-            title: "Profile Created!",
-            description: `Welcome, ${data.name}! Let's get started.`,
-        });
-        router.push('/dashboard');
-    } else {
+  async function onSubmit(data: PetProfile) {
+    if (!user || !firestore) {
         toast({
             variant: "destructive",
-            title: "Error",
-            description: "You must be logged in to create a profile.",
+            title: "Erreur",
+            description: "Vous devez être connecté pour créer un profil.",
         });
+        return;
+    }
+    setIsSubmitting(true);
+    try {
+        const petsCollectionRef = collection(firestore, 'users', user.uid, 'pets');
+        // Use await to ensure the document is created before redirecting
+        await addDoc(petsCollectionRef, { ...data, isPro: true });
+        
+        toast({
+            title: "Profil créé !",
+            description: `Bienvenue, ${data.name} ! C'est parti.`,
+        });
+        router.push('/dashboard');
+
+    } catch (error) {
+        console.error("Failed to create profile:", error);
+        toast({
+            variant: "destructive",
+            title: "Erreur de création du profil",
+            description: "Une erreur s'est produite. Veuillez réessayer.",
+        });
+        setIsSubmitting(false);
     }
 }
   
@@ -94,8 +108,8 @@ export default function OnboardingPage() {
         </div>
         <Card className="w-full">
           <CardHeader>
-            <CardTitle className="font-headline text-3xl">Tell us about your pet</CardTitle>
-            <CardDescription>This helps us create a personalized plan for your companion. We've pre-filled some data for an example pet named Jax.</CardDescription>
+            <CardTitle className="font-headline text-3xl">Parlez-nous de votre animal</CardTitle>
+            <CardDescription>Cela nous aide à créer un plan personnalisé pour votre compagnon. Nous avons pré-rempli des données pour un animal d'exemple nommé Jax.</CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...form}>
@@ -106,9 +120,9 @@ export default function OnboardingPage() {
                     name="name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Pet's Name</FormLabel>
+                        <FormLabel>Nom de l'animal</FormLabel>
                         <FormControl>
-                          <Input placeholder="e.g., Jax" {...field} />
+                          <Input placeholder="ex: Jax" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -119,7 +133,7 @@ export default function OnboardingPage() {
                     name="species"
                     render={({ field }) => (
                       <FormItem className="space-y-3">
-                        <FormLabel>Species</FormLabel>
+                        <FormLabel>Espèce</FormLabel>
                         <FormControl>
                           <RadioGroup
                             onValueChange={field.onChange}
@@ -131,7 +145,7 @@ export default function OnboardingPage() {
                                 <RadioGroupItem value="dog" id="dog" />
                               </FormControl>
                               <Label htmlFor="dog" className="flex items-center gap-2 font-normal">
-                                <Bone className="h-5 w-5" /> Dog
+                                <Bone className="h-5 w-5" /> Chien
                               </Label>
                             </FormItem>
                             <FormItem className="flex items-center space-x-2 space-y-0">
@@ -139,7 +153,7 @@ export default function OnboardingPage() {
                                 <RadioGroupItem value="cat" id="cat" />
                               </FormControl>
                               <Label htmlFor="cat" className="flex items-center gap-2 font-normal">
-                                <Cat className="h-5 w-5" /> Cat
+                                <Cat className="h-5 w-5" /> Chat
                               </Label>
                             </FormItem>
                           </RadioGroup>
@@ -156,9 +170,9 @@ export default function OnboardingPage() {
                       name="breed"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Breed</FormLabel>
+                          <FormLabel>Race</FormLabel>
                           <FormControl>
-                            <Input placeholder="e.g., Beagle" {...field} />
+                            <Input placeholder="ex: Beagle" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -169,9 +183,9 @@ export default function OnboardingPage() {
                       name="age"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Age (years)</FormLabel>
+                          <FormLabel>Âge (années)</FormLabel>
                           <FormControl>
-                            <Input type="number" placeholder="e.g., 4" {...field} />
+                            <Input type="number" placeholder="ex: 4" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -182,9 +196,9 @@ export default function OnboardingPage() {
                       name="weight"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Weight (kg)</FormLabel>
+                          <FormLabel>Poids (kg)</FormLabel>
                           <FormControl>
-                            <Input type="number" step="0.1" placeholder="e.g., 15" {...field} />
+                            <Input type="number" step="0.1" placeholder="ex: 15" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -197,17 +211,17 @@ export default function OnboardingPage() {
                   name="healthGoal"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Main Health Goal</FormLabel>
+                      <FormLabel>Objectif de santé principal</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select a goal" />
+                            <SelectValue placeholder="Sélectionnez un objectif" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="lose_weight">Lose Weight</SelectItem>
-                          <SelectItem value="maintain_weight">Maintain Weight</SelectItem>
-                          <SelectItem value="improve_joints">Improve Joints</SelectItem>
+                          <SelectItem value="lose_weight">Perdre du poids</SelectItem>
+                          <SelectItem value="maintain_weight">Maintenir le poids</SelectItem>
+                          <SelectItem value="improve_joints">Améliorer les articulations</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -220,16 +234,18 @@ export default function OnboardingPage() {
                   name="allergies"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Known Allergies</FormLabel>
+                      <FormLabel>Allergies connues</FormLabel>
                       <FormControl>
-                        <Textarea placeholder="List any known allergies, e.g., Chicken, grains" {...field} />
+                        <Textarea placeholder="Listez les allergies connues, ex: Poulet, céréales" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
-                <Button type="submit" size="lg" className="w-full">Create Profile & View Plan</Button>
+                <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
+                  {isSubmitting ? "Création du profil..." : "Créer le profil & Voir le plan"}
+                </Button>
               </form>
             </Form>
           </CardContent>
