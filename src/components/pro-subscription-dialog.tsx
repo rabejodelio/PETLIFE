@@ -25,13 +25,16 @@ export function ProSubscriptionDialog({ open, onOpenChange }: ProSubscriptionDia
 
   const handleSubscribe = async () => {
     setIsLoading(true);
-    // This is a static, pre-configured PayPal subscription button link.
-    // It's a more reliable method for this context than server-side generation.
-    const payPalSubscriptionLink = 'https://www.paypal.com/webscr?cmd=_s-xclick&hosted_button_id=PU4PZ4P4T5F96';
+    // This is a static, pre-configured PayPal subscription button link for the SANDBOX environment.
+    const payPalSubscriptionLink = 'https://www.sandbox.paypal.com/webscr?cmd=_s-xclick&hosted_button_id=PU4PZ4P4T5F96';
+    
     // Open PayPal in a new tab to avoid iframe blocking issues.
     window.open(payPalSubscriptionLink, '_blank');
+    
+    // We optimistically close the dialog. The user will be redirected back
+    // to the app, where the layout will handle the 'payment=success' parameter.
     setIsLoading(false);
-    onOpenChange(false); // Close the dialog after opening the new tab
+    onOpenChange(false);
   };
 
   return (
