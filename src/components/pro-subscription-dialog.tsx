@@ -28,7 +28,10 @@ export function ProSubscriptionDialog({ open, onOpenChange }: ProSubscriptionDia
     // This is a static, pre-configured PayPal subscription button link.
     // It's a more reliable method for this context than server-side generation.
     const payPalSubscriptionLink = 'https://www.paypal.com/webscr?cmd=_s-xclick&hosted_button_id=PU4PZ4P4T5F96';
-    window.location.href = payPalSubscriptionLink;
+    // Open PayPal in a new tab to avoid iframe blocking issues.
+    window.open(payPalSubscriptionLink, '_blank');
+    setIsLoading(false);
+    onOpenChange(false); // Close the dialog after opening the new tab
   };
 
   return (
