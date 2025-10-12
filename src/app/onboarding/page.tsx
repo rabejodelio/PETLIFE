@@ -17,10 +17,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Logo } from '@/components/logo';
-import { useUser } from '@/firebase';
+import { useUser, useFirestore, addDocumentNonBlocking } from '@/firebase';
 import { useEffect } from 'react';
+import { collection } from 'firebase/firestore';
 
-// Pre-filled data for "Jax" as requested
 const jaxData: Omit<PetProfile, 'isPro' | 'avatarUrl'> = {
   name: 'Jax',
   species: 'dog',
@@ -36,6 +36,7 @@ export default function OnboardingPage() {
   const { saveProfile, profile, loading: profileLoading } = usePetProfile();
   const { toast } = useToast();
   const { user, isUserLoading } = useUser();
+  const firestore = useFirestore();
 
   const form = useForm<PetProfile>({
     resolver: zodResolver(petProfileSchema),
@@ -59,9 +60,10 @@ export default function OnboardingPage() {
   }, [profile, form]);
 
   function onSubmit(data: PetProfile) {
-    if (user) {
-        // Ensure isPro is true when creating the profile to unlock features
-        saveProfile({ ...data, isPro: true });
+    if (user && firestore) {
+        const petsCollectionRef = collection(firestore, 'users', user.uid, 'pets');
+        addDocumentNonBlocking(petsCollectionRef, { ...data, isPro: true });
+        
         toast({
             title: "Profile Created!",
             description: `Welcome, ${data.name}! Let's get started.`,
@@ -70,7 +72,7 @@ export default function OnboardingPage() {
     } else {
         toast({
             variant: "destructive",
-            title: "Authentication Error",
+            title: "Error",
             description: "You must be logged in to create a profile.",
         });
     }

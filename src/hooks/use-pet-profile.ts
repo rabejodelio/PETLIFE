@@ -1,70 +1,82 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import type { PetProfile, ActivityHistory } from '@/lib/types';
-import { useUser } from '@/firebase';
+import { useUser, useFirestore, useCollection, WithId } from '@/firebase';
+import { collection, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { useMemoFirebase } from '@/firebase/provider';
 
-const getPetProfileKey = (userId: string) => `petlife-profile-${userId}`;
 const getActivityHistoryKey = (userId: string) => `petlife-activity-history-${userId}`;
 
 export function usePetProfile() {
   const { user, isUserLoading } = useUser();
-  const [profile, setProfile] = useState<PetProfile | null>(null);
-  const [activityHistory, setActivityHistory] = useState<ActivityHistory>({});
-  const [loading, setLoading] = useState(true);
+  const firestore = useFirestore();
 
-  const loadData = useCallback((userId: string) => {
+  const petsQuery = useMemoFirebase(() => {
+    if (!user || !firestore) return null;
+    return collection(firestore, 'users', user.uid, 'pets');
+  }, [user, firestore]);
+
+  const { data: pets, isLoading: arePetsLoading } = useCollection<PetProfile>(petsQuery);
+  
+  const profile = useMemo(() => {
+    if (!pets || pets.length === 0) return null;
+    // For now, we'll just use the first pet profile found.
+    return pets[0];
+  }, [pets]);
+
+
+  const [activityHistory, setActivityHistory] = useState<ActivityHistory>({});
+  const [isActivityHistoryLoading, setIsActivityHistoryLoading] = useState(true);
+
+  const loadActivityHistory = useCallback((userId: string) => {
+    setIsActivityHistoryLoading(true);
     try {
-      const profileItem = window.localStorage.getItem(getPetProfileKey(userId));
-      setProfile(profileItem ? JSON.parse(profileItem) : null);
-      
       const historyItem = window.localStorage.getItem(getActivityHistoryKey(userId));
       setActivityHistory(historyItem ? JSON.parse(historyItem) : {});
     } catch (error) {
-      console.error('Failed to parse data from localStorage', error);
-      setProfile(null);
+      console.error('Failed to parse activity history from localStorage', error);
       setActivityHistory({});
     } finally {
-      setLoading(false);
+      setIsActivityHistoryLoading(false);
     }
   }, []);
 
   useEffect(() => {
     if (isUserLoading) {
-      setLoading(true);
+      setIsActivityHistoryLoading(true);
       return;
     }
     
     if (user) {
-      loadData(user.uid);
+      loadActivityHistory(user.uid);
     } else {
-      setProfile(null);
       setActivityHistory({});
-      setLoading(false);
+      setIsActivityHistoryLoading(false);
     }
-  }, [user, isUserLoading, loadData]);
+  }, [user, isUserLoading, loadActivityHistory]);
 
-  const saveProfile = useCallback((newProfile: PetProfile) => {
-    if(user) {
+  const saveProfile = useCallback(async (newProfileData: Partial<PetProfile>) => {
+    if (user && firestore && profile) {
       try {
-        window.localStorage.setItem(getPetProfileKey(user.uid), JSON.stringify(newProfile));
-        setProfile(newProfile);
+        const petDocRef = doc(firestore, 'users', user.uid, 'pets', profile.id);
+        await updateDoc(petDocRef, newProfileData);
       } catch (error) {
-        console.error('Failed to save pet profile to localStorage', error);
+        console.error('Failed to save pet profile to Firestore', error);
       }
     }
-  }, [user]);
+  }, [user, firestore, profile]);
   
-  const clearProfile = useCallback(() => {
-    if(user) {
+  const clearProfile = useCallback(async () => {
+    if (user && firestore && profile) {
       try {
-        window.localStorage.removeItem(getPetProfileKey(user.uid));
-        setProfile(null);
+        const petDocRef = doc(firestore, 'users', user.uid, 'pets', profile.id);
+        await deleteDoc(petDocRef);
       } catch (error) {
-        console.error('Failed to clear pet profile from localStorage', error);
+        console.error('Failed to clear pet profile from Firestore', error);
       }
     }
-  }, [user]);
+  }, [user, firestore, profile]);
 
   const saveActivityHistory = useCallback((newHistory: ActivityHistory) => {
     if(user) {
@@ -87,6 +99,8 @@ export function usePetProfile() {
       }
     }
   }, [user]);
+
+  const loading = isUserLoading || arePetsLoading || isActivityHistoryLoading;
 
   return { profile, saveProfile, clearProfile, loading, activityHistory, setActivityHistory: saveActivityHistory, clearActivityHistory };
 }
