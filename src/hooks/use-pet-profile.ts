@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { PetProfile, ActivityHistory } from '@/lib/types';
 import { useUser, useFirestore, useCollection, WithId } from '@/firebase';
-import { collection, doc, updateDoc, deleteDoc, setDoc } from 'firebase/firestore';
+import { collection, doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { useMemoFirebase } from '@/firebase/provider';
 
 const getActivityHistoryKey = (userId: string) => `petlife-activity-history-${userId}`;
@@ -21,7 +21,6 @@ export function usePetProfile() {
   const { data: pets, isLoading: firestorePetsLoading } = useCollection<PetProfile>(petsQuery);
 
   useEffect(() => {
-    // Only update profile from Firestore collection changes
     if (!firestorePetsLoading) {
       if (pets && pets.length > 0) {
         setProfile(pets[0]); // Always use the first pet profile
@@ -30,7 +29,6 @@ export function usePetProfile() {
       }
     }
   }, [pets, firestorePetsLoading]);
-
 
   const [activityHistory, setActivityHistory] = useState<ActivityHistory>({});
   const [isActivityHistoryLoading, setIsActivityHistoryLoading] = useState(true);
@@ -49,30 +47,32 @@ export function usePetProfile() {
   }, []);
 
   useEffect(() => {
-    if (isUserLoading) {
-      setIsActivityHistoryLoading(true);
-      return;
-    }
-    
     if (user) {
       loadActivityHistory(user.uid);
-    } else {
+    } else if (!isUserLoading) {
       setActivityHistory({});
       setIsActivityHistoryLoading(false);
     }
   }, [user, isUserLoading, loadActivityHistory]);
 
   const saveProfile = useCallback(async (newProfileData: Partial<PetProfile>) => {
-    if (user && firestore && profile?.id) { // Ensure there is a profile to update
-        const petDocRef = doc(firestore, 'users', user.uid, 'pets', profile.id);
-        const updatedProfile = { ...profile, ...newProfileData } as WithId<PetProfile>;
-        
-        try {
-            await setDoc(petDocRef, newProfileData, { merge: true });
-            setProfile(updatedProfile); // Optimistically update local state
-        } catch (error) {
-            console.error('Failed to save pet profile', error);
-        }
+    if (!user || !firestore || !profile?.id) {
+      console.error("User, firestore, or profile ID is not available for saving.");
+      return;
+    }
+    
+    const petDocRef = doc(firestore, 'users', user.uid, 'pets', profile.id);
+    
+    // Optimistically update local state
+    const updatedProfile = { ...profile, ...newProfileData };
+    setProfile(updatedProfile);
+
+    try {
+      await setDoc(petDocRef, newProfileData, { merge: true });
+    } catch (error) {
+      console.error('Failed to save pet profile, rolling back optimistic update', error);
+      // Rollback on error
+      setProfile(profile);
     }
   }, [user, firestore, profile]);
   
