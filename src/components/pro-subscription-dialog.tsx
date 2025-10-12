@@ -12,7 +12,6 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Sparkles, CheckCircle } from 'lucide-react';
-import { createPayPalSubscription } from '@/app/actions/paypal';
 import { useToast } from '@/hooks/use-toast';
 
 type ProSubscriptionDialogProps = {
@@ -26,18 +25,10 @@ export function ProSubscriptionDialog({ open, onOpenChange }: ProSubscriptionDia
 
   const handleSubscribe = async () => {
     setIsLoading(true);
-    const result = await createPayPalSubscription();
-    
-    if (result.success && result.redirectUrl) {
-      window.location.href = result.redirectUrl;
-    } else {
-      toast({
-        variant: 'destructive',
-        title: 'Erreur de paiement',
-        description: result.error || 'Impossible de créer l\'abonnement PayPal. Veuillez réessayer.',
-      });
-      setIsLoading(false);
-    }
+    // This is a static, pre-configured PayPal subscription button link.
+    // It's a more reliable method for this context than server-side generation.
+    const payPalSubscriptionLink = 'https://www.paypal.com/webscr?cmd=_s-xclick&hosted_button_id=PU4PZ4P4T5F96';
+    window.location.href = payPalSubscriptionLink;
   };
 
   return (
