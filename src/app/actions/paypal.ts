@@ -3,9 +3,6 @@
 
 import { headers } from 'next/headers';
 
-// This tells Next.js to always render this route dynamically.
-export const dynamic = 'force-dynamic';
-
 // This is a simplified server action.
 // In a real-world scenario, you would use the PayPal REST API SDK
 // to create a subscription plan and an order.
