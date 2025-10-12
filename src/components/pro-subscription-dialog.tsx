@@ -18,7 +18,6 @@ import { useToast } from '@/hooks/use-toast';
 type ProSubscriptionDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onProSuccess: () => void;
 };
 
 export function ProSubscriptionDialog({ open, onOpenChange }: ProSubscriptionDialogProps) {

@@ -1,8 +1,9 @@
+
 'use client';
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import {
   LayoutDashboard,
   Salad,
@@ -46,8 +47,9 @@ const PRO_CODE = "petlife7296";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { profile, loading, clearProfile, clearActivityHistory, saveProfile } = usePetProfile();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const { profile, loading, clearProfile, clearActivityHistory, saveProfile } = usePetProfile();
   const { toast } = useToast();
   const [isProDialogOpen, setIsProDialogOpen] = useState(false);
   const [promoCode, setPromoCode] = useState('');
@@ -61,26 +63,42 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
   }, [isUserLoading, user, router]);
 
+  const handleProSuccess = () => {
+    if (profile && !profile.isPro) {
+      saveProfile({ ...profile, isPro: true });
+       toast({
+        title: 'Félicitations !',
+        description: "Vous êtes maintenant un membre Pro.",
+      });
+    }
+  };
+
+  useEffect(() => {
+    const paymentStatus = searchParams.get('payment');
+    if (paymentStatus === 'success') {
+        handleProSuccess();
+        router.replace('/dashboard');
+    } else if (paymentStatus === 'cancel') {
+        toast({
+            variant: 'destructive',
+            title: 'Paiement annulé',
+            description: 'Votre transaction a été annulée.',
+        });
+        router.replace('/dashboard');
+    }
+  }, [searchParams, router, profile]);
+
+
   const handleLogout = () => {
     signOut(auth);
     clearProfile();
     clearActivityHistory();
     router.push('/');
   };
-  
-   const handleProSuccess = () => {
-    if (profile) {
-      saveProfile({ ...profile, isPro: true });
-    }
-  };
 
   const handlePromoCode = () => {
-    if (promoCode === PRO_CODE) {
+    if (promoCode.toLowerCase() === PRO_CODE.toLowerCase()) {
       handleProSuccess();
-      toast({
-        title: 'Félicitations !',
-        description: 'Vous avez débloqué l\'accès Pro.',
-      });
       setPromoCode('');
     } else {
       toast({
@@ -112,7 +130,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <SidebarProvider>
-      <ProSubscriptionDialog open={isProDialogOpen} onOpenChange={setIsProDialogOpen} onProSuccess={handleProSuccess}/>
+      <ProSubscriptionDialog open={isProDialogOpen} onOpenChange={setIsProDialogOpen} />
       <Sidebar>
         <SidebarHeader>
             <div className="flex items-center justify-between">
