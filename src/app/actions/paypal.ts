@@ -24,7 +24,7 @@ async function getPayPalAccessToken() {
       'Content-Type': 'application/x-www-form-urlencoded',
     },
     body: 'grant_type=client_credentials',
-    cache: 'no-cache',
+    cache: 'no-cache', // Force a new request every time
   });
 
   if (!response.ok) {
@@ -64,7 +64,8 @@ export async function createPayPalSubscription(): Promise<{ success: boolean; re
             return_url: `${origin}/dashboard?payment=success`,
             cancel_url: `${origin}/dashboard?payment=cancel`,
         }
-      })
+      }),
+      cache: 'no-cache', // Force a new request every time
     });
     
     const subscription = await response.json();
@@ -76,7 +77,8 @@ export async function createPayPalSubscription(): Promise<{ success: boolean; re
       }
     }
     
-    console.error("PayPal subscription response:", subscription);
+    // Log the full response if the link is not found
+    console.error("PayPal subscription response did not contain an approval link:", subscription);
     return { success: false, error: 'Could not find PayPal approval link.' };
 
   } catch (error) {
