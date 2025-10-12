@@ -3,27 +3,64 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import type { PetProfile, ActivityHistory } from '@/lib/types';
 import { useUser, useFirestore, useCollection, WithId } from '@/firebase';
-import { collection, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { collection, doc, updateDoc, deleteDoc, setDoc } from 'firebase/firestore';
 import { useMemoFirebase } from '@/firebase/provider';
 
 const getActivityHistoryKey = (userId: string) => `petlife-activity-history-${userId}`;
+const getProfileKey = (userId: string) => `petlife-profile-${userId}`;
 
 export function usePetProfile() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
+  const [profile, setProfile] = useState<WithId<PetProfile> | null>(null);
+  const [arePetsLoading, setArePetsLoading] = useState(true);
 
   const petsQuery = useMemoFirebase(() => {
     if (!user || !firestore) return null;
     return collection(firestore, 'users', user.uid, 'pets');
   }, [user, firestore]);
 
-  const { data: pets, isLoading: arePetsLoading } = useCollection<PetProfile>(petsQuery);
-  
-  const profile = useMemo(() => {
-    if (!pets || pets.length === 0) return null;
-    // For now, we'll just use the first pet profile found.
-    return pets[0];
-  }, [pets]);
+  const { data: pets, isLoading: firestorePetsLoading } = useCollection<PetProfile>(petsQuery);
+
+  useEffect(() => {
+    if (isUserLoading) {
+        setArePetsLoading(true);
+        return;
+    }
+    if (!user) {
+        setProfile(null);
+        setArePetsLoading(false);
+        return;
+    }
+    
+    // Attempt to load from localStorage first for speed
+    const localProfileItem = window.localStorage.getItem(getProfileKey(user.uid));
+    if (localProfileItem) {
+        try {
+            const localProfiles = JSON.parse(localProfileItem);
+            if (localProfiles && localProfiles.length > 0) {
+                setProfile(localProfiles[0]);
+                setArePetsLoading(false);
+                return; // Exit if we have a local profile
+            }
+        } catch (e) {
+            console.error("Failed to parse local profile", e);
+        }
+    }
+
+    // If no local profile, use Firestore data
+    if (!firestorePetsLoading) {
+      if (pets && pets.length > 0) {
+        const firstProfile = pets[0];
+        setProfile(firstProfile);
+        window.localStorage.setItem(getProfileKey(user.uid), JSON.stringify([firstProfile]));
+      } else {
+        setProfile(null);
+      }
+      setArePetsLoading(false);
+    }
+
+  }, [user, isUserLoading, pets, firestorePetsLoading]);
 
 
   const [activityHistory, setActivityHistory] = useState<ActivityHistory>({});
@@ -56,14 +93,18 @@ export function usePetProfile() {
     }
   }, [user, isUserLoading, loadActivityHistory]);
 
-  const saveProfile = useCallback(async (newProfileData: Partial<PetProfile>) => {
-    if (user && firestore && profile) {
-      try {
-        const petDocRef = doc(firestore, 'users', user.uid, 'pets', profile.id);
-        await updateDoc(petDocRef, newProfileData);
-      } catch (error) {
-        console.error('Failed to save pet profile to Firestore', error);
-      }
+  const saveProfile = useCallback(async (newProfileData: Partial<PetProfile> & { id: string }) => {
+    if (user && firestore && newProfileData.id) {
+        const petDocRef = doc(firestore, 'users', user.uid, 'pets', newProfileData.id);
+        const fullProfile = { ...profile, ...newProfileData } as WithId<PetProfile>;
+        
+        try {
+            await setDoc(petDocRef, newProfileData, { merge: true });
+            setProfile(fullProfile);
+            window.localStorage.setItem(getProfileKey(user.uid), JSON.stringify([fullProfile]));
+        } catch (error) {
+            console.error('Failed to save pet profile', error);
+        }
     }
   }, [user, firestore, profile]);
   
@@ -72,6 +113,8 @@ export function usePetProfile() {
       try {
         const petDocRef = doc(firestore, 'users', user.uid, 'pets', profile.id);
         await deleteDoc(petDocRef);
+        setProfile(null);
+        window.localStorage.removeItem(getProfileKey(user.uid));
       } catch (error) {
         console.error('Failed to clear pet profile from Firestore', error);
       }
@@ -100,7 +143,7 @@ export function usePetProfile() {
     }
   }, [user]);
 
-  const loading = isUserLoading || arePetsLoading || isActivityHistoryLoading;
+  const loading = arePetsLoading || isActivityHistoryLoading;
 
   return { profile, saveProfile, clearProfile, loading, activityHistory, setActivityHistory: saveActivityHistory, clearActivityHistory };
 }

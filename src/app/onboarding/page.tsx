@@ -31,9 +31,11 @@ const jaxData: Omit<PetProfile, 'isPro' | 'avatarUrl'> = {
   healthGoal: 'lose_weight',
 };
 
+const getProfileKey = (userId: string) => `petlife-profile-${userId}`;
+
 export default function OnboardingPage() {
   const router = useRouter();
-  const { profile, loading: profileLoading } = usePetProfile();
+  const { profile, loading: profileLoading, saveProfile } = usePetProfile();
   const { toast } = useToast();
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
@@ -72,8 +74,12 @@ export default function OnboardingPage() {
     setIsSubmitting(true);
     try {
         const petsCollectionRef = collection(firestore, 'users', user.uid, 'pets');
-        // Use await to ensure the document is created before redirecting
-        await addDoc(petsCollectionRef, { ...data, isPro: true });
+        const finalData = { ...data, isPro: true };
+        const docRef = await addDoc(petsCollectionRef, finalData);
+
+        // Manually save to localStorage to ensure it's available on next page load
+        const profileWithId = { ...finalData, id: docRef.id };
+        window.localStorage.setItem(getProfileKey(user.uid), JSON.stringify([profileWithId]));
         
         toast({
             title: "Profil créé !",
@@ -88,7 +94,8 @@ export default function OnboardingPage() {
             title: "Erreur de création du profil",
             description: "Une erreur s'est produite. Veuillez réessayer.",
         });
-        setIsSubmitting(false);
+    } finally {
+      setIsSubmitting(false);
     }
 }
   
