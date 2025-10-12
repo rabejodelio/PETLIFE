@@ -44,41 +44,39 @@ export async function createPayPalSubscription(): Promise<{ success: boolean; re
     const accessToken = await getPayPalAccessToken();
     const origin = headers().get('origin');
     
-    const response = await fetch('https://api.sandbox.paypal.com/v2/checkout/orders', {
+    // NOTE: This plan was created manually in the PayPal developer dashboard.
+    // In a real app, you would create this plan via the API.
+    const planId = 'P-3L926792V2313322AMWCSJMI';
+    
+    const response = await fetch('https://api.sandbox.paypal.com/v1/billing/subscriptions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
+        'Prefer': 'return=representation',
       },
       body: JSON.stringify({
-        intent: 'CAPTURE',
-        purchase_units: [{
-          amount: {
-            currency_code: 'EUR',
-            value: '10.00'
-          },
-          description: 'Abonnement PetLife Pro'
-        }],
+        plan_id: planId,
         application_context: {
-            return_url: `${origin}/dashboard?payment=success`,
-            cancel_url: `${origin}/dashboard?payment=cancel`,
             brand_name: 'PetLife',
             shipping_preference: 'NO_SHIPPING',
             user_action: 'SUBSCRIBE_NOW',
+            return_url: `${origin}/dashboard?payment=success`,
+            cancel_url: `${origin}/dashboard?payment=cancel`,
         }
       })
     });
     
-    const order = await response.json();
+    const subscription = await response.json();
 
-    if (order.links) {
-      const approvalLink = order.links.find((link: { rel: string; }) => link.rel === 'approve');
+    if (subscription.links) {
+      const approvalLink = subscription.links.find((link: { rel: string; }) => link.rel === 'approve');
       if (approvalLink) {
         return { success: true, redirectUrl: approvalLink.href };
       }
     }
     
-    console.error("PayPal order response:", order);
+    console.error("PayPal subscription response:", subscription);
     return { success: false, error: 'Could not find PayPal approval link.' };
 
   } catch (error) {
