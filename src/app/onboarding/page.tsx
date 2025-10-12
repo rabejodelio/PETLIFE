@@ -16,9 +16,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Logo } from '@/components/logo';
-import { useUser, useFirestore, usePetProfile } from '@/hooks/use-pet-profile';
+import { useUser, usePetProfile } from '@/hooks/use-pet-profile';
 import { useEffect, useState } from 'react';
-import { collection, addDoc } from 'firebase/firestore';
 
 const jaxData: Omit<PetProfile, 'isPro' | 'avatarUrl'> = {
   name: 'Jax',
@@ -35,7 +34,6 @@ export default function OnboardingPage() {
   const { profile, loading: profileLoading, saveProfile } = usePetProfile();
   const { toast } = useToast();
   const { user, isUserLoading } = useUser();
-  const firestore = useFirestore();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<PetProfile>({
@@ -60,7 +58,7 @@ export default function OnboardingPage() {
   }, [profile, form]);
 
   async function onSubmit(data: PetProfile) {
-    if (!user || !firestore) {
+    if (!user) {
         toast({
             variant: "destructive",
             title: "Erreur",
@@ -70,19 +68,15 @@ export default function OnboardingPage() {
     }
     setIsSubmitting(true);
     try {
-        const petsCollectionRef = collection(firestore, 'users', user.uid, 'pets');
         // Set isPro to true to unlock features
         const finalData = { ...data, isPro: true, avatarUrl: data.avatarUrl || '' };
-        
-        // Wait for the document to be added to Firestore
-        await addDoc(petsCollectionRef, finalData);
+        saveProfile(finalData);
 
         toast({
             title: "Profil créé !",
             description: `Bienvenue, ${data.name} ! C'est parti.`,
         });
         
-        // Redirect only after successful save
         router.push('/dashboard');
 
     } catch (error) {

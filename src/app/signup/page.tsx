@@ -6,16 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useAuth, useFirestore, setDocumentNonBlocking } from "@/firebase";
+import { useAuth } from "@/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { doc } from "firebase/firestore";
 
 export default function SignupPage() {
     const router = useRouter();
     const auth = useAuth();
-    const firestore = useFirestore();
     const { toast } = useToast();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -25,13 +23,8 @@ export default function SignupPage() {
         e.preventDefault();
         setIsLoading(true);
         try {
-            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-            const user = userCredential.user;
-
-            // Store user email in Firestore
-            const userDocRef = doc(firestore, 'users', user.uid);
-            setDocumentNonBlocking(userDocRef, { email: user.email }, { merge: true });
-
+            await createUserWithEmailAndPassword(auth, email, password);
+            
             toast({
                 title: "Account Created!",
                 description: "Redirecting you to pet onboarding.",
