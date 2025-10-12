@@ -7,7 +7,8 @@ import { WeightChart } from '@/components/dashboard/weight-chart';
 import { ActivityChart } from '@/components/dashboard/activity-chart';
 import { usePetProfile } from '@/hooks/use-pet-profile';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { CreatePetProfileForm } from '@/components/dashboard/create-pet-profile-form';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 export default function DashboardPage() {
     const { profile, activityHistory, loading } = usePetProfile();
@@ -23,7 +24,23 @@ export default function DashboardPage() {
     }
 
     if (!profile) {
-        return <CreatePetProfileForm />;
+        return (
+            <div className="flex flex-col items-center justify-center h-[50vh] text-center">
+                <Card className="max-w-md p-8">
+                    <CardHeader>
+                        <CardTitle className="font-headline text-2xl">Welcome to PetLife!</CardTitle>
+                        <CardDescription>
+                            It looks like you haven't created a pet profile yet. Let's create one to get started.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <Button asChild>
+                            <Link href="/onboarding">Create Pet Profile</Link>
+                        </Button>
+                    </CardContent>
+                </Card>
+            </div>
+        );
     }
 
     return (

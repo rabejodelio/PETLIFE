@@ -27,9 +27,9 @@ export default function SignupPage() {
             
             toast({
                 title: "Account Created!",
-                description: "Redirecting you to the dashboard.",
+                description: "Let's create a profile for your pet.",
             });
-            router.push("/dashboard");
+            router.push("/onboarding");
         } catch (error: any) {
             console.error("Signup Error:", error);
             let description = "An unexpected error occurred. Please try again.";
