@@ -8,11 +8,11 @@ import { headers } from 'next/headers';
 // to create a subscription plan and an order.
 
 async function getPayPalAccessToken() {
-  const clientId = process.env.PAYPAL_CLIENT_ID;
-  const clientSecret = process.env.PAYPAL_SECRET;
+  const clientId = "AdVaZg-x-cbjGyLKeYDaTbUR3U-8QqbBh0QvAy0RyrdamDPrFixJ_dp7ifXKBUebt_BgxXgMJzyhHvLI";
+  const clientSecret = "EDwGKLqam7GtXT3RprGHDxaPpzjcBX8qY2uhbIn4thCpI6yemEwSS6XYpQdU_T7TdJRN1EMJ8rHfY032";
 
   if (!clientId || !clientSecret) {
-    throw new Error('PayPal credentials are not set in environment variables.');
+    throw new Error('PayPal credentials are not set.');
   }
 
   const auth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
@@ -24,7 +24,14 @@ async function getPayPalAccessToken() {
       'Content-Type': 'application/x-www-form-urlencoded',
     },
     body: 'grant_type=client_credentials',
+    cache: 'no-cache',
   });
+
+  if (!response.ok) {
+    const errorBody = await response.text();
+    console.error("PayPal Auth Error:", errorBody);
+    throw new Error('Failed to get PayPal access token.');
+  }
 
   const data = await response.json();
   return data.access_token;
@@ -33,10 +40,6 @@ async function getPayPalAccessToken() {
 
 export async function createPayPalSubscription(): Promise<{ success: boolean; redirectUrl?: string; error?: string }> {
   
-  // NOTE: This is a simulation. A real implementation would be more complex.
-  // It would involve creating a product, a plan, and then a subscription with the PayPal API.
-  // For this demo, we'll just create a one-time order and simulate the subscription flow.
-
   try {
     const accessToken = await getPayPalAccessToken();
     const origin = headers().get('origin');
