@@ -117,4 +117,3 @@ export function usePetProfile() {
 
 export const useUser = useAuthUser;
 export const useFirestore = useFirebaseFirestore;
-export const useFirebase = useFirebase;
