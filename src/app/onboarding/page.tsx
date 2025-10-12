@@ -31,11 +31,9 @@ const jaxData: Omit<PetProfile, 'isPro' | 'avatarUrl'> = {
   healthGoal: 'lose_weight',
 };
 
-const getProfileKey = (userId: string) => `petlife-profile-${userId}`;
-
 export default function OnboardingPage() {
   const router = useRouter();
-  const { profile, loading: profileLoading, saveProfile } = usePetProfile();
+  const { profile, loading: profileLoading } = usePetProfile();
   const { toast } = useToast();
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
@@ -74,17 +72,18 @@ export default function OnboardingPage() {
     setIsSubmitting(true);
     try {
         const petsCollectionRef = collection(firestore, 'users', user.uid, 'pets');
-        const finalData = { ...data, isPro: true };
-        const docRef = await addDoc(petsCollectionRef, finalData);
-
-        // Manually save to localStorage to ensure it's available on next page load
-        const profileWithId = { ...finalData, id: docRef.id };
-        window.localStorage.setItem(getProfileKey(user.uid), JSON.stringify([profileWithId]));
+        // Set isPro to true to unlock features
+        const finalData = { ...data, isPro: true, avatarUrl: data.avatarUrl || '' };
         
+        // Wait for the document to be added to Firestore
+        await addDoc(petsCollectionRef, finalData);
+
         toast({
             title: "Profil créé !",
             description: `Bienvenue, ${data.name} ! C'est parti.`,
         });
+        
+        // Redirect only after successful save
         router.push('/dashboard');
 
     } catch (error) {

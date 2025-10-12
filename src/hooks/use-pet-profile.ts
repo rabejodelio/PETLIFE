@@ -7,14 +7,12 @@ import { collection, doc, updateDoc, deleteDoc, setDoc } from 'firebase/firestor
 import { useMemoFirebase } from '@/firebase/provider';
 
 const getActivityHistoryKey = (userId: string) => `petlife-activity-history-${userId}`;
-const getProfileKey = (userId: string) => `petlife-profile-${userId}`;
 
 export function usePetProfile() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const [profile, setProfile] = useState<WithId<PetProfile> | null>(null);
-  const [arePetsLoading, setArePetsLoading] = useState(true);
-
+  
   const petsQuery = useMemoFirebase(() => {
     if (!user || !firestore) return null;
     return collection(firestore, 'users', user.uid, 'pets');
@@ -23,44 +21,15 @@ export function usePetProfile() {
   const { data: pets, isLoading: firestorePetsLoading } = useCollection<PetProfile>(petsQuery);
 
   useEffect(() => {
-    if (isUserLoading) {
-        setArePetsLoading(true);
-        return;
-    }
-    if (!user) {
-        setProfile(null);
-        setArePetsLoading(false);
-        return;
-    }
-    
-    // Attempt to load from localStorage first for speed
-    const localProfileItem = window.localStorage.getItem(getProfileKey(user.uid));
-    if (localProfileItem) {
-        try {
-            const localProfiles = JSON.parse(localProfileItem);
-            if (localProfiles && localProfiles.length > 0) {
-                setProfile(localProfiles[0]);
-                setArePetsLoading(false);
-                return; // Exit if we have a local profile
-            }
-        } catch (e) {
-            console.error("Failed to parse local profile", e);
-        }
-    }
-
-    // If no local profile, use Firestore data
+    // Only update profile from Firestore collection changes
     if (!firestorePetsLoading) {
       if (pets && pets.length > 0) {
-        const firstProfile = pets[0];
-        setProfile(firstProfile);
-        window.localStorage.setItem(getProfileKey(user.uid), JSON.stringify([firstProfile]));
+        setProfile(pets[0]); // Always use the first pet profile
       } else {
         setProfile(null);
       }
-      setArePetsLoading(false);
     }
-
-  }, [user, isUserLoading, pets, firestorePetsLoading]);
+  }, [pets, firestorePetsLoading]);
 
 
   const [activityHistory, setActivityHistory] = useState<ActivityHistory>({});
@@ -93,15 +62,14 @@ export function usePetProfile() {
     }
   }, [user, isUserLoading, loadActivityHistory]);
 
-  const saveProfile = useCallback(async (newProfileData: Partial<PetProfile> & { id: string }) => {
-    if (user && firestore && newProfileData.id) {
-        const petDocRef = doc(firestore, 'users', user.uid, 'pets', newProfileData.id);
-        const fullProfile = { ...profile, ...newProfileData } as WithId<PetProfile>;
+  const saveProfile = useCallback(async (newProfileData: Partial<PetProfile>) => {
+    if (user && firestore && profile?.id) { // Ensure there is a profile to update
+        const petDocRef = doc(firestore, 'users', user.uid, 'pets', profile.id);
+        const updatedProfile = { ...profile, ...newProfileData } as WithId<PetProfile>;
         
         try {
             await setDoc(petDocRef, newProfileData, { merge: true });
-            setProfile(fullProfile);
-            window.localStorage.setItem(getProfileKey(user.uid), JSON.stringify([fullProfile]));
+            setProfile(updatedProfile); // Optimistically update local state
         } catch (error) {
             console.error('Failed to save pet profile', error);
         }
@@ -114,7 +82,6 @@ export function usePetProfile() {
         const petDocRef = doc(firestore, 'users', user.uid, 'pets', profile.id);
         await deleteDoc(petDocRef);
         setProfile(null);
-        window.localStorage.removeItem(getProfileKey(user.uid));
       } catch (error) {
         console.error('Failed to clear pet profile from Firestore', error);
       }
@@ -143,7 +110,7 @@ export function usePetProfile() {
     }
   }, [user]);
 
-  const loading = arePetsLoading || isActivityHistoryLoading;
+  const loading = isUserLoading || firestorePetsLoading || isActivityHistoryLoading;
 
   return { profile, saveProfile, clearProfile, loading, activityHistory, setActivityHistory: saveActivityHistory, clearActivityHistory };
 }
