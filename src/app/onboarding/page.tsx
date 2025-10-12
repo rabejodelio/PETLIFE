@@ -37,7 +37,7 @@ export default function OnboardingPage() {
   });
 
   const onSubmit = (data: PetProfileFormValues) => {
-    saveProfile({ ...data, isPro: true });
+    saveProfile({ ...data, isPro: false });
     toast({
       title: "Profile created!",
       description: "Let's get started on your pet's wellness journey.",
