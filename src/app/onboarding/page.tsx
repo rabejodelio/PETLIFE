@@ -4,7 +4,6 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Bone, Cat } from 'lucide-react';
-import { usePetProfile } from '@/hooks/use-pet-profile';
 import { petProfileSchema } from '@/lib/schemas';
 import type { PetProfile } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -17,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Logo } from '@/components/logo';
-import { useUser, useFirestore } from '@/firebase';
+import { useUser, useFirestore, usePetProfile } from '@/hooks/use-pet-profile';
 import { useEffect, useState } from 'react';
 import { collection, addDoc } from 'firebase/firestore';
 
@@ -33,7 +32,7 @@ const jaxData: Omit<PetProfile, 'isPro' | 'avatarUrl'> = {
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const { profile, loading: profileLoading } = usePetProfile();
+  const { profile, loading: profileLoading, saveProfile } = usePetProfile();
   const { toast } = useToast();
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();

@@ -2,15 +2,16 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import type { PetProfile, ActivityHistory } from '@/lib/types';
-import { useUser, useFirestore, useCollection, WithId } from '@/firebase';
+import { useFirebase, WithId, useCollection, useUser as useAuthUser, useFirestore as useFirebaseFirestore } from '@/firebase';
 import { collection, doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { useMemoFirebase } from '@/firebase/provider';
 
 const getActivityHistoryKey = (userId: string) => `petlife-activity-history-${userId}`;
 
 export function usePetProfile() {
-  const { user, isUserLoading } = useUser();
-  const firestore = useFirestore();
+  const { isUserLoading } = useAuthUser();
+  const user = useAuthUser().user;
+  const firestore = useFirebaseFirestore();
   const [profile, setProfile] = useState<WithId<PetProfile> | null>(null);
   
   const petsQuery = useMemoFirebase(() => {
@@ -63,16 +64,15 @@ export function usePetProfile() {
     
     const petDocRef = doc(firestore, 'users', user.uid, 'pets', profile.id);
     
-    // Optimistically update local state
     const updatedProfile = { ...profile, ...newProfileData };
-    setProfile(updatedProfile);
-
+    
     try {
       await setDoc(petDocRef, newProfileData, { merge: true });
+      // Update local state only after successful firestore write
+      setProfile(updatedProfile);
     } catch (error) {
       console.error('Failed to save pet profile, rolling back optimistic update', error);
-      // Rollback on error
-      setProfile(profile);
+      // No rollback needed as we now update state after success
     }
   }, [user, firestore, profile]);
   
@@ -112,5 +112,9 @@ export function usePetProfile() {
 
   const loading = isUserLoading || firestorePetsLoading || isActivityHistoryLoading;
 
-  return { profile, saveProfile, clearProfile, loading, activityHistory, setActivityHistory: saveActivityHistory, clearActivityHistory };
+  return { profile, saveProfile, clearProfile, loading, activityHistory, setActivityHistory: saveActivityHistory, clearActivityHistory, user, isUserLoading, firestore };
 }
+
+export const useUser = useAuthUser;
+export const useFirestore = useFirebaseFirestore;
+export const useFirebase = useFirebase;
