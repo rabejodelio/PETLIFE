@@ -25,8 +25,10 @@ export function ProSubscriptionDialog({ open, onOpenChange }: ProSubscriptionDia
 
   const handleSubscribe = async () => {
     setIsLoading(true);
-    // This is a static, pre-configured PayPal subscription button link for the SANDBOX environment.
-    const payPalSubscriptionLink = 'https://www.sandbox.paypal.com/webscr?cmd=_s-xclick&hosted_button_id=PU4PZ4P4T5F96';
+    // IMPORTANT: To accept real payments, you MUST replace the `hosted_button_id`
+    // with your own "live" button ID from your production PayPal account.
+    // The current ID is for SANDBOX and will NOT work for real payments.
+    const payPalSubscriptionLink = 'https://www.paypal.com/webscr?cmd=_s-xclick&hosted_button_id=REMPLACEZ_PAR_VOTRE_ID_DE_BOUTON_LIVE';
     
     // Open PayPal in a new tab to avoid iframe blocking issues.
     window.open(payPalSubscriptionLink, '_blank');
