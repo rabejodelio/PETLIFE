@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Scale, Heart, PawPrint } from 'lucide-react';
@@ -8,15 +7,24 @@ import { WeightChart } from '@/components/dashboard/weight-chart';
 import { ActivityChart } from '@/components/dashboard/activity-chart';
 import { usePetProfile } from '@/hooks/use-pet-profile';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { CreatePetProfileForm } from '@/components/dashboard/create-pet-profile-form';
 
 export default function DashboardPage() {
-    const { profile, activityHistory } = usePetProfile();
+    const { profile, activityHistory, loading } = usePetProfile();
 
     const healthGoalMap = {
         lose_weight: 'Lose Weight',
         maintain_weight: 'Maintain Weight',
         improve_joints: 'Improve Joints',
     };
+
+    if (loading) {
+        return <div>Loading...</div>;
+    }
+
+    if (!profile) {
+        return <CreatePetProfileForm />;
+    }
 
     return (
         <div>
