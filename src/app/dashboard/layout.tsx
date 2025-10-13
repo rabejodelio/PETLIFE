@@ -2,7 +2,7 @@
 
 'use client';
 
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -63,7 +63,7 @@ function DashboardLayoutContent({
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { profile, loading, clearProfile, clearActivityHistory, saveProfile } = React.useContext(PetProfileContext)!;
+  const { profile, loading, saveProfile } = React.useContext(PetProfileContext)!;
   const { toast } = useToast();
   const [isProDialogOpen, setIsProDialogOpen] = useState(false);
   const { user, isUserLoading } = useUser();
@@ -104,8 +104,10 @@ function DashboardLayoutContent({
 
   const handleLogout = () => {
     signOut(auth);
-    clearProfile();
-    clearActivityHistory();
+    // clearProfile and clearActivityHistory are now part of the PetProfileContext
+    const context = React.useContext(PetProfileContext)!;
+    context.clearProfile();
+    context.clearActivityHistory();
     router.push('/');
   };
 
@@ -308,74 +310,68 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, [user]);
 
   const saveProfile = async (newProfileData: Partial<PetProfile>): Promise<void> => {
-      if (!user || !firestore) {
-          throw new Error("User not authenticated or Firestore not available.");
-      }
-
-      const petDocRef = doc(firestore, 'users', user.uid, 'pets', 'main-pet');
-      const userDocRef = doc(firestore, 'users', user.uid);
-
-      const finalProfileData = { ...profile, ...newProfileData };
-
-      const denormalizedUserData = {
-        email: user.email,
-        petName: finalProfileData.name,
-        petSpecies: finalProfileData.species,
-        isPro: finalProfileData.isPro,
-      };
-
-      try {
-        await Promise.all([
-          setDoc(petDocRef, finalProfileData, { merge: true }),
-          setDoc(userDocRef, denormalizedUserData, { merge: true })
-        ]);
-      } catch (error) {
-        console.error("Firestore write failed:", error);
-        throw error;
-      }
-  };
-
-
-  const handlePromoCode = async (): Promise<void> => {
     if (!user || !firestore) {
-      toast({
-        variant: 'destructive',
-        title: 'Erreur',
-        description: 'Utilisateur non authentifié.',
-      });
-      return;
+        throw new Error("User not authenticated or Firestore not available.");
     }
 
-    const originalProfile = profile;
-    const newProfileState: PetProfile = {
-      ...(profile || {
-        name: '', species: 'dog', breed: '', age: 0, weight: 0,
-        healthGoal: 'maintain_weight', avatarUrl: ''
-      }),
-      isPro: true
+    // 1. Create the final, merged profile object for state update and Firestore.
+    const updatedProfile: PetProfile = {
+        name: '', 
+        species: 'dog', 
+        breed: '', 
+        age: 0, 
+        weight: 0,
+        healthGoal: 'maintain_weight', 
+        avatarUrl: '',
+        isPro: false,
+        allergies: '',
+        ...(profile || {}), // Apply existing profile if it exists
+        ...newProfileData,   // Apply new data
     };
-    setProfile(newProfileState);
+    
+    // 2. Optimistic UI Update: Set the local state immediately.
+    setProfile(updatedProfile);
 
+    // 3. Prepare data for Firestore writes.
+    const petDocRef = doc(firestore, 'users', user.uid, 'pets', 'main-pet');
+    const userDocRef = doc(firestore, 'users', user.uid);
+
+    const denormalizedUserData = {
+      email: user.email,
+      petName: updatedProfile.name,
+      petSpecies: updatedProfile.species,
+      isPro: updatedProfile.isPro,
+    };
+
+    // 4. Perform Firestore writes atomically and handle errors.
     try {
-        const petDocRef = doc(firestore, 'users', user.uid, 'pets', 'main-pet');
-        await setDoc(petDocRef, { isPro: true }, { merge: true });
-        
-        // Also update the denormalized user doc
-        const userDocRef = doc(firestore, 'users', user.uid);
-        await setDoc(userDocRef, { isPro: true, email: user.email }, { merge: true });
-        
+        await Promise.all([
+            setDoc(petDocRef, updatedProfile, { merge: true }),
+            setDoc(userDocRef, denormalizedUserData, { merge: true })
+        ]);
+    } catch (error) {
+        console.error("Firestore write failed:", error);
+        // Revert the optimistic update on failure.
+        setProfile(profile);
+        // Re-throw the error so the calling function knows about the failure.
+        throw error;
+    }
+};
+
+  const handlePromoCode = async (): Promise<void> => {
+    try {
+        await saveProfile({ isPro: true });
         toast({
             title: 'Félicitations !',
             description: "Vous êtes maintenant un membre Pro.",
         });
     } catch (error) {
-        setProfile(originalProfile); 
         toast({
             variant: 'destructive',
             title: 'Erreur',
             description: 'La mise à jour du profil a échoué. Veuillez réessayer.',
         });
-        console.error("Promo code Firestore write failed:", error);
+        console.error("Promo code update failed:", error);
     }
   };
 

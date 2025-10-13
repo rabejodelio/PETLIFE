@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { DependencyList, createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
@@ -74,6 +75,9 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       return;
     }
 
+    // This check prevents re-subscribing if the auth instance hasn't changed.
+    if(auth.app.name === userAuthState.user?.uid) return;
+
     setUserAuthState({ user: null, isUserLoading: true, userError: null }); // Reset on auth instance change
 
     const unsubscribe = onAuthStateChanged(
@@ -131,7 +135,7 @@ export const useFirebase = (): FirebaseServicesAndUser => {
     firestore: context.firestore,
     auth: context.auth,
     user: context.user,
-    isUserLoading: context.isUserLoading,
+isUserLoading: context.isUserLoading,
     userError: context.userError,
   };
 };
