@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
@@ -311,8 +312,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const userDocRef = doc(firestore, 'users', user.uid);
     const petDocRef = doc(userDocRef, 'pets', 'main-pet');
     
-    // Merge new data with current profile state or a default structure
-    const updatedProfile = { 
+    // Create the full updated profile object to be saved
+    const updatedProfile: PetProfile = { 
         ...(profile || { 
             name: '', species: 'dog', breed: '', age: 0, weight: 0,
             healthGoal: 'maintain_weight', isPro: false,
@@ -320,10 +321,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         ...newProfileData 
     };
   
-    // Save the full updated profile to Firestore
+    // Save the full pet profile to its own document
     await setDoc(petDocRef, updatedProfile, { merge: true });
     
-    // Denormalize some data to the user document
+    // Prepare the denormalized data for the user document
     const denormalizedData: { petName: string; petSpecies: 'dog' | 'cat'; isPro: boolean; email?: string } = { 
         petName: updatedProfile.name, 
         petSpecies: updatedProfile.species,
@@ -334,10 +335,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       denormalizedData.email = user.email;
     }
   
+    // Save the denormalized data to the user document
     await setDoc(userDocRef, denormalizedData, { merge: true });
     
-    // Correctly update local state after successful save
-    // The `onSnapshot` listener will also pick this up, but updating here provides a faster UI response.
+    // **CRITICAL FIX**: Update the local state immediately after successful save.
+    // This makes the UI reactive without waiting for the onSnapshot listener.
     setProfile(updatedProfile);
   };
 

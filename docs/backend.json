@@ -60,11 +60,8 @@
           "description": "Pet's weight goal (e.g., lose weight, maintain weight, gain weight)."
         },
         "allergies": {
-          "type": "array",
-          "description": "A list of the pet's known allergies.",
-          "items": {
-            "type": "string"
-          }
+          "type": "string",
+          "description": "A list of the pet's known allergies."
         },
         "isPro": {
           "type": "boolean",
