@@ -13,6 +13,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Sparkles, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { createPayPalOrder } from '@/app/actions/paypal';
+
 
 type ProSubscriptionDialogProps = {
   open: boolean;
@@ -25,18 +27,21 @@ export function ProSubscriptionDialog({ open, onOpenChange }: ProSubscriptionDia
 
   const handleSubscribe = async () => {
     setIsLoading(true);
-    // IMPORTANT: To accept real payments, you MUST replace the `hosted_button_id`
-    // with your own "live" button ID from your production PayPal account.
-    // The current ID is for SANDBOX and will NOT work for real payments.
-    const payPalSubscriptionLink = 'https://www.paypal.com/webscr?cmd=_s-xclick&hosted_button_id=REMPLACEZ_PAR_VOTRE_ID_DE_BOUTON_LIVE';
     
-    // Open PayPal in a new tab to avoid iframe blocking issues.
-    window.open(payPalSubscriptionLink, '_blank');
-    
-    // We optimistically close the dialog. The user will be redirected back
-    // to the app, where the layout will handle the 'payment=success' parameter.
+    const result = await createPayPalOrder();
+
+    if (result.success && result.link) {
+        window.open(result.link, '_blank');
+        onOpenChange(false);
+    } else {
+        toast({
+            variant: 'destructive',
+            title: 'Erreur de paiement',
+            description: result.error || 'Impossible de créer le lien de paiement PayPal.',
+        });
+    }
+
     setIsLoading(false);
-    onOpenChange(false);
   };
 
   return (
@@ -80,7 +85,7 @@ export function ProSubscriptionDialog({ open, onOpenChange }: ProSubscriptionDia
                 onClick={handleSubscribe} 
                 disabled={isLoading}
               >
-                {isLoading ? 'Redirection...' : 'S\'abonner avec PayPal'}
+                {isLoading ? 'Création de la commande...' : 'S\'abonner avec PayPal'}
               </Button>
         </DialogFooter>
       </DialogContent>
