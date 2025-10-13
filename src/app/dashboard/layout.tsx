@@ -263,7 +263,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       setLoading(false);
       return;
     }
-
+    
     setLoading(true);
 
     const userDocRef = doc(firestore, 'users', user.uid);
@@ -271,7 +271,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         if (docSnap.exists()) {
             setUserDoc(docSnap.data() as UserDoc);
         } else if (user.email) {
-            // Document doesn't exist, so create it.
             const newUserDoc: UserDoc = { email: user.email, isPro: false };
             try {
                 await setDoc(userDocRef, newUserDoc);
@@ -330,27 +329,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         weight: 10,
         healthGoal: 'maintain_weight',
         isPro: false,
+        avatarUrl: '',
+        allergies: '',
       };
 
       const updatedProfile = { ...currentProfile, ...newProfileData };
-      
-      const denormalizedData = {
-        email: user.email!,
-        petName: updatedProfile.name,
-        petSpecies: updatedProfile.species,
-        isPro: updatedProfile.isPro,
-      };
-
-      const userDocRef = doc(firestore, 'users', user.uid);
       const petDocRef = doc(firestore, 'users', user.uid, 'pets', 'main-pet');
-
-      await Promise.all([
-        setDoc(userDocRef, denormalizedData, { merge: true }),
-        setDoc(petDocRef, updatedProfile, { merge: true }),
-      ]);
-
+      await setDoc(petDocRef, updatedProfile, { merge: true });
       setProfile(updatedProfile);
-      setUserDoc(denormalizedData);
 
     } catch (error) {
       console.error("Firestore write failed:", error);
@@ -383,7 +369,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             title: 'Erreur',
             description: 'la mise à jour du profil a échoué. Veuillez réessayer.',
         });
-        throw error;
     }
   };
 
