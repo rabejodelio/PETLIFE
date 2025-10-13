@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -100,13 +101,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const handlePromoCode = async () => {
     if (promoCode.toLowerCase() === PRO_CODE.toLowerCase()) {
       if (profile) {
+        // Save to Firestore and update local state at the same time
         await saveProfile({ ...profile, isPro: true });
         toast({
           title: 'Félicitations !',
           description: "Vous êtes maintenant un membre Pro.",
         });
-        // Reload the page to reflect the new Pro status in the UI
-        window.location.reload();
+        setIsProDialogOpen(false); // Close any open dialogs
       }
     } else {
       toast({
