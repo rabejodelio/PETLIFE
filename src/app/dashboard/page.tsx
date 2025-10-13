@@ -9,9 +9,10 @@ import { usePetProfile } from '@/hooks/use-pet-profile';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { AddWeightEntryForm } from '@/components/dashboard/add-weight-entry-form';
 
 export default function DashboardPage() {
-    const { profile, activityHistory, loading } = usePetProfile();
+    const { profile, activityHistory, loading, petDocRef } = usePetProfile();
 
     const healthGoalMap = {
         lose_weight: 'Lose Weight',
@@ -71,9 +72,16 @@ export default function DashboardPage() {
                 />
             </div>
 
-            <div className="grid gap-6 lg:grid-cols-2">
-                <WeightChart />
-                <ActivityChart activityHistory={activityHistory} />
+            <div className="grid gap-6 lg:grid-cols-5">
+                <div className="lg:col-span-3">
+                    <WeightChart petDocRef={petDocRef} />
+                </div>
+                <div className="lg:col-span-2">
+                    <AddWeightEntryForm petDocRef={petDocRef} currentWeight={profile.weight} />
+                </div>
+                <div className="lg:col-span-5">
+                    <ActivityChart activityHistory={activityHistory} />
+                </div>
             </div>
 
              <Card className="mt-6 shadow-md">

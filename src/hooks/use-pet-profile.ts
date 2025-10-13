@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import type { PetProfile, ActivityHistory } from '@/lib/types';
 import { useUser, useFirestore } from '@/firebase';
-import { doc, setDoc, getDoc, onSnapshot, collection } from 'firebase/firestore';
+import { doc, setDoc, getDoc, onSnapshot, collection, DocumentReference, DocumentData } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 const getActivityHistoryKey = (userId: string) => `petlife-activity-history-${userId}`;
@@ -25,7 +25,7 @@ export function usePetProfile() {
     return null;
   }, [user, firestore]);
 
-  const petDocRef = useMemo(() => {
+  const petDocRef: DocumentReference<DocumentData> | null = useMemo(() => {
     if (userDocRef) {
       // For simplicity, we'll assume one pet per user and use a fixed ID.
       return doc(userDocRef, 'pets', 'main-pet');
@@ -149,5 +149,5 @@ export function usePetProfile() {
 
   const overallLoading = isUserLoading || loading || isActivityHistoryLoading;
 
-  return { profile, saveProfile, clearProfile, loading: overallLoading, activityHistory, setActivityHistory: saveActivityHistory, clearActivityHistory, user, isUserLoading };
+  return { profile, saveProfile, clearProfile, loading: overallLoading, activityHistory, setActivityHistory: saveActivityHistory, clearActivityHistory, user, isUserLoading, petDocRef };
 }
