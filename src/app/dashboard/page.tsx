@@ -3,14 +3,13 @@
 import { Scale, Heart, PawPrint } from 'lucide-react';
 import { PageHeader } from '@/components/page-header';
 import { StatCard } from '@/components/dashboard/stat-card';
-import { ActivityChart } from '@/components/dashboard/activity-chart';
 import { usePetProfile } from '@/hooks/use-pet-profile';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
 export default function DashboardPage() {
-    const { profile, activityHistory, loading } = usePetProfile();
+    const { profile, loading } = usePetProfile();
 
     const healthGoalMap = {
         lose_weight: 'Lose Weight',
@@ -71,9 +70,6 @@ export default function DashboardPage() {
             </div>
 
             <div className="grid gap-6">
-                <div className="lg:col-span-3">
-                    <ActivityChart activityHistory={activityHistory} />
-                </div>
                  <Card className="shadow-md">
                     <CardHeader>
                         <CardTitle className="font-headline">Quick Insights</CardTitle>
