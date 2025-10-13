@@ -1,179 +1,194 @@
 /**
- * @fileoverview Firestore Security Rules for PetLife application.
+ * @fileoverview Firestore Security Rules for the PetLife application.
  *
  * Core Philosophy:
- * This ruleset enforces a strict user-ownership model for all data. Each user can only
- * access their own data and the data of their pets. No cross-user access is allowed.
+ * This ruleset enforces a strict user-ownership model. Each user has full control over their own data tree,
+ * including user profiles, pet profiles, meal plans, supplement recommendations, and activity records.
+ * No cross-user access is permitted unless explicitly specified.
  *
  * Data Structure:
- * All data is nested under /users/{userId}. Pets are stored as subcollections under users,
- * and meal plans, supplement recommendations, and activity records are stored as
- * subcollections under pets. This hierarchical structure ensures clear ownership and
- * avoids the need for complex queries in security rules.
+ * All data is nested under /users/{userId}, ensuring clear ownership.  Pet profiles are stored as
+ * /users/{userId}/pets/{petId}, and related data (meal plans, supplements, activities) are stored as
+ * subcollections under each pet. This hierarchical structure simplifies security rules and eliminates the
+ * need for complex queries or `get()` calls.
  *
  * Key Security Decisions:
- * - Users can only create, read, update, and delete their own user documents.
- * - Users can only create, read, update, and delete pets that belong to them.
- * - Users can only create, read, update, and delete meal plans, supplement recommendations,
- *   and activity records that belong to their pets.
- * - Listing of user documents is disallowed to prevent potential information leakage.
- * - The rules prioritize security and atomicity by avoiding `get()` calls. All authorization
- *   decisions are based on path-based ownership.
+ * - User listing is implicitly denied; only a user can access their own profile data.
+ * - All write operations are validated against the authenticated user's ID to prevent unauthorized data modification.
+ * - Deletion of documents is allowed only by the owner.
  *
  * Denormalization for Authorization:
- *  N/A - Path-based ownership obviates the need for denormalization.
- *
- * Structural Segregation:
- *  N/A - Data is segregated by nesting under user and pet documents.
+ *  - The data structure inherently denormalizes the user-pet relationship into the document paths.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Protects user profile data, ensuring only the owner can manage their profile.
+     * @description Secures user profile data, ensuring only the authenticated user can access their own profile.
      * @path /users/{userId}
-     * @allow (create) - Authenticated user creates their own profile (userId matches auth.uid).
-     * @allow (get, update, delete) - Authenticated user accesses their own profile (userId matches auth.uid).
-     * @deny (create) - Authenticated user attempts to create a profile with a different userId.
-     * @deny (get, update, delete) - Authenticated user attempts to access another user's profile.
-     * @deny (list) - Listing of user documents is not allowed.
+     * @allow (create) User 'WHvcLe6OjjeG3mMC9JplxabbFU93' can create their own profile with matching userId.
+     * @deny (create) User 'OTHER_USER_ID' cannot create a profile with userId 'WHvcLe6OjjeG3mMC9JplxabbFU93'.
+     * @allow (get) User 'WHvcLe6OjjeG3mMC9JplxabbFU93' can read their own profile.
+     * @deny (get) User 'OTHER_USER_ID' cannot read user 'WHvcLe6OjjeG3mMC9JplxabbFU93' profile.
+     * @allow (update) User 'WHvcLe6OjjeG3mMC9JplxabbFU93' can update their own profile.
+     * @deny (update) User 'OTHER_USER_ID' cannot update user 'WHvcLe6OjjeG3mMC9JplxabbFU93' profile.
+     * @allow (delete) User 'WHvcLe6OjjeG3mMC9JplxabbFU93' can delete their own profile.
+     * @deny (delete) User 'OTHER_USER_ID' cannot delete user 'WHvcLe6OjjeG3mMC9JplxabbFU93' profile.
      * @principle Enforces document ownership for all operations on user profiles.
      */
     match /users/{userId} {
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
       function isOwner(userId) {
         return request.auth.uid == userId;
       }
-
       function isExistingOwner(userId) {
-          return isOwner(userId) && resource != null;
+        return isOwner(userId) && resource != null;
       }
 
-      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.id == userId;
       allow get: if isOwner(userId);
-      allow list: if false;
+      allow list: if false; // User listing is not permitted
+
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
       allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Protects pet profile data, ensuring only the pet's owner can manage the profile.
+     * @description Secures pet profile data, ensuring only the owning user can access their pet profiles.
      * @path /users/{userId}/pets/{petId}
-     * @allow (create) - Authenticated user creates a pet profile under their user ID.
-     * @allow (get, list, update, delete) - Authenticated user accesses their own pet profiles.
-     * @deny (create) - Authenticated user attempts to create a pet profile under a different user ID.
-     * @deny (get, list, update, delete) - Authenticated user attempts to access another user's pet profiles.
+     * @allow (create) User 'WHvcLe6OjjeG3mMC9JplxabbFU93' can create a pet profile under their user ID.
+     * @deny (create) User 'OTHER_USER_ID' cannot create a pet profile under user 'WHvcLe6OjjeG3mMC9JplxabbFU93'.
+     * @allow (get) User 'WHvcLe6OjjeG3mMC9JplxabbFU93' can read a pet profile under their user ID.
+     * @deny (get) User 'OTHER_USER_ID' cannot read a pet profile under user 'WHvcLe6OjjeG3mMC9JplxabbFU93'.
+     * @allow (update) User 'WHvcLe6OjjeG3mMC9JplxabbFU93' can update a pet profile under their user ID.
+     * @deny (update) User 'OTHER_USER_ID' cannot update a pet profile under user 'WHvcLe6OjjeG3mMC9JplxabbFU93'.
+     * @allow (delete) User 'WHvcLe6OjjeG3mMC9JplxabbFU93' can delete a pet profile under their user ID.
+     * @deny (delete) User 'OTHER_USER_ID' cannot delete a pet profile under user 'WHvcLe6OjjeG3mMC9JplxabbFU93'.
      * @principle Enforces document ownership for all operations on pet profiles.
      */
     match /users/{userId}/pets/{petId} {
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
       function isOwner(userId) {
         return request.auth.uid == userId;
       }
+       function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
 
-        function isExistingOwner(userId) {
-          return isOwner(userId) && resource != null;
-        }
-
-      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.userId == userId;
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
+
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
       allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Protects meal plan data, ensuring only the pet's owner can manage meal plans.
+     * @description Secures meal plan data, ensuring only the owning user can access meal plans for their pets.
      * @path /users/{userId}/pets/{petId}/mealPlans/{mealPlanId}
-     * @allow (create) - Authenticated user creates a meal plan under their pet's profile.
-     * @allow (get, list, update, delete) - Authenticated user accesses their own pet's meal plans.
-     * @deny (create) - Authenticated user attempts to create a meal plan under another user's pet profile.
-     * @deny (get, list, update, delete) - Authenticated user attempts to access another user's pet's meal plans.
+     * @allow (create) User 'WHvcLe6OjjeG3mMC9JplxabbFU93' can create a meal plan for their pet.
+     * @deny (create) User 'OTHER_USER_ID' cannot create a meal plan for pet 'petId' of user 'WHvcLe6OjjeG3mMC9JplxabbFU93'.
+     * @allow (get) User 'WHvcLe6OjjeG3mMC9JplxabbFU93' can read a meal plan for their pet.
+     * @deny (get) User 'OTHER_USER_ID' cannot read a meal plan for pet 'petId' of user 'WHvcLe6OjjeG3mMC9JplxabbFU93'.
+     * @allow (update) User 'WHvcLe6OjjeG3mMC9JplxabbFU93' can update a meal plan for their pet.
+     * @deny (update) User 'OTHER_USER_ID' cannot update a meal plan for pet 'petId' of user 'WHvcLe6OjjeG3mMC9JplxabbFU93'.
+     * @allow (delete) User 'WHvcLe6OjjeG3mMC9JplxabbFU93' can delete a meal plan for their pet.
+     * @deny (delete) User 'OTHER_USER_ID' cannot delete a meal plan for pet 'petId' of user 'WHvcLe6OjjeG3mMC9JplxabbFU93'.
      * @principle Enforces document ownership for all operations on meal plans.
      */
     match /users/{userId}/pets/{petId}/mealPlans/{mealPlanId} {
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
       function isOwner(userId) {
         return request.auth.uid == userId;
       }
+       function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
 
-        function isExistingOwner(userId) {
-          return isOwner(userId) && resource != null;
-        }
-
-      allow create: if isSignedIn() && isOwner(userId);
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
+
+      allow create: if isOwner(userId);
       allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Protects supplement recommendation data, ensuring only the pet's owner can manage recommendations.
+     * @description Secures supplement recommendation data, ensuring only the owning user can access supplement recommendations for their pets.
      * @path /users/{userId}/pets/{petId}/supplementRecommendations/{supplementRecommendationId}
-     * @allow (create) - Authenticated user creates a supplement recommendation under their pet's profile.
-     * @allow (get, list, update, delete) - Authenticated user accesses their own pet's supplement recommendations.
-     * @deny (create) - Authenticated user attempts to create a supplement recommendation under another user's pet profile.
-     * @deny (get, list, update, delete) - Authenticated user attempts to access another user's pet's supplement recommendations.
+     * @allow (create) User 'WHvcLe6OjjeG3mMC9JplxabbFU93' can create a supplement recommendation for their pet.
+     * @deny (create) User 'OTHER_USER_ID' cannot create a supplement recommendation for pet 'petId' of user 'WHvcLe6OjjeG3mMC9JplxabbFU93'.
+     * @allow (get) User 'WHvcLe6OjjeG3mMC9JplxabbFU93' can read a supplement recommendation for their pet.
+     * @deny (get) User 'OTHER_USER_ID' cannot read a supplement recommendation for pet 'petId' of user 'WHvcLe6OjjeG3mMC9JplxabbFU93'.
+     * @allow (update) User 'WHvcLe6OjjeG3mMC9JplxabbFU93' can update a supplement recommendation for their pet.
+     * @deny (update) User 'OTHER_USER_ID' cannot update a supplement recommendation for pet 'petId' of user 'WHvcLe6OjjeG3mMC9JplxabbFU93'.
+     * @allow (delete) User 'WHvcLe6OjjeG3mMC9JplxabbFU93' can delete a supplement recommendation for their pet.
+     * @deny (delete) User 'OTHER_USER_ID' cannot delete a supplement recommendation for pet 'petId' of user 'WHvcLe6OjjeG3mMC9JplxabbFU93'.
      * @principle Enforces document ownership for all operations on supplement recommendations.
      */
     match /users/{userId}/pets/{petId}/supplementRecommendations/{supplementRecommendationId} {
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
       function isOwner(userId) {
         return request.auth.uid == userId;
       }
+       function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
 
-        function isExistingOwner(userId) {
-          return isOwner(userId) && resource != null;
-        }
-
-      allow create: if isSignedIn() && isOwner(userId);
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
+
+      allow create: if isOwner(userId);
       allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Protects activity record data, ensuring only the pet's owner can manage activity records.
+     * @description Secures activity record data, ensuring only the owning user can access activity records for their pets.
      * @path /users/{userId}/pets/{petId}/activityRecords/{activityRecordId}
-     * @allow (create) - Authenticated user creates an activity record under their pet's profile.
-     * @allow (get, list, update, delete) - Authenticated user accesses their own pet's activity records.
-     * @deny (create) - Authenticated user attempts to create an activity record under another user's pet profile.
-     * @deny (get, list, update, delete) - Authenticated user attempts to access another user's pet's activity records.
+     * @allow (create) User 'WHvcLe6OjjeG3mMC9JplxabbFU93' can create an activity record for their pet.
+     * @deny (create) User 'OTHER_USER_ID' cannot create an activity record for pet 'petId' of user 'WHvcLe6OjjeG3mMC9JplxabbFU93'.
+     * @allow (get) User 'WHvcLe6OjjeG3mMC9JplxabbFU93' can read an activity record for their pet.
+     * @deny (get) User 'OTHER_USER_ID' cannot read an activity record for pet 'petId' of user 'WHvcLe6OjjeG3mMC9JplxabbFU93'.
+     * @allow (update) User 'WHvcLe6OjjeG3mMC9JplxabbFU93' can update an activity record for their pet.
+     * @deny (update) User 'OTHER_USER_ID' cannot update an activity record for pet 'petId' of user 'WHvcLe6OjjeG3mMC9JplxabbFU93'.
+     * @allow (delete) User 'WHvcLe6OjjeG3mMC9JplxabbFU93' can delete an activity record for their pet.
+     * @deny (delete) User 'OTHER_USER_ID' cannot delete an activity record for pet 'petId' of user 'WHvcLe6OjjeG3mMC9JplxabbFU93'.
      * @principle Enforces document ownership for all operations on activity records.
      */
     match /users/{userId}/pets/{petId}/activityRecords/{activityRecordId} {
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
       function isOwner(userId) {
         return request.auth.uid == userId;
       }
+       function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
 
-        function isExistingOwner(userId) {
-          return isOwner(userId) && resource != null;
-        }
-
-      allow create: if isSignedIn() && isOwner(userId);
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
+
+      allow create: if isOwner(userId);
       allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
+    }
+       /**
+     * @description Fixes the reported error by granting the user permission to list weight records for their pet.
+     * @path /users/{userId}/pets/{petId}/weightRecords
+     * @allow (list) User 'WHvcLe6OjjeG3mMC9JplxabbFU93' can list weight records for their pet.
+     * @deny (list) User 'OTHER_USER_ID' cannot list weight records for pet 'petId' of user 'WHvcLe6OjjeG3mMC9JplxabbFU93'.
+     * @principle Enforces document ownership for list operations on weight records.
+     */
+    match /users/{userId}/pets/{petId}/weightRecords/{weightRecordId} {
+        function isOwner(userId) {
+            return request.auth.uid == userId;
+        }
+        function isExistingOwner(userId) {
+            return isOwner(userId) && resource != null;
+        }
+
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+
+        allow create: if isOwner(userId);
+        allow update: if isExistingOwner(userId);
+        allow delete: if isExistingOwner(userId);
     }
   }
 }
