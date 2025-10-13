@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -19,7 +19,6 @@ import {
   Lock,
   Users,
 } from 'lucide-react';
-
 import {
   SidebarProvider,
   Sidebar,
@@ -35,14 +34,17 @@ import {
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { usePetProfile, PetProfileProvider } from '@/hooks/use-pet-provider';
 import { Logo } from '@/components/logo';
 import { ProSubscriptionDialog } from '@/components/pro-subscription-dialog';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Label } from '@/components/ui/label';
-import { useAuth, useUser } from '@/firebase';
+import { useAuth, useUser, useFirestore } from '@/firebase';
 import { signOut } from 'firebase/auth';
+import { doc, setDoc, getDoc, onSnapshot } from 'firebase/firestore';
+import type { PetProfile, ActivityHistory } from '@/lib/types';
+import { PetProfileContext } from '@/hooks/use-pet-provider';
+
 
 const PRO_CODE = "petlife7296";
 
@@ -50,7 +52,7 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { profile, loading, clearProfile, clearActivityHistory, saveProfile } = usePetProfile();
+  const { profile, loading, clearProfile, clearActivityHistory, saveProfile } = React.useContext(PetProfileContext)!;
   const { toast } = useToast();
   const [isProDialogOpen, setIsProDialogOpen] = useState(false);
   const [promoCode, setPromoCode] = useState('');
@@ -100,8 +102,6 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
   const handlePromoCode = async () => {
     if (promoCode.toLowerCase() === PRO_CODE.toLowerCase()) {
       if (profile) {
-        // saveProfile now instantly updates the shared state.
-        // React will handle the re-render automatically.
         await saveProfile({ ...profile, isPro: true });
         toast({
           title: 'Félicitations !',
@@ -250,9 +250,129 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
 
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const { user, isUserLoading } = useUser();
+  const firestore = useFirestore();
+  const [profile, setProfile] = useState<PetProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [activityHistory, setActivityHistory] = useState<ActivityHistory>({});
+  
+  const getActivityHistoryKey = (userId: string) => `petlife-activity-history-${userId}`;
+
+  useEffect(() => {
+    if (isUserLoading) {
+      setLoading(true);
+      return;
+    }
+    if (!user || !firestore) {
+      setProfile(null);
+      setLoading(false);
+      return;
+    }
+
+    const petDocRef = doc(firestore, 'users', user.uid, 'pets', 'main-pet');
+    setLoading(true);
+
+    const unsubscribe = onSnapshot(petDocRef, (docSnap) => {
+      if (docSnap.exists()) {
+        setProfile(docSnap.data() as PetProfile);
+      } else {
+        setProfile(null);
+      }
+      setLoading(false);
+    }, (error) => {
+      console.error("Erreur de chargement du profil depuis Firestore :", error);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [user, firestore, isUserLoading]);
+
+  useEffect(() => {
+    if (user) {
+      const key = getActivityHistoryKey(user.uid);
+      try {
+        const storedHistory = localStorage.getItem(key);
+        setActivityHistory(storedHistory ? JSON.parse(storedHistory) : {});
+      } catch (e) {
+        console.error("Impossible de lire l'historique d'activité :", e);
+        setActivityHistory({});
+      }
+    } else {
+      setActivityHistory({});
+    }
+  }, [user]);
+
+  const saveProfile = async (newProfileData: Partial<PetProfile>) => {
+    if (!user || !firestore) {
+      console.error("Sauvegarde impossible : utilisateur non connecté.");
+      return;
+    }
+
+    const userDocRef = doc(firestore, 'users', user.uid);
+    const petDocRef = doc(userDocRef, 'pets', 'main-pet');
+    
+    const currentProfile = profile || {
+        name: '', species: 'dog', breed: '', age: 0, weight: 0,
+        healthGoal: 'maintain_weight', isPro: false,
+    };
+    
+    const updatedProfile = { ...currentProfile, ...newProfileData };
+
+    await setDoc(petDocRef, updatedProfile, { merge: true });
+    
+    const denormalizedData = { 
+        petName: updatedProfile.name, 
+        petSpecies: updatedProfile.species,
+        isPro: updatedProfile.isPro 
+    };
+
+    if (user.email) {
+      (denormalizedData as any).email = user.email;
+    }
+
+    await setDoc(userDocRef, denormalizedData, { merge: true });
+  };
+
+  const clearProfile = () => setProfile(null);
+
+  const saveActivityHistory = (newHistory: ActivityHistory) => {
+    if (user) {
+      setActivityHistory(newHistory);
+      localStorage.setItem(getActivityHistoryKey(user.uid), JSON.stringify(newHistory));
+    }
+  };
+
+  const clearActivityHistory = () => {
+    if (user) {
+      setActivityHistory({});
+      localStorage.removeItem(getActivityHistoryKey(user.uid));
+    }
+  };
+  
+  useEffect(() => {
+    if (user && firestore) {
+        const userDocRef = doc(firestore, 'users', user.uid);
+        getDoc(userDocRef).then(docSnap => {
+            if (!docSnap.exists() && user.email) {
+                setDoc(userDocRef, { email: user.email }, { merge: true });
+            }
+        });
+    }
+  }, [user, firestore]);
+
+  const contextValue = {
+    profile,
+    loading: loading || isUserLoading,
+    activityHistory,
+    saveProfile,
+    clearProfile,
+    setActivityHistory: saveActivityHistory,
+    clearActivityHistory,
+  };
+
   return (
-    <PetProfileProvider>
+    <PetProfileContext.Provider value={contextValue}>
       <DashboardLayoutContent>{children}</DashboardLayoutContent>
-    </PetProfileProvider>
+    </PetProfileContext.Provider>
   )
 }

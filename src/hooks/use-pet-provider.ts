@@ -1,13 +1,11 @@
 
 'use client';
 
-import React, { useState, useEffect, createContext, useContext, ReactNode } from 'react';
+import React, { createContext, useContext, type ReactNode } from 'react';
 import type { PetProfile, ActivityHistory } from '@/lib/types';
-import { useUser, useFirestore } from '@/firebase';
-import { doc, setDoc, getDoc, onSnapshot } from 'firebase/firestore';
 
-const getActivityHistoryKey = (userId: string) => `petlife-activity-history-${userId}`;
-
+// 1. Définition du type pour le contexte
+// C'est la "forme" des données que notre contexte va fournir.
 interface PetProfileContextType {
   profile: PetProfile | null;
   loading: boolean;
@@ -18,147 +16,20 @@ interface PetProfileContextType {
   clearActivityHistory: () => void;
 }
 
-const PetProfileContext = createContext<PetProfileContextType | undefined>(undefined);
-
-export function PetProfileProvider({ children }: { children: ReactNode }) {
-  const { user, isUserLoading } = useUser();
-  const firestore = useFirestore();
-  const [profile, setProfile] = useState<PetProfile | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [activityHistory, setActivityHistory] = useState<ActivityHistory>({});
-
-  useEffect(() => {
-    if (isUserLoading) {
-      setLoading(true);
-      return;
-    }
-    if (!user || !firestore) {
-      setProfile(null);
-      setLoading(false);
-      return;
-    }
-
-    const petDocRef = doc(firestore, 'users', user.uid, 'pets', 'main-pet');
-    setLoading(true);
-
-    const unsubscribe = onSnapshot(petDocRef, (docSnap) => {
-      if (docSnap.exists()) {
-        const data = docSnap.data() as PetProfile;
-        setProfile(data);
-      } else {
-        setProfile(null);
-      }
-      setLoading(false);
-    }, (error) => {
-      console.error("Erreur de chargement du profil depuis Firestore :", error);
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, [user, firestore, isUserLoading]);
-
-  useEffect(() => {
-    if (user) {
-      const key = getActivityHistoryKey(user.uid);
-      try {
-        const storedHistory = localStorage.getItem(key);
-        setActivityHistory(storedHistory ? JSON.parse(storedHistory) : {});
-      } catch (e) {
-        console.error("Impossible de lire l'historique d'activité :", e);
-        setActivityHistory({});
-      }
-    } else {
-      setActivityHistory({});
-    }
-  }, [user]);
-
-  const saveProfile = async (newProfileData: Partial<PetProfile>) => {
-    if (!user || !firestore) {
-      console.error("Sauvegarde impossible : utilisateur non connecté.");
-      return;
-    }
-
-    const userDocRef = doc(firestore, 'users', user.uid);
-    const petDocRef = doc(userDocRef, 'pets', 'main-pet');
-
-    const currentProfile = profile || {
-        name: '',
-        species: 'dog',
-        breed: '',
-        age: 0,
-        weight: 0,
-        healthGoal: 'maintain_weight',
-        isPro: false,
-    };
-    
-    const updatedProfile = { ...currentProfile, ...newProfileData };
-
-    await setDoc(petDocRef, updatedProfile, { merge: true });
-    
-    const denormalizedData = { 
-        petName: updatedProfile.name, 
-        petSpecies: updatedProfile.species,
-        isPro: updatedProfile.isPro 
-    };
-
-    if (user.email) {
-      (denormalizedData as any).email = user.email;
-    }
-
-    await setDoc(userDocRef, denormalizedData, { merge: true });
-  };
-
-  const clearProfile = () => {
-    setProfile(null);
-  };
-
-  const saveActivityHistory = (newHistory: ActivityHistory) => {
-    if (user) {
-      setActivityHistory(newHistory);
-      localStorage.setItem(getActivityHistoryKey(user.uid), JSON.stringify(newHistory));
-    }
-  };
-
-  const clearActivityHistory = () => {
-    if (user) {
-      setActivityHistory({});
-      localStorage.removeItem(getActivityHistoryKey(user.uid));
-    }
-  };
-  
-  useEffect(() => {
-    if (user && firestore) {
-        const userDocRef = doc(firestore, 'users', user.uid);
-        getDoc(userDocRef).then(docSnap => {
-            if (!docSnap.exists() && user.email) {
-                setDoc(userDocRef, { email: user.email }, { merge: true });
-            }
-        });
-    }
-  }, [user, firestore]);
-
-  const contextValue: PetProfileContextType = {
-    profile,
-    loading: loading || isUserLoading,
-    activityHistory,
-    saveProfile,
-    clearProfile,
-    setActivityHistory: saveActivityHistory,
-    clearActivityHistory,
-  };
-
-  return (
-    <PetProfileContext.Provider value={contextValue}>
-      {children}
-    </PetProfileContext.Provider>
-  );
-}
+// 2. Création du Contexte
+// Nous créons un contexte avec une valeur initiale de `undefined`.
+// C'est pourquoi nous devons toujours vérifier si le contexte est utilisé à l'intérieur d'un Provider.
+export const PetProfileContext = createContext<PetProfileContextType | undefined>(undefined);
 
 
+// 3. Création du Hook personnalisé `usePetProfile`
+// Ce hook simplifie l'accès au contexte pour les composants enfants.
 export function usePetProfile(): PetProfileContextType {
   const context = useContext(PetProfileContext);
   if (context === undefined) {
-    throw new Error('usePetProfile doit être utilisé à l\'intérieur d\'un PetProfileProvider');
+    // Si un composant essaie d'utiliser ce hook sans être enveloppé par le Provider,
+    // nous lançons une erreur claire pour le développeur.
+    throw new Error('usePetProfile doit être utilisé à l’intérieur d’un PetProfileProvider');
   }
   return context;
 }

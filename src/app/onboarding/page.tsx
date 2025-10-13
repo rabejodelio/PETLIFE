@@ -37,9 +37,9 @@ export default function OnboardingPage() {
   });
 
   const onSubmit = (data: PetProfileFormValues) => {
-    saveProfile({ ...data, isPro: false });
+    saveProfile({ ...data, isPro: profile?.isPro || false });
     toast({
-      title: "Profile created!",
+      title: "Profile saved!",
       description: "Let's get started on your pet's wellness journey.",
     })
     router.push('/dashboard');
@@ -182,7 +182,7 @@ export default function OnboardingPage() {
                                 )}
                             />
                         </div>
-                        <Button type="submit" className="w-full">Create Profile & View Plan</Button>
+                        <Button type="submit" className="w-full">Save Profile</Button>
                     </form>
                 </Form>
             </CardContent>
