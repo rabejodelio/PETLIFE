@@ -260,45 +260,50 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   useEffect(() => {
     if (!user || !firestore) {
-      setLoading(false);
+      if (!isUserLoading) {
+        setLoading(false);
+      }
       return;
     }
     
     setLoading(true);
 
     const userDocRef = doc(firestore, 'users', user.uid);
-    const unsubUser = onSnapshot(userDocRef, async (docSnap) => {
-        if (docSnap.exists()) {
-            setUserDoc(docSnap.data() as UserDoc);
-        } else if (user.email) {
-            const newUserDoc: UserDoc = { email: user.email, isPro: false };
-            try {
+    const petDocRef = doc(firestore, 'users', user.uid, 'pets', 'main-pet');
+
+    const manageUserDocument = async () => {
+        try {
+            const docSnap = await getDoc(userDocRef);
+            if (docSnap.exists()) {
+                setUserDoc(docSnap.data() as UserDoc);
+            } else if (user.email) {
+                const newUserDoc: UserDoc = { email: user.email, isPro: false };
                 await setDoc(userDocRef, newUserDoc);
                 setUserDoc(newUserDoc);
-            } catch (error) {
-                console.error("Failed to create user document:", error);
             }
+        } catch (error) {
+            console.error("Error managing user document:", error);
         }
-    });
+    };
 
-    const petDocRef = doc(firestore, 'users', user.uid, 'pets', 'main-pet');
     const unsubPet = onSnapshot(petDocRef, (docSnap) => {
       if (docSnap.exists()) {
         setProfile(docSnap.data() as PetProfile);
       } else {
         setProfile(null);
       }
-      setLoading(false);
     }, (error) => {
       console.error("Erreur de chargement du profil depuis Firestore :", error);
+    });
+
+    manageUserDocument().finally(() => {
       setLoading(false);
     });
 
     return () => {
-      unsubUser();
       unsubPet();
     };
-  }, [user, firestore]);
+  }, [user, firestore, isUserLoading]);
 
   useEffect(() => {
     if (user) {
@@ -355,7 +360,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     try {
         await updateDoc(userDocRef, { isPro: true });
         
-        setUserDoc(prevDoc => ({ ...(prevDoc || {email: user.email!}), isPro: true }));
+        // After successful write, update local state to match
+        setUserDoc(prevDoc => ({ ...(prevDoc as UserDoc), isPro: true }));
         
         toast({
             title: 'Félicitations !',
