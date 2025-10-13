@@ -8,10 +8,9 @@ import {
 } from 'firebase/auth';
 
 /** Initiate anonymous sign-in (non-blocking). */
-export function initiateAnonymousSignIn(authInstance: Auth): void {
-  // CRITICAL: Call signInAnonymously directly. Do NOT use 'await signInAnonymously(...)'.
-  signInAnonymously(authInstance);
-  // Code continues immediately. Auth state change is handled by onAuthStateChanged listener.
+export function initiateAnonymousSignIn(authInstance: Auth): Promise<void> {
+  // Use await here to ensure session is established before proceeding.
+  return signInAnonymously(authInstance).then(() => {});
 }
 
 /** Initiate email/password sign-up (non-blocking). */

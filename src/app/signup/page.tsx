@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useAuth, useUser, initiateEmailSignUp } from "@/firebase";
+import { useAuth, useUser, initiateEmailSignUp, initiateAnonymousSignIn } from "@/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
+import { linkWithCredential, EmailAuthProvider } from "firebase/auth";
 
 export default function SignupPage() {
     const router = useRouter();
@@ -21,7 +22,7 @@ export default function SignupPage() {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        if (!isUserLoading && user) {
+        if (!isUserLoading && user && !user.isAnonymous) {
             toast({
                 title: "Account Created!",
                 description: "Let's create a profile for your pet.",
@@ -30,7 +31,7 @@ export default function SignupPage() {
         }
     }, [user, isUserLoading, router, toast]);
 
-    const handleSignup = (e: React.FormEvent) => {
+    const handleSignup = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
         setIsLoading(true);
@@ -41,21 +42,36 @@ export default function SignupPage() {
             return;
         }
 
-        // Non-blocking call
-        initiateEmailSignUp(auth, email, password);
-
-        // We show a loading state and let the onAuthStateChanged listener handle success.
-        // A simple timeout can handle failures like email-already-in-use.
-        setTimeout(() => {
-            if (!user) { // If user is not set after a delay, assume failure.
-                 toast({
-                    variant: "destructive",
-                    title: "Signup Failed",
-                    description: "This email might already be in use. Please try another one.",
-                });
-                setIsLoading(false);
+        try {
+            // Ensure we have an anonymous user session first
+            if (!auth.currentUser) {
+                await initiateAnonymousSignIn(auth);
             }
-        }, 3000); // 3-second timeout to check for login status.
+
+            // Now that we're sure there's a user (anonymous), link the new credentials
+            if (auth.currentUser) {
+                const credential = EmailAuthProvider.credential(email, password);
+                await linkWithCredential(auth.currentUser, credential);
+            } else {
+                throw new Error("Failed to establish a user session.");
+            }
+
+        } catch (error: any) {
+            console.error("Signup error:", error);
+            let errorMessage = "An unknown error occurred during sign-up.";
+            if (error.code === 'auth/email-already-in-use') {
+                errorMessage = "This email is already in use. Please log in or use a different email.";
+            } else if (error.code === 'auth/invalid-email') {
+                errorMessage = "Please enter a valid email address.";
+            }
+            setError(errorMessage);
+            toast({
+                variant: "destructive",
+                title: "Signup Failed",
+                description: errorMessage,
+            });
+            setIsLoading(false);
+        }
     };
 
     return (
