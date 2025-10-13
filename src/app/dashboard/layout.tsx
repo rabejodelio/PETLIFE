@@ -338,33 +338,32 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const userDocRef = doc(firestore, 'users', user.uid);
 
     try {
-        // Step 1: Write to Firestore and wait for it to complete.
-        await setDoc(userDocRef, { isPro: true }, { merge: true });
+        // Step 1: Read the current document data first.
+        const docSnap = await getDoc(userDocRef);
+        const existingData = docSnap.exists() ? docSnap.data() : { email: user.email };
 
-        // Step 2: If successful, show success toast.
+        // Step 2: Merge existing data with the new 'isPro' status.
+        const dataToSave = { ...existingData, isPro: true };
+
+        // Step 3: Write the complete, valid object back to Firestore.
+        await setDoc(userDocRef, dataToSave);
+        
+        // Step 4: After successful write, update local state and notify user.
+        setUserDoc(dataToSave as UserDoc);
         toast({
             title: 'Félicitations !',
             description: "Vous êtes maintenant un membre Pro.",
         });
 
-        // Step 3: Securely update the local state after the write is confirmed.
-        // This is now safe because the onSnapshot listener will receive the update
-        // and handle the re-render automatically and correctly.
-        // We can optionally set it here for instant feedback, but onSnapshot is the source of truth.
-        setUserDoc(currentDoc => {
-            const newDoc = currentDoc ? { ...currentDoc } : { email: user.email! };
-            newDoc.isPro = true;
-            return newDoc;
-        });
-
     } catch (error) {
-        // Step 4: If Firestore write fails, show an error.
         console.error("Promo code update failed:", error);
         toast({
             variant: 'destructive',
             title: 'Erreur',
             description: 'la mise à jour du profil a échoué. Veuillez réessayer.',
         });
+        // Re-throw the error if other parts of the app need to react to the failure.
+        throw error;
     }
   };
 
@@ -418,3 +417,5 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     </PetProfileContext.Provider>
   );
 }
+
+    
