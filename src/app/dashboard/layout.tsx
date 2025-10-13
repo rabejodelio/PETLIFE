@@ -100,10 +100,10 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
     router.push('/');
   };
 
-  const handlePromoCode = async () => {
+  const handlePromoCode = () => {
     if (promoCode.toLowerCase() === PRO_CODE.toLowerCase()) {
       if (profile) {
-        await saveProfile({ isPro: true });
+        saveProfile({ isPro: true });
         toast({
           title: 'Félicitations !',
           description: "Vous êtes maintenant un membre Pro.",
@@ -303,44 +303,50 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
   }, [user]);
 
-  const saveProfile = async (newProfileData: Partial<PetProfile>) => {
+  const saveProfile = (newProfileData: Partial<PetProfile>) => {
     if (!user || !firestore) {
       console.error("Sauvegarde impossible : utilisateur non connecté.");
       return;
     }
-  
+
+    // Construct the full updated profile object first
+    const updatedProfile: PetProfile = {
+      ...(profile || {
+        name: '', species: 'dog', breed: '', age: 0, weight: 0,
+        healthGoal: 'maintain_weight', isPro: false,
+      }),
+      ...newProfileData
+    };
+    
+    // Optimistically update the local state.
+    // This makes the UI feel instant and prevents the race condition.
+    setProfile(updatedProfile);
+
+    // Now, persist the changes to Firestore in the background.
     const userDocRef = doc(firestore, 'users', user.uid);
     const petDocRef = doc(userDocRef, 'pets', 'main-pet');
-    
-    // Create the full updated profile object to be saved
-    const updatedProfile: PetProfile = { 
-        ...(profile || { 
-            name: '', species: 'dog', breed: '', age: 0, weight: 0,
-            healthGoal: 'maintain_weight', isPro: false,
-        }), 
-        ...newProfileData 
+
+    const denormalizedData: { petName: string; petSpecies: 'dog' | 'cat'; isPro: boolean; email?: string } = {
+      petName: updatedProfile.name,
+      petSpecies: updatedProfile.species,
+      isPro: updatedProfile.isPro
     };
-  
-    // Save the full pet profile to its own document
-    await setDoc(petDocRef, updatedProfile, { merge: true });
-    
-    // Prepare the denormalized data for the user document
-    const denormalizedData: { petName: string; petSpecies: 'dog' | 'cat'; isPro: boolean; email?: string } = { 
-        petName: updatedProfile.name, 
-        petSpecies: updatedProfile.species,
-        isPro: updatedProfile.isPro 
-    };
-  
     if (user.email) {
       denormalizedData.email = user.email;
     }
-  
-    // Save the denormalized data to the user document
-    await setDoc(userDocRef, denormalizedData, { merge: true });
+
+    // Use promises to write to both documents
+    const petPromise = setDoc(petDocRef, updatedProfile, { merge: true });
+    const userPromise = setDoc(userDocRef, denormalizedData, { merge: true });
     
-    // **CRITICAL FIX**: Update the local state immediately after successful save.
-    // This makes the UI reactive without waiting for the onSnapshot listener.
-    setProfile(updatedProfile);
+    // We don't need to await them here as the UI is already updated.
+    // We can add .catch() for error handling if needed.
+    Promise.all([petPromise, userPromise]).catch(error => {
+      console.error("Failed to save profile to Firestore:", error);
+      // Optional: revert the optimistic update on failure
+      // setProfile(profile); 
+      // toast({ variant: 'destructive', title: 'Save failed' });
+    });
   };
 
   const clearProfile = () => setProfile(null);
