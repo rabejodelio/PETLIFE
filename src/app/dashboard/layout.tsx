@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -335,6 +336,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
 
     const userDocRef = doc(firestore, 'users', user.uid);
+    const updatedDoc = { ...userDoc, email: user.email!, isPro: true };
+
+    // Optimistic update
+    setUserDoc(updatedDoc);
 
     try {
         await setDoc(userDocRef, { isPro: true }, { merge: true });
@@ -343,6 +348,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             description: "Vous êtes maintenant un membre Pro.",
         });
     } catch (error) {
+        // Revert on failure
+        setUserDoc(userDoc);
         console.error("Promo code update failed:", error);
         toast({
             variant: 'destructive',
