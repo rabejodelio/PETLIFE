@@ -65,6 +65,10 @@
           "items": {
             "type": "string"
           }
+        },
+        "isPro": {
+          "type": "boolean",
+          "description": "Indicates if the user has a Pro subscription for this pet."
         }
       },
       "required": [
@@ -75,7 +79,8 @@
         "age",
         "breed",
         "weight",
-        "weightGoal"
+        "weightGoal",
+        "isPro"
       ]
     },
     "MealPlan": {
@@ -145,7 +150,7 @@
       ]
     },
     "ActivityRecord": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
+      "$schema": "http://json-schema.org/draft-07-schema#",
       "title": "ActivityRecord",
       "type": "object",
       "description": "Represents an activity record for a pet.",

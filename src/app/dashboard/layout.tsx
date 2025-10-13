@@ -17,6 +17,7 @@ import {
   Home,
   Sparkles,
   Lock,
+  Users,
 } from 'lucide-react';
 
 import {
@@ -118,6 +119,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     { href: '/dashboard/activity', label: 'Activity', icon: PawPrint, pro: true },
     { href: '/dashboard/wellness', label: 'Wellness', icon: Heart, pro: true },
     { href: '/dashboard/profile', label: 'Profile', icon: User, pro: false },
+    { href: '/dashboard/users', label: 'Users', icon: Users, pro: false, admin: true },
   ];
 
   if (isUserLoading || loading) {
@@ -127,6 +129,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </div>
     );
   }
+
+  // A simple check for an admin user. In a real app, this should be based on custom claims.
+  const isAdmin = user?.email === 'admin@petlife.com';
 
   return (
     <SidebarProvider>
@@ -140,7 +145,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </SidebarHeader>
         <SidebarContent className="p-2">
           <SidebarMenu>
-            {navItems.map((item) => {
+            {navItems.filter(item => !(item.admin && !isAdmin)).map((item) => {
               const isPro = profile?.isPro ?? false;
               const isLocked = item.pro && !isPro;
               
