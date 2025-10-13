@@ -97,10 +97,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     router.push('/');
   };
 
-  const handlePromoCode = () => {
+  const handlePromoCode = async () => {
     if (promoCode.toLowerCase() === PRO_CODE.toLowerCase()) {
       if (profile) {
-        saveProfile({ ...profile, isPro: true });
+        await saveProfile({ ...profile, isPro: true });
         toast({
           title: 'Félicitations !',
           description: "Vous êtes maintenant un membre Pro.",

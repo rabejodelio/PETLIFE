@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import type { PetProfile, ActivityHistory } from '@/lib/types';
 import { useUser, useFirestore } from '@/firebase';
 import { doc, setDoc, getDoc, onSnapshot, collection, DocumentReference, DocumentData } from 'firebase/firestore';
-import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 const getActivityHistoryKey = (userId: string) => `petlife-activity-history-${userId}`;
 
@@ -85,14 +84,14 @@ export function usePetProfile() {
     }
   }, [user, isUserLoading, loadActivityHistory]);
 
-  const saveProfile = useCallback((newProfileData: PetProfile) => {
+  const saveProfile = useCallback(async (newProfileData: PetProfile): Promise<void> => {
     if (!petDocRef || !userDocRef) {
       console.error("User or Firestore not available for saving.");
       return;
     }
 
     // Save the full pet profile to its own document
-    setDocumentNonBlocking(petDocRef, newProfileData, { merge: true });
+    await setDoc(petDocRef, newProfileData, { merge: true });
 
     // Denormalize key information to the parent user document for easy querying
     const denormalizedPetData = {
@@ -100,7 +99,8 @@ export function usePetProfile() {
       petSpecies: newProfileData.species,
       isPro: newProfileData.isPro,
     };
-    setDocumentNonBlocking(userDocRef, denormalizedPetData, { merge: true });
+    await setDoc(userDocRef, denormalizedPetData, { merge: true });
+
 
     // Optimistically update local state
     setProfile(newProfileData);
