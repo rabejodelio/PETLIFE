@@ -17,15 +17,21 @@ export function usePetProfile() {
   const [activityHistory, setActivityHistory] = useState<ActivityHistory>({});
   const [isActivityHistoryLoading, setIsActivityHistoryLoading] = useState(true);
 
-  // Memoize the pet document reference
-  const petDocRef = useMemo(() => {
+  // Memoize the user and pet document references
+  const userDocRef = useMemo(() => {
     if (user && firestore) {
-      // For simplicity, we'll assume one pet per user and use a fixed ID.
-      // In a real multi-pet app, you'd manage multiple pet IDs.
-      return doc(firestore, 'users', user.uid, 'pets', 'main-pet');
+      return doc(firestore, 'users', user.uid);
     }
     return null;
   }, [user, firestore]);
+
+  const petDocRef = useMemo(() => {
+    if (userDocRef) {
+      // For simplicity, we'll assume one pet per user and use a fixed ID.
+      return doc(userDocRef, 'pets', 'main-pet');
+    }
+    return null;
+  }, [userDocRef]);
 
   // Effect to subscribe to pet profile changes
   useEffect(() => {
@@ -80,15 +86,25 @@ export function usePetProfile() {
   }, [user, isUserLoading, loadActivityHistory]);
 
   const saveProfile = useCallback((newProfileData: PetProfile) => {
-    if (!petDocRef) {
+    if (!petDocRef || !userDocRef) {
       console.error("User or Firestore not available for saving.");
       return;
     }
-    // Use non-blocking write for better UX
+
+    // Save the full pet profile to its own document
     setDocumentNonBlocking(petDocRef, newProfileData, { merge: true });
+
+    // Denormalize key information to the parent user document for easy querying
+    const denormalizedPetData = {
+      petName: newProfileData.name,
+      petSpecies: newProfileData.species,
+      isPro: newProfileData.isPro,
+    };
+    setDocumentNonBlocking(userDocRef, denormalizedPetData, { merge: true });
+
     // Optimistically update local state
     setProfile(newProfileData);
-  }, [petDocRef]);
+  }, [petDocRef, userDocRef]);
   
   const clearProfile = useCallback(() => {
     // This would now involve deleting the document in Firestore,
