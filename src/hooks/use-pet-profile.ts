@@ -87,22 +87,22 @@ export function usePetProfile() {
   const saveProfile = useCallback(async (newProfileData: PetProfile): Promise<void> => {
     if (!petDocRef || !userDocRef) {
       console.error("User or Firestore not available for saving.");
-      return;
+      throw new Error("User or Firestore not available");
     }
 
-    // Save the full pet profile to its own document
-    await setDoc(petDocRef, newProfileData, { merge: true });
-
-    // Denormalize key information to the parent user document for easy querying
     const denormalizedPetData = {
       petName: newProfileData.name,
       petSpecies: newProfileData.species,
       isPro: newProfileData.isPro,
     };
-    await setDoc(userDocRef, denormalizedPetData, { merge: true });
-
-
-    // Optimistically update local state
+    
+    // Use Promise.all to wait for both writes to complete
+    await Promise.all([
+      setDoc(petDocRef, newProfileData, { merge: true }),
+      setDoc(userDocRef, denormalizedPetData, { merge: true })
+    ]);
+    
+    // This local state update is optimistic, but the function now waits for Firestore.
     setProfile(newProfileData);
   }, [petDocRef, userDocRef]);
   

@@ -101,13 +101,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const handlePromoCode = async () => {
     if (promoCode.toLowerCase() === PRO_CODE.toLowerCase()) {
       if (profile) {
-        // Save to Firestore and update local state at the same time
         await saveProfile({ ...profile, isPro: true });
         toast({
           title: 'Félicitations !',
           description: "Vous êtes maintenant un membre Pro.",
         });
         setIsProDialogOpen(false); // Close any open dialogs
+        router.refresh(); // Refresh server components and re-fetch data
       }
     } else {
       toast({
