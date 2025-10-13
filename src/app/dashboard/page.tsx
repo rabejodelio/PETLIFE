@@ -3,16 +3,14 @@
 import { Scale, Heart, PawPrint } from 'lucide-react';
 import { PageHeader } from '@/components/page-header';
 import { StatCard } from '@/components/dashboard/stat-card';
-import { WeightChart } from '@/components/dashboard/weight-chart';
 import { ActivityChart } from '@/components/dashboard/activity-chart';
 import { usePetProfile } from '@/hooks/use-pet-profile';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { AddWeightEntryForm } from '@/components/dashboard/add-weight-entry-form';
 
 export default function DashboardPage() {
-    const { profile, activityHistory, loading, petDocRef } = usePetProfile();
+    const { profile, activityHistory, loading } = usePetProfile();
 
     const healthGoalMap = {
         lose_weight: 'Lose Weight',
@@ -56,7 +54,7 @@ export default function DashboardPage() {
                     title="Current Weight"
                     value={`${profile?.weight || 0} kg`}
                     icon={<Scale className="h-5 w-5" />}
-                    description="Target: 13 kg"
+                    description="Last updated today"
                 />
                 <StatCard
                     title="Primary Goal"
@@ -72,31 +70,23 @@ export default function DashboardPage() {
                 />
             </div>
 
-            <div className="grid gap-6 lg:grid-cols-5">
+            <div className="grid gap-6">
                 <div className="lg:col-span-3">
-                    <WeightChart petDocRef={petDocRef} />
-                </div>
-                <div className="lg:col-span-2">
-                    <AddWeightEntryForm petDocRef={petDocRef} currentWeight={profile.weight} />
-                </div>
-                <div className="lg:col-span-5">
                     <ActivityChart activityHistory={activityHistory} />
                 </div>
+                 <Card className="shadow-md">
+                    <CardHeader>
+                        <CardTitle className="font-headline">Quick Insights</CardTitle>
+                        <CardDescription>AI-powered observations about {profile?.name}.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <ul className="space-y-2 text-sm list-disc list-inside">
+                            <li>Jax's activity levels on Wednesday were a bit low. Try an extra evening walk.</li>
+                            <li>Consider introducing a puzzle feeder to make meal times more engaging.</li>
+                        </ul>
+                    </CardContent>
+                </Card>
             </div>
-
-             <Card className="mt-6 shadow-md">
-                <CardHeader>
-                    <CardTitle className="font-headline">Quick Insights</CardTitle>
-                    <CardDescription>AI-powered observations about {profile?.name}.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <ul className="space-y-2 text-sm list-disc list-inside">
-                        <li>Jax's weight is trending down nicely, keep up the great work!</li>
-                        <li>Activity levels on Wednesday were a bit low. Try an extra evening walk.</li>
-                        <li>Consider introducing a puzzle feeder to make meal times more engaging.</li>
-                    </ul>
-                </CardContent>
-            </Card>
         </div>
     );
 }
