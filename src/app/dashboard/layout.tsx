@@ -68,7 +68,7 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
 
   const handleProSuccess = () => {
     if (profile && !profile.isPro) {
-      saveProfile({ ...profile, isPro: true });
+      saveProfile({ isPro: true });
        toast({
         title: 'Félicitations !',
         description: "Vous êtes maintenant un membre Pro.",
@@ -102,7 +102,7 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
   const handlePromoCode = async () => {
     if (promoCode.toLowerCase() === PRO_CODE.toLowerCase()) {
       if (profile) {
-        await saveProfile({ ...profile, isPro: true });
+        await saveProfile({ isPro: true });
         toast({
           title: 'Félicitations !',
           description: "Vous êtes maintenant un membre Pro.",
@@ -307,30 +307,38 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       console.error("Sauvegarde impossible : utilisateur non connecté.");
       return;
     }
-
+  
     const userDocRef = doc(firestore, 'users', user.uid);
     const petDocRef = doc(userDocRef, 'pets', 'main-pet');
     
-    const currentProfile = profile || {
-        name: '', species: 'dog', breed: '', age: 0, weight: 0,
-        healthGoal: 'maintain_weight', isPro: false,
+    // Merge new data with current profile state or a default structure
+    const updatedProfile = { 
+        ...(profile || { 
+            name: '', species: 'dog', breed: '', age: 0, weight: 0,
+            healthGoal: 'maintain_weight', isPro: false,
+        }), 
+        ...newProfileData 
     };
-    
-    const updatedProfile = { ...currentProfile, ...newProfileData };
-
+  
+    // Save the full updated profile to Firestore
     await setDoc(petDocRef, updatedProfile, { merge: true });
     
-    const denormalizedData = { 
+    // Denormalize some data to the user document
+    const denormalizedData: { petName: string; petSpecies: 'dog' | 'cat'; isPro: boolean; email?: string } = { 
         petName: updatedProfile.name, 
         petSpecies: updatedProfile.species,
         isPro: updatedProfile.isPro 
     };
-
+  
     if (user.email) {
-      (denormalizedData as any).email = user.email;
+      denormalizedData.email = user.email;
     }
-
+  
     await setDoc(userDocRef, denormalizedData, { merge: true });
+    
+    // Correctly update local state after successful save
+    // The `onSnapshot` listener will also pick this up, but updating here provides a faster UI response.
+    setProfile(updatedProfile);
   };
 
   const clearProfile = () => setProfile(null);
