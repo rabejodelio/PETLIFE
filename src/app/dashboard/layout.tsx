@@ -281,7 +281,24 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       if (docSnap.exists()) {
         setProfile(docSnap.data() as PetProfile);
       } else {
-        setProfile(null);
+        // If the pet doc doesn't exist, check the user doc for the 'isPro' status
+        const userDocRef = doc(firestore, 'users', user.uid);
+        getDoc(userDocRef).then(userSnap => {
+            if (userSnap.exists() && userSnap.data().isPro) {
+                // Create a minimal profile object with the Pro status
+                setProfile(currentProfile => ({
+                    name: currentProfile?.name || '',
+                    species: currentProfile?.species || 'dog',
+                    breed: currentProfile?.breed || '',
+                    age: currentProfile?.age || 0,
+                    weight: currentProfile?.weight || 0,
+                    healthGoal: currentProfile?.healthGoal || 'maintain_weight',
+                    isPro: true,
+                }));
+            } else {
+                setProfile(null);
+            }
+        });
       }
       setLoading(false);
     }, (error) => {
@@ -308,58 +325,66 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, [user]);
 
   const saveProfile = async (newProfileData: Partial<PetProfile>): Promise<void> => {
-    if (!user || !firestore) {
-        throw new Error("User not authenticated or Firestore not available.");
-    }
+      if (!user || !firestore) {
+          throw new Error("User not authenticated or Firestore not available.");
+      }
 
-    const updatedProfile: PetProfile = {
-        ...(profile || { 
-            name: '', species: 'dog', breed: '', age: 0, weight: 0, 
-            healthGoal: 'maintain_weight', isPro: false 
-        }),
-        ...newProfileData,
-    };
+      // If a profile doesn't exist, create a default one. Otherwise, use the existing one.
+      const baseProfile = profile || {
+          name: '', species: 'dog', breed: '', age: 0, weight: 0,
+          healthGoal: 'maintain_weight', isPro: false, avatarUrl: ''
+      };
 
-    const petDocRef = doc(firestore, 'users', user.uid, 'pets', 'main-pet');
-    const userDocRef = doc(firestore, 'users', user.uid);
+      const updatedProfile: PetProfile = {
+          ...baseProfile,
+          ...newProfileData,
+      };
 
-    const denormalizedData = {
-        petName: updatedProfile.name,
-        petSpecies: updatedProfile.species,
-        isPro: updatedProfile.isPro,
-        email: user.email,
-    };
+      const petDocRef = doc(firestore, 'users', user.uid, 'pets', 'main-pet');
+      const userDocRef = doc(firestore, 'users', user.uid);
 
-    try {
-        // Use Promise.all to ensure both writes are awaited
-        await Promise.all([
-            setDoc(petDocRef, updatedProfile, { merge: true }),
-            setDoc(userDocRef, denormalizedData, { merge: true })
-        ]);
-    } catch (error) {
-        console.error("Firestore write failed:", error);
-        // Re-throw so the calling function can handle it
-        throw error;
-    }
+      // This data is for the top-level user document, used for the admin user list.
+      const denormalizedData = {
+          petName: updatedProfile.name,
+          petSpecies: updatedProfile.species,
+          isPro: updatedProfile.isPro,
+          email: user.email,
+      };
+
+      try {
+          await Promise.all([
+              setDoc(petDocRef, updatedProfile, { merge: true }),
+              setDoc(userDocRef, denormalizedData, { merge: true })
+          ]);
+      } catch (error) {
+          console.error("Firestore write failed:", error);
+          throw error;
+      }
   };
 
-  const handlePromoCode = async (): Promise<void> => {
-    if (!profile) return; // Cannot apply code if there's no profile
 
+  const handlePromoCode = async (): Promise<void> => {
+    // Optimistic UI update: Set the profile to Pro immediately.
     const originalProfile = profile;
-    const updatedProfile = { ...profile, isPro: true };
-    
-    // Optimistic UI update
-    setProfile(updatedProfile); 
+    const newProfileState: PetProfile = {
+      ...(profile || {
+        // Create a default structure if profile is null
+        name: '', species: 'dog', breed: '', age: 0, weight: 0,
+        healthGoal: 'maintain_weight', isPro: false
+      }),
+      isPro: true
+    };
+    setProfile(newProfileState);
 
     try {
+        // Attempt to save the change to Firestore.
         await saveProfile({ isPro: true });
         toast({
             title: 'Félicitations !',
             description: "Vous êtes maintenant un membre Pro.",
         });
     } catch (error) {
-        // If saveProfile fails, revert the UI and show an error
+        // If Firestore save fails, revert the UI and show an error.
         setProfile(originalProfile); 
         toast({
             variant: 'destructive',
