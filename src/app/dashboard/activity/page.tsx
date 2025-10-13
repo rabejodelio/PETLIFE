@@ -3,7 +3,7 @@
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { usePetProfile } from '@/hooks/use-pet-profile';
+import { usePetProfile } from '@/hooks/use-pet-provider';
 import { Lightbulb, Calendar as CalendarIcon, CheckCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { getRecommendations } from './actions';

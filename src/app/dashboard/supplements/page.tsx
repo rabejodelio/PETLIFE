@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Pill, Lightbulb, ChevronDown } from 'lucide-react';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { usePetProfile } from '@/hooks/use-pet-profile';
+import { usePetProfile } from '@/hooks/use-pet-provider';
 import { getRecommendations } from './actions';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';

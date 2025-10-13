@@ -3,7 +3,7 @@
 import { Scale, Heart, PawPrint } from 'lucide-react';
 import { PageHeader } from '@/components/page-header';
 import { StatCard } from '@/components/dashboard/stat-card';
-import { usePetProfile } from '@/hooks/use-pet-profile';
+import { usePetProfile } from '@/hooks/use-pet-provider';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';

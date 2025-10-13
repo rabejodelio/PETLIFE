@@ -35,7 +35,7 @@ import {
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { usePetProfile, PetProfileProvider } from '@/hooks/use-pet-profile';
+import { usePetProfile, PetProfileProvider } from '@/hooks/use-pet-provider';
 import { Logo } from '@/components/logo';
 import { ProSubscriptionDialog } from '@/components/pro-subscription-dialog';
 import { Input } from '@/components/ui/input';

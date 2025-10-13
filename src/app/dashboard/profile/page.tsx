@@ -1,6 +1,6 @@
 'use client';
 
-import { usePetProfile } from "@/hooks/use-pet-profile";
+import { usePetProfile } from "@/hooks/use-pet-provider";
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";

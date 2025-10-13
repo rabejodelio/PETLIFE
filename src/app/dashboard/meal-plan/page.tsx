@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Utensils, ChevronDown } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { usePetProfile } from '@/hooks/use-pet-profile';
+import { usePetProfile } from '@/hooks/use-pet-provider';
 import { generateMealPlanAction, type MealPlanInput } from './actions';
 import type { MealPlanOutput } from '@/ai/ai-meal-planning';
 import { Textarea } from '@/components/ui/textarea';
