@@ -318,8 +318,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       ...newProfileData
     };
     
-    // Optimistically update the local state.
-    // This makes the UI feel instant and prevents the race condition.
+    // Optimistically update the local state immediately.
+    // This makes the UI feel instant and prevents race conditions with onSnapshot.
     setProfile(updatedProfile);
 
     // Now, persist the changes to Firestore in the background.
@@ -343,9 +343,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     // We can add .catch() for error handling if needed.
     Promise.all([petPromise, userPromise]).catch(error => {
       console.error("Failed to save profile to Firestore:", error);
-      // Optional: revert the optimistic update on failure
-      // setProfile(profile); 
-      // toast({ variant: 'destructive', title: 'Save failed' });
+      // Optional: revert the optimistic update on failure by re-fetching or setting back to the previous profile.
+      // For this app, we'll log the error and let the next onSnapshot eventually correct it.
     });
   };
 
