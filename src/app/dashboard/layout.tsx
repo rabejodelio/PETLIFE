@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
@@ -48,14 +49,23 @@ import { PetProfileContext } from '@/hooks/use-pet-provider';
 
 const PRO_CODE = "petlife7296";
 
-function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
+function DashboardLayoutContent({ 
+  children,
+  handlePromoCode,
+  promoCode,
+  setPromoCode,
+}: { 
+  children: React.ReactNode;
+  handlePromoCode: () => Promise<void>;
+  promoCode: string;
+  setPromoCode: (code: string) => void;
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { profile, loading, clearProfile, clearActivityHistory, saveProfile } = React.useContext(PetProfileContext)!;
   const { toast } = useToast();
   const [isProDialogOpen, setIsProDialogOpen] = useState(false);
-  const [promoCode, setPromoCode] = useState('');
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
 
@@ -99,17 +109,11 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
     router.push('/');
   };
 
-  const handlePromoCode = async () => {
+  const onApplyPromoCode = async () => {
     if (promoCode.toLowerCase() === PRO_CODE.toLowerCase()) {
-      if (profile) {
-        await saveProfile({ isPro: true });
-        toast({
-          title: 'Félicitations !',
-          description: "Vous êtes maintenant un membre Pro.",
-        });
-        setIsProDialogOpen(false);
-        setPromoCode('');
-      }
+      await handlePromoCode();
+      setIsProDialogOpen(false);
+      setPromoCode('');
     } else {
       toast({
         variant: 'destructive',
@@ -118,7 +122,6 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
       });
     }
   };
-
 
   const navItems = [
     { href: '/', label: 'Home', icon: Home, pro: false },
@@ -209,7 +212,7 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
                             <Label htmlFor="promo-code" className='text-left text-xs px-1 text-muted-foreground'>Code promotionnel</Label>
                             <div className='flex gap-2 w-full'>
                                 <Input id="promo-code" placeholder="Entrez votre code" value={promoCode} onChange={(e) => setPromoCode(e.target.value)} className="flex-grow bg-background/50 h-9" />
-                                <Button type="button" variant="secondary" onClick={handlePromoCode} className="h-9">Appliquer</Button>
+                                <Button type="button" variant="secondary" onClick={onApplyPromoCode} className="h-9">Appliquer</Button>
                             </div>
                         </div>
                     </SidebarMenuItem>
@@ -255,6 +258,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [profile, setProfile] = useState<PetProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [activityHistory, setActivityHistory] = useState<ActivityHistory>({});
+  const { toast } = useToast();
+  const [promoCode, setPromoCode] = useState('');
   
   const getActivityHistoryKey = (userId: string) => `petlife-activity-history-${userId}`;
 
@@ -305,11 +310,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const saveProfile = async (newProfileData: Partial<PetProfile>): Promise<void> => {
     if (!user || !firestore) {
       console.error("Sauvegarde impossible : utilisateur non connecté.");
-      return Promise.reject(new Error("User not connected"));
+      throw new Error("User not connected");
     }
 
-    // This is an optimistic update.
-    // It updates the local state first, assuming the write will succeed.
     const updatedProfile: PetProfile = {
       ...(profile || {
         name: '', species: 'dog', breed: '', age: 0, weight: 0,
@@ -320,7 +323,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     
     setProfile(updatedProfile);
 
-    // Now, persist the changes to Firestore in the background.
     const userDocRef = doc(firestore, 'users', user.uid);
     const petDocRef = doc(userDocRef, 'pets', 'main-pet');
 
@@ -334,16 +336,31 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
 
     try {
-        // We now await both writes to ensure they complete.
         await Promise.all([
             setDoc(petDocRef, updatedProfile, { merge: true }),
             setDoc(userDocRef, denormalizedData, { merge: true })
         ]);
     } catch (error) {
         console.error("Failed to save profile to Firestore:", error);
-        // Optional: revert the optimistic update on failure by re-fetching or setting back to the previous profile.
-        // For now, we log the error. The onSnapshot listener might eventually correct the UI.
         throw error;
+    }
+  };
+
+  const handlePromoCode = async (): Promise<void> => {
+    if (profile) {
+      try {
+        await saveProfile({ isPro: true });
+        toast({
+          title: 'Félicitations !',
+          description: "Vous êtes maintenant un membre Pro.",
+        });
+      } catch (error) {
+        toast({
+          variant: 'destructive',
+          title: 'Erreur',
+          description: 'La mise à jour du profil a échoué.',
+        });
+      }
     }
   };
 
@@ -386,7 +403,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <PetProfileContext.Provider value={contextValue}>
-      <DashboardLayoutContent>{children}</DashboardLayoutContent>
+      <DashboardLayoutContent
+        handlePromoCode={handlePromoCode}
+        promoCode={promoCode}
+        setPromoCode={setPromoCode}
+      >
+        {children}
+      </DashboardLayoutContent>
     </PetProfileContext.Provider>
   )
 }
