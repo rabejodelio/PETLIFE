@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -36,7 +35,7 @@ import {
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { usePetProfile } from '@/hooks/use-pet-profile';
+import { usePetProfile, PetProfileProvider } from '@/hooks/use-pet-profile';
 import { Logo } from '@/components/logo';
 import { ProSubscriptionDialog } from '@/components/pro-subscription-dialog';
 import { Input } from '@/components/ui/input';
@@ -47,7 +46,7 @@ import { signOut } from 'firebase/auth';
 
 const PRO_CODE = "petlife7296";
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -101,13 +100,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const handlePromoCode = async () => {
     if (promoCode.toLowerCase() === PRO_CODE.toLowerCase()) {
       if (profile) {
+        // saveProfile now instantly updates the shared state.
+        // React will handle the re-render automatically.
         await saveProfile({ ...profile, isPro: true });
         toast({
           title: 'Félicitations !',
           description: "Vous êtes maintenant un membre Pro.",
         });
-        setIsProDialogOpen(false); // Close any open dialogs
-        router.refresh(); // Refresh server components and re-fetch data
+        setIsProDialogOpen(false);
+        setPromoCode('');
       }
     } else {
       toast({
@@ -245,4 +246,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </SidebarInset>
     </SidebarProvider>
   );
+}
+
+
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <PetProfileProvider>
+      <DashboardLayoutContent>{children}</DashboardLayoutContent>
+    </PetProfileProvider>
+  )
 }
