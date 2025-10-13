@@ -267,11 +267,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     setLoading(true);
 
     const userDocRef = doc(firestore, 'users', user.uid);
-    const unsubUser = onSnapshot(userDocRef, (docSnap) => {
+    const unsubUser = onSnapshot(userDocRef, async (docSnap) => {
         if (docSnap.exists()) {
             setUserDoc(docSnap.data() as UserDoc);
         } else if (user.email) {
-            setDoc(userDocRef, { email: user.email, isPro: false }, { merge: true });
+            // Document doesn't exist, so create it.
+            const newUserDoc: UserDoc = { email: user.email, isPro: false };
+            try {
+                await setDoc(userDocRef, newUserDoc);
+                setUserDoc(newUserDoc);
+            } catch (error) {
+                console.error("Failed to create user document:", error);
+            }
         }
     });
 
@@ -315,7 +322,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
     
     try {
-      // 1. Get the current profile state, or create a default if it doesn't exist
       const currentProfile = profile || {
         name: 'My Pet',
         species: 'dog',
@@ -326,10 +332,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         isPro: false,
       };
 
-      // 2. Merge new data into the current profile state
       const updatedProfile = { ...currentProfile, ...newProfileData };
       
-      // 3. Prepare denormalized data for the top-level user document
       const denormalizedData = {
         email: user.email!,
         petName: updatedProfile.name,
@@ -337,7 +341,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         isPro: updatedProfile.isPro,
       };
 
-      // 4. Atomically update both documents
       const userDocRef = doc(firestore, 'users', user.uid);
       const petDocRef = doc(firestore, 'users', user.uid, 'pets', 'main-pet');
 
@@ -346,13 +349,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         setDoc(petDocRef, updatedProfile, { merge: true }),
       ]);
 
-      // 5. Update local state AFTER successful DB write
       setProfile(updatedProfile);
       setUserDoc(denormalizedData);
 
     } catch (error) {
       console.error("Firestore write failed:", error);
-      throw error; // Re-throw to be caught by the caller
+      throw error; 
     }
   };
 
@@ -365,11 +367,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const userDocRef = doc(firestore, 'users', user.uid);
 
     try {
-        // Step 1: Write isPro: true to the user document.
         await updateDoc(userDocRef, { isPro: true });
-
-        // Step 2: Update the local userDoc state to reflect the change instantly.
-        setUserDoc(prevDoc => ({ ...prevDoc, email: user.email!, isPro: true }));
+        
+        setUserDoc(prevDoc => ({ ...(prevDoc || {email: user.email!}), isPro: true }));
         
         toast({
             title: 'Félicitations !',

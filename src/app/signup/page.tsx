@@ -22,8 +22,8 @@ export default function SignupPage() {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        // Redirect if user is signed in and not anonymous
-        if (!isUserLoading && user && !user.isAnonymous) {
+        // Redirect if user is signed in
+        if (!isUserLoading && user) {
             toast({
                 title: "Account Created!",
                 description: "Let's create a profile for your pet.",
@@ -45,7 +45,7 @@ export default function SignupPage() {
 
         try {
             await createUserWithEmailAndPassword(auth, email, password);
-            // The useEffect will handle the redirect on successful user creation.
+            // The useEffect will handle the redirect on successful user state change.
         } catch (error: any) {
             console.error("Signup error:", error);
             let errorMessage = "An unknown error occurred during sign-up.";
@@ -82,7 +82,7 @@ export default function SignupPage() {
                         <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
                     </div>
                     {error && <p className="text-sm text-destructive">{error}</p>}
-                    <Button type="submit" className="w-full" disabled={isLoading || (!isUserLoading && user && !user.isAnonymous)}>
+                    <Button type="submit" className="w-full" disabled={isLoading || (!isUserLoading && !!user)}>
                         {isLoading ? "Creating Account..." : "Create Account"}
                     </Button>
                 </form>

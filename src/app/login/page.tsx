@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useAuth, initiateEmailSignIn, useUser } from "@/firebase";
+import { useAuth, useUser } from "@/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
+import { signInWithEmailAndPassword } from "firebase/auth";
 
 export default function LoginPage() {
     const router = useRouter();
@@ -30,7 +31,7 @@ export default function LoginPage() {
         }
     }, [user, isUserLoading, router, toast]);
 
-    const handleLogin = (e: React.FormEvent) => {
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
         setIsLoading(true);
@@ -41,22 +42,25 @@ export default function LoginPage() {
             return;
         }
 
-        // Non-blocking call
-        initiateEmailSignIn(auth, email, password);
-
-        // We can show a loading state and let the useEffect handle success.
-        // For handling specific errors like wrong password, we'd need to listen to auth errors globally
-        // or stick to the async/await pattern with try-catch. For this app, we assume success or a generic message.
-        setTimeout(() => {
-          if (!user) {
-            toast({
+        try {
+            await signInWithEmailAndPassword(auth, email, password);
+            // The useEffect hook will handle the successful redirection.
+        } catch (error: any) {
+            let errorMessage = "Invalid email or password. Please try again.";
+            if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+                errorMessage = "Invalid email or password.";
+            } else if (error.code === 'auth/invalid-email') {
+                errorMessage = "Please enter a valid email address.";
+            }
+             toast({
                 variant: "destructive",
                 title: "Login Failed",
-                description: "Invalid email or password. Please try again.",
+                description: errorMessage,
             });
+            setError(errorMessage);
+        } finally {
             setIsLoading(false);
-          }
-        }, 3000); // A timeout to handle login failure, as non-blocking won't throw here.
+        }
     };
 
     return (
