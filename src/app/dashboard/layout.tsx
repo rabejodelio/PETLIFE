@@ -273,6 +273,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         if (docSnap.exists()) {
             setUserDoc(docSnap.data() as UserDoc);
         } else if (user.email) {
+            // Document doesn't exist, let's create it.
+            // This might happen on first sign-up.
             setDoc(userDocRef, { email: user.email, isPro: false }, { merge: true });
         }
     });
@@ -325,7 +327,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
   };
 
-  const handlePromoCode = async (): Promise<void> => {
+const handlePromoCode = async (): Promise<void> => {
     if (!user || !firestore) {
         toast({
             variant: 'destructive',
@@ -336,25 +338,33 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
 
     const userDocRef = doc(firestore, 'users', user.uid);
-    const updatedDoc = { ...userDoc, email: user.email!, isPro: true };
-
-    // Optimistic update
-    setUserDoc(updatedDoc);
 
     try {
+        // Step 1: Write to Firestore and wait for it to complete.
         await setDoc(userDocRef, { isPro: true }, { merge: true });
+
+        // Step 2: If successful, show success toast.
         toast({
             title: 'Félicitations !',
             description: "Vous êtes maintenant un membre Pro.",
         });
+
+        // Step 3: Securely update the local state.
+        // The onSnapshot listener will eventually catch this change, 
+        // but we can update it locally for instant feedback.
+        setUserDoc(currentDoc => {
+            const newDoc = currentDoc ? { ...currentDoc } : { email: user.email! };
+            newDoc.isPro = true;
+            return newDoc;
+        });
+
     } catch (error) {
-        // Revert on failure
-        setUserDoc(userDoc);
+        // Step 4: If Firestore write fails, show an error.
         console.error("Promo code update failed:", error);
         toast({
             variant: 'destructive',
             title: 'Erreur',
-            description: 'La mise à jour du profil a échoué. Veuillez réessayer.',
+            description: 'la mise à jour du profil a échoué. Veuillez réessayer.',
         });
     }
   };
