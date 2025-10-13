@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -43,7 +42,7 @@ import { Label } from '@/components/ui/label';
 import { useAuth, useUser, useFirestore } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import { doc, setDoc, getDoc, onSnapshot } from 'firebase/firestore';
-import type { PetProfile, ActivityHistory } from '@/lib/types';
+import type { PetProfile, ActivityHistory, UserDoc } from '@/lib/types';
 import { PetProfileContext } from '@/hooks/use-pet-provider';
 
 
@@ -54,16 +53,18 @@ function DashboardLayoutContent({
   handlePromoCode,
   promoCode,
   setPromoCode,
+  isPro,
 }: { 
   children: React.ReactNode;
   handlePromoCode: () => Promise<void>;
   promoCode: string;
   setPromoCode: (code: string) => void;
+  isPro: boolean;
 }) {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { profile, loading, saveProfile } = React.useContext(PetProfileContext)!;
+  const { profile, saveProfile } = React.useContext(PetProfileContext)!;
   const { toast } = useToast();
   const [isProDialogOpen, setIsProDialogOpen] = useState(false);
   const { user, isUserLoading } = useUser();
@@ -77,7 +78,7 @@ function DashboardLayoutContent({
   }, [isUserLoading, user, router]);
 
   const handleProSuccess = async () => {
-    if (profile && !profile.isPro) {
+    if (profile) {
       await saveProfile({ isPro: true });
        toast({
         title: 'Félicitations !',
@@ -104,7 +105,6 @@ function DashboardLayoutContent({
 
   const handleLogout = () => {
     signOut(auth);
-    // clearProfile and clearActivityHistory are now part of the PetProfileContext
     const context = React.useContext(PetProfileContext)!;
     context.clearProfile();
     context.clearActivityHistory();
@@ -136,14 +136,6 @@ function DashboardLayoutContent({
     { href: '/dashboard/users', label: 'Users', icon: Users, pro: false, admin: true },
   ];
 
-  if (isUserLoading || loading) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center">
-        <Logo />
-      </div>
-    );
-  }
-
   // A simple check for an admin user. In a real app, this should be based on custom claims.
   const isAdmin = user?.email === 'admin@petlife.com';
 
@@ -160,7 +152,6 @@ function DashboardLayoutContent({
         <SidebarContent className="p-2">
           <SidebarMenu>
             {navItems.filter(item => !(item.admin && !isAdmin)).map((item) => {
-              const isPro = profile?.isPro ?? false;
               const isLocked = item.pro && !isPro;
               
               const linkContent = (
@@ -189,7 +180,7 @@ function DashboardLayoutContent({
                 </SidebarMenuItem>
               );
             })}
-             {!profile?.isPro && (
+             {!isPro && (
                 <SidebarGroup className="p-0 mt-4 space-y-2">
                     <SidebarMenuItem>
                         <SidebarMenuButton onClick={() => setIsProDialogOpen(true)} variant="outline" className="w-full justify-center bg-gradient-to-r from-yellow-400 to-orange-500 text-white border-none hover:from-yellow-500 hover:to-orange-600 hover:text-white">
@@ -233,7 +224,7 @@ function DashboardLayoutContent({
             <div className="overflow-hidden group-data-[collapsible=icon]:hidden">
               <div className='flex items-center gap-2'>
                 <p className="font-semibold truncate">{profile?.name || user?.email}</p>
-                {profile?.isPro && <span className="text-xs font-bold bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-2 py-0.5 rounded-full">PRO</span>}
+                {isPro && <span className="text-xs font-bold bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-2 py-0.5 rounded-full">PRO</span>}
               </div>
               <p className="text-xs text-muted-foreground truncate">{profile?.breed || 'No pet profile'}</p>
             </div>
@@ -258,6 +249,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const [profile, setProfile] = useState<PetProfile | null>(null);
+  const [userDoc, setUserDoc] = useState<UserDoc | null>(null);
   const [loading, setLoading] = useState(true);
   const [activityHistory, setActivityHistory] = useState<ActivityHistory>({});
   const { toast } = useToast();
@@ -266,20 +258,25 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const getActivityHistoryKey = (userId: string) => `petlife-activity-history-${userId}`;
 
   useEffect(() => {
-    if (isUserLoading) {
-      setLoading(true);
-      return;
-    }
     if (!user || !firestore) {
-      setProfile(null);
       setLoading(false);
       return;
     }
 
+    const userDocRef = doc(firestore, 'users', user.uid);
     const petDocRef = doc(firestore, 'users', user.uid, 'pets', 'main-pet');
+    
     setLoading(true);
 
-    const unsubscribe = onSnapshot(petDocRef, (docSnap) => {
+    const unsubUser = onSnapshot(userDocRef, (docSnap) => {
+        if (docSnap.exists()) {
+            setUserDoc(docSnap.data() as UserDoc);
+        } else if (user.email) {
+            setDoc(userDocRef, { email: user.email, isPro: false }, { merge: true });
+        }
+    });
+
+    const unsubPet = onSnapshot(petDocRef, (docSnap) => {
       if (docSnap.exists()) {
         setProfile(docSnap.data() as PetProfile);
       } else {
@@ -291,8 +288,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       setLoading(false);
     });
 
-    return () => unsubscribe();
-  }, [user, firestore, isUserLoading]);
+    return () => {
+      unsubUser();
+      unsubPet();
+    };
+  }, [user, firestore]);
 
   useEffect(() => {
     if (user) {
@@ -311,67 +311,44 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const saveProfile = async (newProfileData: Partial<PetProfile>): Promise<void> => {
     if (!user || !firestore) {
-        throw new Error("User not authenticated or Firestore not available.");
+      throw new Error("User not authenticated or Firestore not available.");
     }
-
-    // 1. Create the final, merged profile object for state update and Firestore.
-    const updatedProfile: PetProfile = {
-        name: '', 
-        species: 'dog', 
-        breed: '', 
-        age: 0, 
-        weight: 0,
-        healthGoal: 'maintain_weight', 
-        avatarUrl: '',
-        isPro: false,
-        allergies: '',
-        ...(profile || {}), // Apply existing profile if it exists
-        ...newProfileData,   // Apply new data
-    };
-    
-    // 2. Optimistic UI Update: Set the local state immediately.
-    setProfile(updatedProfile);
-
-    // 3. Prepare data for Firestore writes.
+  
     const petDocRef = doc(firestore, 'users', user.uid, 'pets', 'main-pet');
-    const userDocRef = doc(firestore, 'users', user.uid);
-
-    const denormalizedUserData = {
-      email: user.email,
-      petName: updatedProfile.name,
-      petSpecies: updatedProfile.species,
-      isPro: updatedProfile.isPro,
-    };
-
-    // 4. Perform Firestore writes atomically and handle errors.
+    
     try {
-        await Promise.all([
-            setDoc(petDocRef, updatedProfile, { merge: true }),
-            setDoc(userDocRef, denormalizedUserData, { merge: true })
-        ]);
+      await setDoc(petDocRef, newProfileData, { merge: true });
     } catch (error) {
-        console.error("Firestore write failed:", error);
-        // Revert the optimistic update on failure.
-        setProfile(profile);
-        // Re-throw the error so the calling function knows about the failure.
-        throw error;
+      console.error("Firestore write failed:", error);
+      throw error;
     }
-};
+  };
 
   const handlePromoCode = async (): Promise<void> => {
+    if (!user || !firestore) {
+        toast({
+            variant: 'destructive',
+            title: 'Erreur',
+            description: 'Utilisateur non authentifié. Veuillez vous reconnecter.',
+        });
+        return;
+    }
+
+    const userDocRef = doc(firestore, 'users', user.uid);
+
     try {
-        await saveProfile({ isPro: true });
+        await setDoc(userDocRef, { isPro: true }, { merge: true });
         toast({
             title: 'Félicitations !',
             description: "Vous êtes maintenant un membre Pro.",
         });
     } catch (error) {
+        console.error("Promo code update failed:", error);
         toast({
             variant: 'destructive',
             title: 'Erreur',
             description: 'La mise à jour du profil a échoué. Veuillez réessayer.',
         });
-        console.error("Promo code update failed:", error);
     }
   };
 
@@ -391,17 +368,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       localStorage.removeItem(getActivityHistoryKey(user.uid));
     }
   };
-  
-  useEffect(() => {
-    if (user && firestore) {
-        const userDocRef = doc(firestore, 'users', user.uid);
-        getDoc(userDocRef).then(docSnap => {
-            if (!docSnap.exists() && user.email) {
-                setDoc(userDocRef, { email: user.email }, { merge: true });
-            }
-        });
-    }
-  }, [user, firestore]);
 
   const contextValue = {
     profile,
@@ -413,15 +379,26 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     clearActivityHistory,
   };
 
+  const isPro = userDoc?.isPro || false;
+
+  if (isUserLoading || loading) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        <Logo />
+      </div>
+    );
+  }
+
   return (
     <PetProfileContext.Provider value={contextValue}>
       <DashboardLayoutContent
         handlePromoCode={handlePromoCode}
         promoCode={promoCode}
         setPromoCode={setPromoCode}
+        isPro={isPro}
       >
         {children}
       </DashboardLayoutContent>
     </PetProfileContext.Provider>
-  )
+  );
 }

@@ -1,29 +1,21 @@
+
 'use client';
 
 import { PageHeader } from '@/components/page-header';
-import { useCollection, WithId } from '@/firebase';
+import { useCollection } from '@/firebase';
 import { useFirestore, useMemoFirebase } from '@/firebase/provider';
-import { collection, DocumentData, query } from 'firebase/firestore';
+import { collection, query } from 'firebase/firestore';
+import type { UserDoc } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Bone, Cat } from 'lucide-react';
-import { useMemo } from 'react';
-
-// This is the shape of the denormalized user document
-interface UserDoc extends DocumentData {
-    email: string;
-    petName?: string;
-    petSpecies?: 'dog' | 'cat';
-    isPro?: boolean;
-}
 
 export default function UsersPage() {
   const firestore = useFirestore();
   
-  // Simple query to get all user documents
   const usersQuery = useMemoFirebase(() => {
     if (!firestore) return null;
     return query(collection(firestore, 'users'));
@@ -93,11 +85,9 @@ export default function UsersPage() {
                        {user.petSpecies || 'N/A'}
                     </TableCell>
                    <TableCell>
-                       {user.petName ? ( // Check if a pet exists
-                           <Badge variant={user.isPro ? 'default' : 'secondary'}>
-                               {user.isPro ? 'Pro' : 'Free'}
-                           </Badge>
-                       ) : 'N/A'}
+                       <Badge variant={user.isPro ? 'default' : 'secondary'}>
+                           {user.isPro ? 'Pro' : 'Free'}
+                       </Badge>
                    </TableCell>
                 </TableRow>
               ))}
