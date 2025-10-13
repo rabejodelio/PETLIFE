@@ -86,7 +86,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         });
         router.replace('/dashboard');
     }
-  }, [searchParams, router, profile]);
+  }, [searchParams, router]);
 
 
   const handleLogout = () => {
