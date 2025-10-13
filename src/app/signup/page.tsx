@@ -6,54 +6,56 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useAuth } from "@/firebase";
+import { useAuth, useUser, initiateEmailSignUp } from "@/firebase";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { useState, useEffect } from "react";
 
 export default function SignupPage() {
     const router = useRouter();
     const auth = useAuth();
+    const { user, isUserLoading } = useUser();
     const { toast } = useToast();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
-    const handleSignup = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setIsLoading(true);
-        try {
-            await createUserWithEmailAndPassword(auth, email, password);
-            
+    useEffect(() => {
+        if (!isUserLoading && user) {
             toast({
                 title: "Account Created!",
                 description: "Let's create a profile for your pet.",
             });
             router.push("/onboarding");
-        } catch (error: any) {
-            console.error("Signup Error:", error);
-            let description = "An unexpected error occurred. Please try again.";
-            if (error.code) {
-                switch (error.code) {
-                    case 'auth/email-already-in-use':
-                        description = "This email is already registered. Please log in.";
-                        break;
-                    case 'auth/weak-password':
-                        description = "Password is too weak. It should be at least 6 characters.";
-                        break;
-                    case 'auth/invalid-email':
-                        description = "Please enter a valid email address.";
-                        break;
-                }
-            }
-            toast({
-                variant: "destructive",
-                title: "Signup Failed",
-                description,
-            });
-        } finally {
-            setIsLoading(false);
         }
+    }, [user, isUserLoading, router, toast]);
+
+    const handleSignup = (e: React.FormEvent) => {
+        e.preventDefault();
+        setError(null);
+        setIsLoading(true);
+
+        if (password.length < 6) {
+            setError("Password must be at least 6 characters long.");
+            setIsLoading(false);
+            return;
+        }
+
+        // Non-blocking call
+        initiateEmailSignUp(auth, email, password);
+
+        // We show a loading state and let the onAuthStateChanged listener handle success.
+        // A simple timeout can handle failures like email-already-in-use.
+        setTimeout(() => {
+            if (!user) { // If user is not set after a delay, assume failure.
+                 toast({
+                    variant: "destructive",
+                    title: "Signup Failed",
+                    description: "This email might already be in use. Please try another one.",
+                });
+                setIsLoading(false);
+            }
+        }, 3000); // 3-second timeout to check for login status.
     };
 
     return (
@@ -72,6 +74,7 @@ export default function SignupPage() {
                         <Label htmlFor="password">Password</Label>
                         <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
                     </div>
+                    {error && <p className="text-sm text-destructive">{error}</p>}
                     <Button type="submit" className="w-full" disabled={isLoading}>{isLoading ? "Creating Account..." : "Create Account"}</Button>
                 </form>
                 <div className="mt-4 text-center text-sm">

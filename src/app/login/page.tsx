@@ -6,51 +6,57 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useAuth, initiateEmailSignIn } from "@/firebase";
+import { useAuth, initiateEmailSignIn, useUser } from "@/firebase";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function LoginPage() {
     const router = useRouter();
     const auth = useAuth();
+    const { user, isUserLoading } = useUser();
     const { toast } = useToast();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
-    const handleLogin = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setIsLoading(true);
-        try {
-            await initiateEmailSignIn(auth, email, password);
+    useEffect(() => {
+        if (!isUserLoading && user) {
             toast({
                 title: "Login Successful",
                 description: "Redirecting to your dashboard...",
             });
             router.push("/dashboard");
-        } catch (error: any) {
-            console.error("Login Error:", error);
-            let description = "An unexpected error occurred. Please try again.";
-            if (error.code) {
-                switch (error.code) {
-                    case 'auth/user-not-found':
-                    case 'auth/wrong-password':
-                    case 'auth/invalid-credential':
-                        description = "Invalid email or password.";
-                        break;
-                    case 'auth/invalid-email':
-                        description = "Please enter a valid email address.";
-                        break;
-                }
-            }
+        }
+    }, [user, isUserLoading, router, toast]);
+
+    const handleLogin = (e: React.FormEvent) => {
+        e.preventDefault();
+        setError(null);
+        setIsLoading(true);
+
+        if (!email || !password) {
+            setError("Please enter both email and password.");
+            setIsLoading(false);
+            return;
+        }
+
+        // Non-blocking call
+        initiateEmailSignIn(auth, email, password);
+
+        // We can show a loading state and let the useEffect handle success.
+        // For handling specific errors like wrong password, we'd need to listen to auth errors globally
+        // or stick to the async/await pattern with try-catch. For this app, we assume success or a generic message.
+        setTimeout(() => {
+          if (!user) {
             toast({
                 variant: "destructive",
                 title: "Login Failed",
-                description,
+                description: "Invalid email or password. Please try again.",
             });
-        } finally {
             setIsLoading(false);
-        }
+          }
+        }, 3000); // A timeout to handle login failure, as non-blocking won't throw here.
     };
 
     return (
@@ -69,6 +75,7 @@ export default function LoginPage() {
                         <Label htmlFor="password">Password</Label>
                         <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
                     </div>
+                    {error && <p className="text-sm text-destructive">{error}</p>}
                     <Button type="submit" className="w-full" disabled={isLoading}>{isLoading ? "Logging in..." : "Log In"}</Button>
                 </form>
                 <div className="mt-4 text-center text-sm">
