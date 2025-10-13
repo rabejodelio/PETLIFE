@@ -99,8 +99,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const handlePromoCode = () => {
     if (promoCode.toLowerCase() === PRO_CODE.toLowerCase()) {
-      handleProSuccess();
-      setPromoCode('');
+      if (profile) {
+        saveProfile({ ...profile, isPro: true });
+        toast({
+          title: 'Félicitations !',
+          description: "Vous êtes maintenant un membre Pro.",
+        });
+        // Reload the page to reflect the new Pro status in the UI
+        window.location.reload();
+      }
     } else {
       toast({
         variant: 'destructive',
