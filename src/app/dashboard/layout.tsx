@@ -42,7 +42,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Label } from '@/components/ui/label';
 import { useAuth, useUser, useFirestore } from '@/firebase';
 import { signOut } from 'firebase/auth';
-import { doc, setDoc, getDoc, onSnapshot } from 'firebase/firestore';
+import { doc, setDoc, getDoc, onSnapshot, updateDoc } from 'firebase/firestore';
 import type { PetProfile, ActivityHistory, UserDoc } from '@/lib/types';
 import { PetProfileContext } from '@/hooks/use-pet-provider';
 
@@ -271,7 +271,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         if (docSnap.exists()) {
             setUserDoc(docSnap.data() as UserDoc);
         } else if (user.email) {
-            // Create the user doc if it doesn't exist
             setDoc(userDocRef, { email: user.email, isPro: false }, { merge: true });
         }
     });
@@ -338,18 +337,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const userDocRef = doc(firestore, 'users', user.uid);
 
     try {
-        // Step 1: Read the current document data first.
-        const docSnap = await getDoc(userDocRef);
-        const existingData = docSnap.exists() ? docSnap.data() : { email: user.email };
+        // Step 1: Write to Firestore and wait for confirmation.
+        await updateDoc(userDocRef, { isPro: true });
 
-        // Step 2: Merge existing data with the new 'isPro' status.
-        const dataToSave = { ...existingData, isPro: true };
-
-        // Step 3: Write the complete, valid object back to Firestore.
-        await setDoc(userDocRef, dataToSave);
+        // Step 2: After successful write, read the updated document back.
+        const updatedDocSnap = await getDoc(userDocRef);
+        const updatedData = updatedDocSnap.data() as UserDoc;
         
-        // Step 4: After successful write, update local state and notify user.
-        setUserDoc(dataToSave as UserDoc);
+        // Step 3: Update local state with the confirmed data from Firestore.
+        setUserDoc(updatedData);
+        
         toast({
             title: 'Félicitations !',
             description: "Vous êtes maintenant un membre Pro.",
@@ -362,7 +359,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             title: 'Erreur',
             description: 'la mise à jour du profil a échoué. Veuillez réessayer.',
         });
-        // Re-throw the error if other parts of the app need to react to the failure.
         throw error;
     }
   };
