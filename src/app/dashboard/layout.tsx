@@ -66,9 +66,9 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
     }
   }, [isUserLoading, user, router]);
 
-  const handleProSuccess = () => {
+  const handleProSuccess = async () => {
     if (profile && !profile.isPro) {
-      saveProfile({ isPro: true });
+      await saveProfile({ isPro: true });
        toast({
         title: 'Félicitations !',
         description: "Vous êtes maintenant un membre Pro.",
@@ -99,10 +99,10 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
     router.push('/');
   };
 
-  const handlePromoCode = () => {
+  const handlePromoCode = async () => {
     if (promoCode.toLowerCase() === PRO_CODE.toLowerCase()) {
       if (profile) {
-        saveProfile({ isPro: true });
+        await saveProfile({ isPro: true });
         toast({
           title: 'Félicitations !',
           description: "Vous êtes maintenant un membre Pro.",
@@ -302,13 +302,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
   }, [user]);
 
-  const saveProfile = (newProfileData: Partial<PetProfile>) => {
+  const saveProfile = async (newProfileData: Partial<PetProfile>): Promise<void> => {
     if (!user || !firestore) {
       console.error("Sauvegarde impossible : utilisateur non connecté.");
-      return;
+      return Promise.reject(new Error("User not connected"));
     }
 
-    // Construct the full updated profile object first
+    // This is an optimistic update.
+    // It updates the local state first, assuming the write will succeed.
     const updatedProfile: PetProfile = {
       ...(profile || {
         name: '', species: 'dog', breed: '', age: 0, weight: 0,
@@ -317,8 +318,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       ...newProfileData
     };
     
-    // Optimistically update the local state immediately.
-    // This makes the UI feel instant and prevents race conditions with onSnapshot.
     setProfile(updatedProfile);
 
     // Now, persist the changes to Firestore in the background.
@@ -334,17 +333,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       denormalizedData.email = user.email;
     }
 
-    // Use promises to write to both documents
-    const petPromise = setDoc(petDocRef, updatedProfile, { merge: true });
-    const userPromise = setDoc(userDocRef, denormalizedData, { merge: true });
-    
-    // We don't need to await them here as the UI is already updated.
-    // We can add .catch() for error handling if needed.
-    Promise.all([petPromise, userPromise]).catch(error => {
-      console.error("Failed to save profile to Firestore:", error);
-      // Optional: revert the optimistic update on failure by re-fetching or setting back to the previous profile.
-      // For this app, we'll log the error and let the next onSnapshot eventually correct it.
-    });
+    try {
+        // We now await both writes to ensure they complete.
+        await Promise.all([
+            setDoc(petDocRef, updatedProfile, { merge: true }),
+            setDoc(userDocRef, denormalizedData, { merge: true })
+        ]);
+    } catch (error) {
+        console.error("Failed to save profile to Firestore:", error);
+        // Optional: revert the optimistic update on failure by re-fetching or setting back to the previous profile.
+        // For now, we log the error. The onSnapshot listener might eventually correct the UI.
+        throw error;
+    }
   };
 
   const clearProfile = () => setProfile(null);
@@ -390,5 +390,3 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     </PetProfileContext.Provider>
   )
 }
-
-    
