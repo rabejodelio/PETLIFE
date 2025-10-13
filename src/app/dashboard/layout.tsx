@@ -264,19 +264,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       return;
     }
 
-    const userDocRef = doc(firestore, 'users', user.uid);
-    const petDocRef = doc(firestore, 'users', user.uid, 'pets', 'main-pet');
-    
     setLoading(true);
 
+    const userDocRef = doc(firestore, 'users', user.uid);
     const unsubUser = onSnapshot(userDocRef, (docSnap) => {
         if (docSnap.exists()) {
             setUserDoc(docSnap.data() as UserDoc);
         } else if (user.email) {
+            // Create the user doc if it doesn't exist
             setDoc(userDocRef, { email: user.email, isPro: false }, { merge: true });
         }
     });
 
+    const petDocRef = doc(firestore, 'users', user.uid, 'pets', 'main-pet');
     const unsubPet = onSnapshot(petDocRef, (docSnap) => {
       if (docSnap.exists()) {
         setProfile(docSnap.data() as PetProfile);
@@ -325,7 +325,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
   };
 
-const handlePromoCode = async (): Promise<void> => {
+  const handlePromoCode = async (): Promise<void> => {
     if (!user || !firestore) {
         toast({
             variant: 'destructive',
@@ -348,6 +348,9 @@ const handlePromoCode = async (): Promise<void> => {
         });
 
         // Step 3: Securely update the local state after the write is confirmed.
+        // This is now safe because the onSnapshot listener will receive the update
+        // and handle the re-render automatically and correctly.
+        // We can optionally set it here for instant feedback, but onSnapshot is the source of truth.
         setUserDoc(currentDoc => {
             const newDoc = currentDoc ? { ...currentDoc } : { email: user.email! };
             newDoc.isPro = true;
