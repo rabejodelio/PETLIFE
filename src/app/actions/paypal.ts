@@ -1,10 +1,10 @@
 
 'use server';
 
-// Identifiants pour l'environnement sandbox de PayPal.
-const PAYPAL_CLIENT_ID = 'AdVaZg-x-cbjGyLKeYDaTbUR3U-8QqbBh0QvAy0RyrdamDPrFixJ_dp7ifXKBUebt_BgxXgMJzyhHvLI';
-const PAYPAL_SECRET = 'EDwGKLqam7GtXT3RprGHDxaPpzjcBX8qY2uhbIn4thCpI6yemEwSS6XYpQdU_T7TdJRN1EMJ8rHfY032';
-const PAYPAL_API_BASE = 'https://api-m.sandbox.paypal.com'; // Utilisation de l'URL sandbox
+// Clés de PRODUCTION pour l'API PayPal.
+const PAYPAL_CLIENT_ID = 'AVIdbqPDhsyPeIQ_OocwT6TPGCPe4unkE3SVRLmaitVU26e3OM6riELntVqe0AepevnGv1Qwj_ERVBf1';
+const PAYPAL_SECRET = 'EPDVudbtFZlFHrHmicMPtn13CNTe8jvShUhUg5G0yMDazRM3ZMF4Xa95MWdHWVi-QwS57tdYg2uyx7KI';
+const PAYPAL_API_BASE = 'https://api-m.paypal.com'; // URL de PRODUCTION
 
 // Fonction pour obtenir un jeton d'accès OAuth2 auprès de PayPal.
 async function getPayPalAccessToken() {
