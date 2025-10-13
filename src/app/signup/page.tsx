@@ -6,10 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useAuth, useUser, initiateEmailSignUp, initiateAnonymousSignIn } from "@/firebase";
+import { useAuth, useUser } from "@/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
-import { linkWithCredential, EmailAuthProvider } from "firebase/auth";
+import { createUserWithEmailAndPassword } from "firebase/auth";
 
 export default function SignupPage() {
     const router = useRouter();
@@ -22,6 +22,7 @@ export default function SignupPage() {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
+        // Redirect if user is signed in and not anonymous
         if (!isUserLoading && user && !user.isAnonymous) {
             toast({
                 title: "Account Created!",
@@ -43,19 +44,8 @@ export default function SignupPage() {
         }
 
         try {
-            // Ensure we have an anonymous user session first
-            if (!auth.currentUser) {
-                await initiateAnonymousSignIn(auth);
-            }
-
-            // Now that we're sure there's a user (anonymous), link the new credentials
-            if (auth.currentUser) {
-                const credential = EmailAuthProvider.credential(email, password);
-                await linkWithCredential(auth.currentUser, credential);
-            } else {
-                throw new Error("Failed to establish a user session.");
-            }
-
+            await createUserWithEmailAndPassword(auth, email, password);
+            // The useEffect will handle the redirect on successful user creation.
         } catch (error: any) {
             console.error("Signup error:", error);
             let errorMessage = "An unknown error occurred during sign-up.";
@@ -70,6 +60,7 @@ export default function SignupPage() {
                 title: "Signup Failed",
                 description: errorMessage,
             });
+        } finally {
             setIsLoading(false);
         }
     };
@@ -91,7 +82,9 @@ export default function SignupPage() {
                         <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
                     </div>
                     {error && <p className="text-sm text-destructive">{error}</p>}
-                    <Button type="submit" className="w-full" disabled={isLoading}>{isLoading ? "Creating Account..." : "Create Account"}</Button>
+                    <Button type="submit" className="w-full" disabled={isLoading || (!isUserLoading && user && !user.isAnonymous)}>
+                        {isLoading ? "Creating Account..." : "Create Account"}
+                    </Button>
                 </form>
                 <div className="mt-4 text-center text-sm">
                     Already have an account?{" "}

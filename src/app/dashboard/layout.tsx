@@ -313,39 +313,63 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     if (!user || !firestore) {
       throw new Error("User not authenticated or Firestore not available.");
     }
-  
-    const petDocRef = doc(firestore, 'users', user.uid, 'pets', 'main-pet');
     
     try {
-      await setDoc(petDocRef, newProfileData, { merge: true });
+      // 1. Get the current profile state, or create a default if it doesn't exist
+      const currentProfile = profile || {
+        name: 'My Pet',
+        species: 'dog',
+        breed: 'Unknown',
+        age: 1,
+        weight: 10,
+        healthGoal: 'maintain_weight',
+        isPro: false,
+      };
+
+      // 2. Merge new data into the current profile state
+      const updatedProfile = { ...currentProfile, ...newProfileData };
+      
+      // 3. Prepare denormalized data for the top-level user document
+      const denormalizedData = {
+        email: user.email!,
+        petName: updatedProfile.name,
+        petSpecies: updatedProfile.species,
+        isPro: updatedProfile.isPro,
+      };
+
+      // 4. Atomically update both documents
+      const userDocRef = doc(firestore, 'users', user.uid);
+      const petDocRef = doc(firestore, 'users', user.uid, 'pets', 'main-pet');
+
+      await Promise.all([
+        setDoc(userDocRef, denormalizedData, { merge: true }),
+        setDoc(petDocRef, updatedProfile, { merge: true }),
+      ]);
+
+      // 5. Update local state AFTER successful DB write
+      setProfile(updatedProfile);
+      setUserDoc(denormalizedData);
+
     } catch (error) {
       console.error("Firestore write failed:", error);
-      throw error;
+      throw error; // Re-throw to be caught by the caller
     }
   };
 
   const handlePromoCode = async (): Promise<void> => {
     if (!user || !firestore) {
-        toast({
-            variant: 'destructive',
-            title: 'Erreur',
-            description: 'Utilisateur non authentifié. Veuillez vous reconnecter.',
-        });
+        toast({ variant: 'destructive', title: 'Erreur', description: 'Utilisateur non authentifié.' });
         return;
     }
 
     const userDocRef = doc(firestore, 'users', user.uid);
 
     try {
-        // Step 1: Write to Firestore and wait for confirmation.
+        // Step 1: Write isPro: true to the user document.
         await updateDoc(userDocRef, { isPro: true });
 
-        // Step 2: After successful write, read the updated document back.
-        const updatedDocSnap = await getDoc(userDocRef);
-        const updatedData = updatedDocSnap.data() as UserDoc;
-        
-        // Step 3: Update local state with the confirmed data from Firestore.
-        setUserDoc(updatedData);
+        // Step 2: Update the local userDoc state to reflect the change instantly.
+        setUserDoc(prevDoc => ({ ...prevDoc, email: user.email!, isPro: true }));
         
         toast({
             title: 'Félicitations !',
@@ -413,5 +437,3 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     </PetProfileContext.Provider>
   );
 }
-
-    
