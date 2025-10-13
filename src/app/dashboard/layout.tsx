@@ -273,8 +273,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         if (docSnap.exists()) {
             setUserDoc(docSnap.data() as UserDoc);
         } else if (user.email) {
-            // Document doesn't exist, let's create it.
-            // This might happen on first sign-up.
             setDoc(userDocRef, { email: user.email, isPro: false }, { merge: true });
         }
     });
@@ -349,9 +347,7 @@ const handlePromoCode = async (): Promise<void> => {
             description: "Vous êtes maintenant un membre Pro.",
         });
 
-        // Step 3: Securely update the local state.
-        // The onSnapshot listener will eventually catch this change, 
-        // but we can update it locally for instant feedback.
+        // Step 3: Securely update the local state after the write is confirmed.
         setUserDoc(currentDoc => {
             const newDoc = currentDoc ? { ...currentDoc } : { email: user.email! };
             newDoc.isPro = true;
