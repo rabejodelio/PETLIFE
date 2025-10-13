@@ -309,52 +309,61 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const saveProfile = async (newProfileData: Partial<PetProfile>): Promise<void> => {
     if (!user || !firestore) {
-      console.error("Sauvegarde impossible : utilisateur non connecté.");
-      throw new Error("User not connected");
+        console.error("Sauvegarde impossible : utilisateur non connecté.");
+        throw new Error("User not connected");
     }
 
+    // Merge new data with existing profile to ensure all fields are present for denormalization
     const updatedProfile: PetProfile = {
-      ...(profile || {
-        name: '', species: 'dog', breed: '', age: 0, weight: 0,
-        healthGoal: 'maintain_weight', isPro: false,
-      }),
-      ...newProfileData
+        ...(profile || {
+            name: '', species: 'dog', breed: '', age: 0, weight: 0,
+            healthGoal: 'maintain_weight', isPro: false,
+        }),
+        ...newProfileData
     };
     
-    setProfile(updatedProfile);
-
+    const petDocRef = doc(firestore, 'users', user.uid, 'pets', 'main-pet');
     const userDocRef = doc(firestore, 'users', user.uid);
-    const petDocRef = doc(userDocRef, 'pets', 'main-pet');
 
+    // This data is for the top-level user document, for the admin view.
     const denormalizedData: { petName: string; petSpecies: 'dog' | 'cat'; isPro: boolean; email?: string } = {
-      petName: updatedProfile.name,
-      petSpecies: updatedProfile.species,
-      isPro: updatedProfile.isPro
+        petName: updatedProfile.name,
+        petSpecies: updatedProfile.species,
+        isPro: updatedProfile.isPro
     };
+
     if (user.email) {
-      denormalizedData.email = user.email;
+        denormalizedData.email = user.email;
     }
 
     try {
+        // Perform both writes in parallel.
         await Promise.all([
             setDoc(petDocRef, updatedProfile, { merge: true }),
             setDoc(userDocRef, denormalizedData, { merge: true })
         ]);
     } catch (error) {
         console.error("Failed to save profile to Firestore:", error);
+        // Re-throw the error so the calling function (handlePromoCode) can catch it.
         throw error;
     }
   };
 
-  const handlePromoCode = async (): Promise<void> => {
+ const handlePromoCode = async (): Promise<void> => {
     if (profile) {
+      const originalProfile = profile; // Keep a copy to revert if needed
+      const updatedProfile = { ...profile, isPro: true };
+      
+      setProfile(updatedProfile); // Optimistic update of the UI
+
       try {
-        await saveProfile({ isPro: true });
+        await saveProfile(updatedProfile); // Call the save function with the full updated profile
         toast({
           title: 'Félicitations !',
           description: "Vous êtes maintenant un membre Pro.",
         });
       } catch (error) {
+        setProfile(originalProfile); // Revert UI on failure
         toast({
           variant: 'destructive',
           title: 'Erreur',
@@ -363,6 +372,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       }
     }
   };
+
 
   const clearProfile = () => setProfile(null);
 
