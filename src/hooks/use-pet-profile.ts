@@ -4,53 +4,38 @@
 import { useState, useEffect, useCallback, useMemo, createContext, useContext, ReactNode } from 'react';
 import type { PetProfile, ActivityHistory } from '@/lib/types';
 import { useUser, useFirestore } from '@/firebase';
-import { doc, setDoc, getDoc, onSnapshot, DocumentReference, DocumentData } from 'firebase/firestore';
+import { doc, setDoc, getDoc, onSnapshot } from 'firebase/firestore';
 
 const getActivityHistoryKey = (userId: string) => `petlife-activity-history-${userId}`;
 
-// Define the shape of the context
+// 1. Définir la forme du contexte
 interface PetProfileContextType {
   profile: PetProfile | null;
   loading: boolean;
   activityHistory: ActivityHistory;
-  isUserLoading: boolean;
-  petDocRef: DocumentReference<DocumentData> | null;
-  saveProfile: (newProfileData: PetProfile) => void;
+  saveProfile: (newProfileData: Partial<PetProfile>) => Promise<void>;
   clearProfile: () => void;
   setActivityHistory: (newHistory: ActivityHistory) => void;
   clearActivityHistory: () => void;
 }
 
-// Create the context with a default undefined value
+// 2. Créer le contexte avec une valeur par défaut
 const PetProfileContext = createContext<PetProfileContextType | undefined>(undefined);
 
-
-// Create the Provider component
+// 3. Créer le composant Provider
 export function PetProfileProvider({ children }: { children: ReactNode }) {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const [profile, setProfile] = useState<PetProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  
   const [activityHistory, setActivityHistory] = useState<ActivityHistory>({});
-  const [isActivityHistoryLoading, setIsActivityHistoryLoading] = useState(true);
+  const [isHistoryLoading, setIsHistoryLoading] = useState(true);
 
-  const userDocRef = useMemo(() => {
-    if (user && firestore) {
-      return doc(firestore, 'users', user.uid);
-    }
-    return null;
-  }, [user, firestore]);
+  // Mémoriser les références Firestore pour éviter les re-créations inutiles
+  const userDocRef = useMemo(() => (user ? doc(firestore, 'users', user.uid) : null), [user, firestore]);
+  const petDocRef = useMemo(() => (userDocRef ? doc(userDocRef, 'pets', 'main-pet') : null), [userDocRef]);
 
-  const petDocRef: DocumentReference<DocumentData> | null = useMemo(() => {
-    if (userDocRef) {
-      // All pets are stored under a 'pets' subcollection with a static ID for simplicity
-      return doc(userDocRef, 'pets', 'main-pet');
-    }
-    return null;
-  }, [userDocRef]);
-
-  // Effect to listen for pet profile changes from Firestore
+  // Effet pour charger et écouter le profil de l'animal
   useEffect(() => {
     if (!petDocRef) {
       if (!isUserLoading) {
@@ -61,140 +46,111 @@ export function PetProfileProvider({ children }: { children: ReactNode }) {
     }
 
     setLoading(true);
-    const unsubscribe = onSnapshot(petDocRef, 
-      (docSnap) => {
-        if (docSnap.exists()) {
-          setProfile(docSnap.data() as PetProfile);
-        } else {
-          setProfile(null);
+    const unsubscribe = onSnapshot(petDocRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data() as PetProfile;
+        setProfile(data);
+        if (userDocRef) {
+          setDoc(userDocRef, { petName: data.name, petSpecies: data.species, isPro: data.isPro }, { merge: true });
         }
-        setLoading(false);
-      }, 
-      (error) => {
-        console.error("Failed to fetch pet profile from Firestore", error);
-        setLoading(false);
+      } else {
+        setProfile(null);
       }
-    );
+      setLoading(false);
+    }, (error) => {
+      console.error("Erreur de chargement du profil depuis Firestore :", error);
+      setLoading(false);
+    });
 
     return () => unsubscribe();
-  }, [petDocRef, isUserLoading]);
-  
-  // Load activity history from local storage
-  const loadActivityHistory = useCallback((userId: string) => {
-    setIsActivityHistoryLoading(true);
-    try {
-      const historyItem = window.localStorage.getItem(getActivityHistoryKey(userId));
-      setActivityHistory(historyItem ? JSON.parse(historyItem) : {});
-    } catch (error) {
-      console.error('Failed to parse activity history from localStorage', error);
-      setActivityHistory({});
-    } finally {
-      setIsActivityHistoryLoading(false);
-    }
-  }, []);
+  }, [petDocRef, userDocRef, isUserLoading]);
 
+  // Effet pour charger l'historique d'activité depuis le localStorage
   useEffect(() => {
     if (user) {
-      loadActivityHistory(user.uid);
+      setIsHistoryLoading(true);
+      const key = getActivityHistoryKey(user.uid);
+      try {
+        const storedHistory = localStorage.getItem(key);
+        setActivityHistory(storedHistory ? JSON.parse(storedHistory) : {});
+      } catch (e) {
+        console.error("Impossible de lire l'historique d'activité :", e);
+        setActivityHistory({});
+      }
+      setIsHistoryLoading(false);
     } else if (!isUserLoading) {
       setActivityHistory({});
-      setIsActivityHistoryLoading(false);
+      setIsHistoryLoading(false);
     }
-  }, [user, isUserLoading, loadActivityHistory]);
+  }, [user, isUserLoading]);
 
-
-  // Save profile data to Firestore and update local state
-  const saveProfile = useCallback((newProfileData: PetProfile) => {
-    if (!petDocRef || !userDocRef) {
-      console.error("User or Firestore not available for saving.");
-      return;
-    }
-    
-    // Directly update the state to ensure UI reactivity
-    setProfile(newProfileData);
-
-    const denormalizedPetData = {
-      petName: newProfileData.name,
-      petSpecies: newProfileData.species,
-      isPro: newProfileData.isPro,
-    };
-    
-    // Perform writes without making the UI wait
-    setDoc(petDocRef, newProfileData, { merge: true });
-    setDoc(userDocRef, denormalizedPetData, { merge: true });
-
-  }, [petDocRef, userDocRef]);
-  
-  // Clear local profile state
   const clearProfile = useCallback(() => {
     setProfile(null);
   }, []);
 
-  // Save activity history to local storage
-  const saveActivityHistory = useCallback((newHistory: ActivityHistory) => {
-    if(user) {
-      try {
-          window.localStorage.setItem(getActivityHistoryKey(user.uid), JSON.stringify(newHistory));
-          setActivityHistory(newHistory);
-      } catch (error) {
-          console.error('Failed to save activity history to localStorage', error);
-      }
-    }
-  }, [user]);
-
-  // Clear activity history from local storage
   const clearActivityHistory = useCallback(() => {
     if (user) {
-      try {
-          window.localStorage.removeItem(getActivityHistoryKey(user.uid));
-          setActivityHistory({});
-      } catch (error) {
-          console.error('Failed to clear activity history from localStorage', error);
-      }
+      setActivityHistory({});
+      localStorage.removeItem(getActivityHistoryKey(user.uid));
     }
   }, [user]);
 
-  // Ensure user document exists on user load
+  const saveProfile = useCallback(async (newProfileData: Partial<PetProfile>) => {
+    if (!petDocRef || !userDocRef) {
+      console.error("Sauvegarde impossible : utilisateur non connecté ou références non prêtes.");
+      return;
+    }
+    
+    // Mise à jour optimiste de l'UI
+    const updatedProfile = { ...(profile || {} as PetProfile), ...newProfileData } as PetProfile;
+    setProfile(updatedProfile);
+
+    // Sauvegarde dans Firestore
+    await setDoc(petDocRef, newProfileData, { merge: true });
+    await setDoc(userDocRef, { petName: updatedProfile.name, petSpecies: updatedProfile.species, isPro: updatedProfile.isPro }, { merge: true });
+
+  }, [petDocRef, userDocRef, profile]);
+  
+  const saveActivityHistory = useCallback((newHistory: ActivityHistory) => {
+    if (user) {
+      setActivityHistory(newHistory);
+      localStorage.setItem(getActivityHistoryKey(user.uid), JSON.stringify(newHistory));
+    }
+  }, [user]);
+
+  // Assurer l'existence du document utilisateur
   useEffect(() => {
-    if (user && firestore) {
-      const userDocRef = doc(firestore, 'users', user.uid);
+    if (user && userDocRef) {
       getDoc(userDocRef).then(docSnap => {
         if (!docSnap.exists()) {
           setDoc(userDocRef, { email: user.email, id: user.uid });
         }
       });
     }
-  }, [user, firestore]);
+  }, [user, userDocRef]);
 
-
-  // Combine loading states
-  const overallLoading = isUserLoading || loading || isActivityHistoryLoading;
-
-  // Memoize the context value
-  const value = useMemo(() => ({
+  const contextValue = useMemo(() => ({
     profile,
-    loading: overallLoading,
+    loading: loading || isUserLoading || isHistoryLoading,
     activityHistory,
-    isUserLoading,
-    petDocRef,
     saveProfile,
     clearProfile,
     setActivityHistory: saveActivityHistory,
-    clearActivityHistory
-  }), [profile, overallLoading, activityHistory, isUserLoading, petDocRef, saveProfile, clearProfile, saveActivityHistory, clearActivityHistory]);
+    clearActivityHistory,
+  }), [profile, loading, isUserLoading, isHistoryLoading, activityHistory, saveProfile, clearProfile, saveActivityHistory, clearActivityHistory]);
 
   return (
-    <PetProfileContext.Provider value={value}>
+    <PetProfileContext.Provider value={contextValue}>
       {children}
     </PetProfileContext.Provider>
   );
 }
 
-// Create the custom hook to use the context
+// 4. Créer le hook personnalisé pour utiliser le contexte
 export function usePetProfile(): PetProfileContextType {
   const context = useContext(PetProfileContext);
   if (context === undefined) {
-    throw new Error('usePetProfile must be used within a PetProfileProvider');
+    throw new Error('usePetProfile doit être utilisé à l\'intérieur d\'un PetProfileProvider');
   }
   return context;
 }
