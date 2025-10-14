@@ -1,52 +1,50 @@
 /**
- * @fileoverview Firestore Security Rules for the PetLife application.
+ * @fileoverview Firestore Security Rules for PetLife application.
  *
  * Core Philosophy:
  * This ruleset enforces a strict user-ownership model for all data. Each user can only
  * access their own data and the data of their pets. Data is organized hierarchically
- * under the `/users/{userId}` path to simplify ownership checks.
+ * under the /users/{userId} path to simplify authorization.
  *
  * Data Structure:
- * All data is nested under `/users/{userId}`, ensuring clear ownership.
- * - /users/{userId}: Stores user profiles.
- * - /users/{userId}/pets/{petId}: Stores pet profiles owned by a specific user.
- * - /users/{userId}/pets/{petId}/mealPlans/{mealPlanId}: Stores meal plans for a specific pet.
- * - /users/{userId}/pets/{petId}/supplementRecommendations/{supplementRecommendationId}: Stores supplement recommendations for a specific pet.
- * - /users/{userId}/pets/{petId}/activityRecords/{activityRecordId}: Stores activity records for a specific pet.
+ * All data is nested under /users/{userId}, with pets, meal plans, supplement recommendations,
+ * and activity records as subcollections. This structure ensures clear ownership and avoids
+ * the need for complex queries in security rules.
  *
  * Key Security Decisions:
  * - Users can only read and write their own user document.
  * - Users can only manage pets, meal plans, supplement recommendations, and activity records
- *   associated with their own user ID.
- * - No public listing of users or pets is allowed. Only owners can list their own resources.
+ *   associated with their user ID.
+ * - Listing of users is disallowed.
  *
  * Denormalization for Authorization:
- *  - The data model includes a `userId` field on `Pet` documents and a `petId` field on
- *    `MealPlan`, `SupplementRecommendation`, and `ActivityRecord` documents. This denormalization
- *    allows for efficient security rules that do not require additional `get()` calls.
- * Structural Segregation:
- * All private user data is stored under the /users/{userId} path, ensuring that it is
- * isolated from other users and the public.
+ *  - The `userId` is present both in the path and as a field in the `Pet` document.
+ *  - The `petId` is present both in the path and as a field in the `MealPlan`, `SupplementRecommendation` and `ActivityRecord` documents.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Controls access to user profile data. Only the user themselves can read/write their profile.
+     * @description Controls access to user profiles.
      * @path /users/{userId}
-     * @allow (get, update, delete) User with ID 'lHwjFouEjMgD9hgraRBcx320eB03' can access /users/lHwjFouEjMgD9hgraRBcx320eB03.
-     * @allow (create) User with ID 'lHwjFouEjMgD9hgraRBcx320eB03' can create /users/lHwjFouEjMgD9hgraRBcx320eB03
-     * @deny (get, update, delete) User with ID 'otherUserId' cannot access /users/lHwjFouEjMgD9hgraRBcx320eB03.
-     * @principle Enforces document ownership for user profiles.
+     * @allow (create) - A user can create their own profile if the userId matches their auth.uid.
+     * @allow (get, update, delete) - A user can only access their own profile data.
+     * @deny (list) - Listing all users is not allowed.
+     * @deny (create) - A user cannot create a user document with an ID that doesn't match their auth.uid.
+     * @principle Enforces document ownership for writes.
      */
     match /users/{userId} {
+      // isOwner function check if the user id is the same as the authenticated user id
       function isOwner(userId) {
-        return request.auth != null && request.auth.uid == userId;
+        return request.auth.uid == userId;
       }
+
+      // isExistingOwner checks if the user is the owner and the resource exists
       function isExistingOwner(userId) {
         return isOwner(userId) && resource != null;
       }
+
       allow get: if isOwner(userId);
       allow list: if false;
       allow create: if isOwner(userId) && request.resource.data.id == userId;
@@ -55,40 +53,50 @@ service cloud.firestore {
     }
 
     /**
-     * @description Controls access to pet profiles. Only the owner of the user profile can manage their pets.
+     * @description Controls access to pet profiles.
      * @path /users/{userId}/pets/{petId}
-     * @allow (create, get, list, update, delete) User with ID 'lHwjFouEjMgD9hgraRBcx320eB03' can manage pets under /users/lHwjFouEjMgD9hgraRBcx320eB03.
-     * @deny (create, get, list, update, delete) User with ID 'otherUserId' cannot manage pets under /users/lHwjFouEjMgD9hgraRBcx320eB03.
-     * @principle Enforces document ownership for pet profiles.
+     * @allow (create) - A user can create a pet profile under their userId.
+     * @allow (get, list, update, delete) - A user can only access pet profiles associated with their user ID.
+     * @deny (create) - A user cannot create a pet profile under another user's ID.
+     * @principle Enforces document ownership for writes.
      */
     match /users/{userId}/pets/{petId} {
+      // isOwner function check if the user id is the same as the authenticated user id
       function isOwner(userId) {
-        return request.auth != null && request.auth.uid == userId;
+        return request.auth.uid == userId;
       }
+
+      // isExistingOwner checks if the user is the owner and the resource exists
       function isExistingOwner(userId) {
         return isOwner(userId) && resource != null;
       }
+
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.userId == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow create: if isOwner(userId) ;
+      allow update: if isExistingOwner(userId) ;
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Controls access to meal plans. Only the owner of the pet profile can manage meal plans.
+     * @description Controls access to meal plans for pets.
      * @path /users/{userId}/pets/{petId}/mealPlans/{mealPlanId}
-     * @allow (create, get, list, update, delete) User with ID 'lHwjFouEjMgD9hgraRBcx320eB03' can manage meal plans under /users/lHwjFouEjMgD9hgraRBcx320eB03/pets/{petId}.
-     * @deny (create, get, list, update, delete) User with ID 'otherUserId' cannot manage meal plans under /users/lHwjFouEjMgD9hgraRBcx320eB03/pets/{petId}.
-     * @principle Enforces document ownership for meal plans.
+     * @allow (create) - A user can create a meal plan for a pet they own.
+     * @allow (get, list, update, delete) - A user can only access meal plans associated with their pet.
+     * @deny (create) - A user cannot create a meal plan for a pet owned by another user.
+     * @principle Enforces document ownership for writes.
      */
     match /users/{userId}/pets/{petId}/mealPlans/{mealPlanId} {
+      // isOwner function check if the user id is the same as the authenticated user id
       function isOwner(userId) {
-        return request.auth != null && request.auth.uid == userId;
+        return request.auth.uid == userId;
       }
+
+      // isExistingOwner checks if the user is the owner and the resource exists
       function isExistingOwner(userId) {
         return isOwner(userId) && resource != null;
       }
+
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
       allow create: if isOwner(userId);
@@ -97,19 +105,24 @@ service cloud.firestore {
     }
 
     /**
-     * @description Controls access to supplement recommendations. Only the owner of the pet profile can manage supplement recommendations.
+     * @description Controls access to supplement recommendations for pets.
      * @path /users/{userId}/pets/{petId}/supplementRecommendations/{supplementRecommendationId}
-     * @allow (create, get, list, update, delete) User with ID 'lHwjFouEjMgD9hgraRBcx320eB03' can manage supplement recommendations under /users/lHwjFouEjMgD9hgraRBcx320eB03/pets/{petId}.
-     * @deny (create, get, list, update, delete) User with ID 'otherUserId' cannot manage supplement recommendations under /users/lHwjFouEjMgD9hgraRBcx320eB03/pets/{petId}.
-     * @principle Enforces document ownership for supplement recommendations.
+     * @allow (create) - A user can create a supplement recommendation for a pet they own.
+     * @allow (get, list, update, delete) - A user can only access supplement recommendations associated with their pet.
+     * @deny (create) - A user cannot create a supplement recommendation for a pet owned by another user.
+     * @principle Enforces document ownership for writes.
      */
     match /users/{userId}/pets/{petId}/supplementRecommendations/{supplementRecommendationId} {
+      // isOwner function check if the user id is the same as the authenticated user id
       function isOwner(userId) {
-        return request.auth != null && request.auth.uid == userId;
+        return request.auth.uid == userId;
       }
+
+      // isExistingOwner checks if the user is the owner and the resource exists
       function isExistingOwner(userId) {
         return isOwner(userId) && resource != null;
       }
+
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
       allow create: if isOwner(userId);
@@ -118,19 +131,24 @@ service cloud.firestore {
     }
 
     /**
-     * @description Controls access to activity records. Only the owner of the pet profile can manage activity records.
+     * @description Controls access to activity records for pets.
      * @path /users/{userId}/pets/{petId}/activityRecords/{activityRecordId}
-     * @allow (create, get, list, update, delete) User with ID 'lHwjFouEjMgD9hgraRBcx320eB03' can manage activity records under /users/lHwjFouEjMgD9hgraRBcx320eB03/pets/{petId}.
-     * @deny (create, get, list, update, delete) User with ID 'otherUserId' cannot manage activity records under /users/lHwjFouEjMgD9hgraRBcx320eB03/pets/{petId}.
-     * @principle Enforces document ownership for activity records.
+     * @allow (create) - A user can create an activity record for a pet they own.
+     * @allow (get, list, update, delete) - A user can only access activity records associated with their pet.
+     * @deny (create) - A user cannot create an activity record for a pet owned by another user.
+     * @principle Enforces document ownership for writes.
      */
     match /users/{userId}/pets/{petId}/activityRecords/{activityRecordId} {
+      // isOwner function check if the user id is the same as the authenticated user id
       function isOwner(userId) {
-        return request.auth != null && request.auth.uid == userId;
+        return request.auth.uid == userId;
       }
+
+      // isExistingOwner checks if the user is the owner and the resource exists
       function isExistingOwner(userId) {
         return isOwner(userId) && resource != null;
       }
+
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
       allow create: if isOwner(userId);
