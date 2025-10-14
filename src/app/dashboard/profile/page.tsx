@@ -56,7 +56,17 @@ export default function ProfilePage() {
     }
 
     if (!profile) {
-        return <div>No profile found. Please create one from the onboarding page.</div>;
+        return (
+            <div className="text-center py-12">
+                <h2 className="text-xl font-semibold">No Pet Profile Found</h2>
+                <p className="text-muted-foreground mt-2 mb-4">Let's create one to get started.</p>
+                <Button asChild>
+                    <Link href="/dashboard/profile/edit">
+                        <Pencil className="mr-2 h-4 w-4" /> Create Profile
+                    </Link>
+                </Button>
+            </div>
+        );
     }
 
     return (
@@ -66,7 +76,7 @@ export default function ProfilePage() {
                 description="View and manage your pet's details."
             >
                 <Button variant="outline" asChild>
-                    <Link href="/dashboard/onboarding">
+                    <Link href="/dashboard/profile/edit">
                         <Pencil className="mr-2 h-4 w-4" /> Edit Profile
                     </Link>
                 </Button>

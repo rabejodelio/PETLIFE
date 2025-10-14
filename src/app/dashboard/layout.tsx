@@ -268,22 +268,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     setLoading(true);
 
     const userDocRef = doc(firestore, 'users', user.uid);
+    // Pet document reference is now dynamic based on user's main pet ID
     const petDocRef = doc(firestore, 'users', user.uid, 'pets', 'main-pet');
 
-    const manageUserDocument = async () => {
-        try {
-            const docSnap = await getDoc(userDocRef);
-            if (docSnap.exists()) {
-                setUserDoc(docSnap.data() as UserDoc);
-            } else if (user.email) {
-                const newUserDoc: UserDoc = { email: user.email, isPro: false };
-                await setDoc(userDocRef, newUserDoc);
-                setUserDoc(newUserDoc);
-            }
-        } catch (error) {
-            console.error("Error managing user document:", error);
+    const unsubUser = onSnapshot(userDocRef, (docSnap) => {
+        if (docSnap.exists()) {
+            setUserDoc(docSnap.data() as UserDoc);
+        } else if (user.email) {
+            const newUserDoc: UserDoc = { email: user.email, isPro: false };
+            setDoc(userDocRef, newUserDoc); // Create user doc if it doesn't exist
+            setUserDoc(newUserDoc);
         }
-    };
+    }, (error) => {
+        console.error("Error loading user document from Firestore:", error);
+    });
 
     const unsubPet = onSnapshot(petDocRef, (docSnap) => {
       if (docSnap.exists()) {
@@ -291,15 +289,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       } else {
         setProfile(null);
       }
+       setLoading(false);
     }, (error) => {
       console.error("Erreur de chargement du profil depuis Firestore :", error);
-    });
-
-    manageUserDocument().finally(() => {
       setLoading(false);
     });
 
     return () => {
+      unsubUser();
       unsubPet();
     };
   }, [user, firestore, isUserLoading]);
@@ -331,7 +328,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       age: 0,
       weight: 0,
       healthGoal: 'maintain_weight',
-      isPro: false,
+      isPro: userDoc?.isPro || false, // Use user's pro status
       avatarUrl: '',
       allergies: '',
     };
@@ -341,7 +338,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     try {
       const petDocRef = doc(firestore, 'users', user.uid, 'pets', 'main-pet');
       await setDoc(petDocRef, updatedProfile, { merge: true });
-      setProfile(updatedProfile); // Optimistic update
+      // The onSnapshot listener will update the profile state automatically
     } catch (error) {
       console.error("Firestore write failed:", error);
       toast({
@@ -364,7 +361,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
     updateDoc(userDocRef, dataToUpdate)
         .then(() => {
-            setUserDoc(prevDoc => ({ ...(prevDoc as UserDoc), isPro: true }));
+            // The onSnapshot listener for the user doc will update the state
             toast({
                 title: 'Félicitations !',
                 description: "Vous êtes maintenant un membre Pro.",
@@ -409,7 +406,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const isPro = userDoc?.isPro || false;
 
-  if (isUserLoading || loading) {
+  if (isUserLoading) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <Logo />
@@ -430,5 +427,3 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     </PetProfileContext.Provider>
   );
 }
-
-    

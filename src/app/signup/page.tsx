@@ -38,7 +38,7 @@ export default function SignupPage() {
                 title: "Account Created!",
                 description: "Let's create a profile for your pet.",
             });
-            router.push("/onboarding");
+            router.push("/dashboard");
         } catch (error: any) {
             console.error("Signup error:", error);
             let errorMessage = "An unknown error occurred during sign-up.";

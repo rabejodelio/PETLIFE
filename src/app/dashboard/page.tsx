@@ -7,26 +7,16 @@ import { usePetProfile } from '@/hooks/use-pet-provider';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
 import { Logo } from '@/components/logo';
 
 export default function DashboardPage() {
     const { profile, loading } = usePetProfile();
-    const router = useRouter();
 
     const healthGoalMap = {
         lose_weight: 'Lose Weight',
         maintain_weight: 'Maintain Weight',
         improve_joints: 'Improve Joints',
     };
-
-    useEffect(() => {
-        // Only redirect when loading is finished and there's no profile.
-        if (!loading && !profile) {
-            router.push('/onboarding');
-        }
-    }, [loading, profile, router]);
 
     if (loading) {
         return (
@@ -37,9 +27,24 @@ export default function DashboardPage() {
     }
 
     if (!profile) {
-        // This will be briefly visible before the useEffect above redirects.
-        // Or it can be a fallback while waiting for redirection.
-        return null;
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
+                <Card className="max-w-lg">
+                    <CardHeader>
+                        <CardTitle className="font-headline text-2xl">Welcome to PetLife!</CardTitle>
+                        <CardDescription>It looks like you don't have a pet profile yet. Let's create one!</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <p className="mb-4 text-sm text-muted-foreground">
+                            Creating a profile helps us tailor meal plans, activities, and wellness tips specifically for your furry friend.
+                        </p>
+                        <Button asChild>
+                            <Link href="/dashboard/profile/edit">Create Pet Profile</Link>
+                        </Button>
+                    </CardContent>
+                </Card>
+            </div>
+        );
     }
 
     return (
