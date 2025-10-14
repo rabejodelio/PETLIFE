@@ -1,12 +1,13 @@
 /**
- * @fileoverview Firestore Security Rules for PetLife application.
+ * @fileoverview Firestore Security Rules for the PetLife application.
  *
  * Core Philosophy:
  * This ruleset enforces a strict user-ownership model for all data. Each user can only
- * access their own data and the data of their pets.  Data is organized in a hierarchical
- * structure under /users/{userId}.
+ * access their own data and the data of their pets. Data is organized hierarchically
+ * under the `/users/{userId}` path to simplify ownership checks.
  *
  * Data Structure:
+ * All data is nested under `/users/{userId}`, ensuring clear ownership.
  * - /users/{userId}: Stores user profiles.
  * - /users/{userId}/pets/{petId}: Stores pet profiles owned by a specific user.
  * - /users/{userId}/pets/{petId}/mealPlans/{mealPlanId}: Stores meal plans for a specific pet.
@@ -14,147 +15,124 @@
  * - /users/{userId}/pets/{petId}/activityRecords/{activityRecordId}: Stores activity records for a specific pet.
  *
  * Key Security Decisions:
- * - User listing is disallowed.
- * - All write operations require the user to be the owner of the document or its parent.
- * - The rules are designed to avoid `get()` calls for efficiency and to ensure atomicity.
+ * - Users can only read and write their own user document.
+ * - Users can only manage pets, meal plans, supplement recommendations, and activity records
+ *   associated with their own user ID.
+ * - No public listing of users or pets is allowed. Only owners can list their own resources.
  *
  * Denormalization for Authorization:
- *  The data structure inherently denormalizes ownership by nesting pet-related data under the user's document.
+ *  - The data model includes a `userId` field on `Pet` documents and a `petId` field on
+ *    `MealPlan`, `SupplementRecommendation`, and `ActivityRecord` documents. This denormalization
+ *    allows for efficient security rules that do not require additional `get()` calls.
+ * Structural Segregation:
+ * All private user data is stored under the /users/{userId} path, ensuring that it is
+ * isolated from other users and the public.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper function to check if the user is signed in
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    // Helper function to check if the authenticated user is the owner of the resource (based on the userId)
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
-    }
-
-    // Helper function to check if the authenticated user is the existing owner of the resource (based on the userId)
-    function isExistingOwner(userId) {
-      return isOwner(userId) && resource != null;
-    }
-
     /**
-     * @description Grants access to user profile data based on ownership.
+     * @description Controls access to user profile data. Only the user themselves can read/write their profile.
      * @path /users/{userId}
-     * @allow (create) User with ID 'user123' can create their own profile.
-     * @deny (create) User with ID 'user123' cannot create a profile for 'user456'.
-     * @allow (get) User 'user123' can read their own profile.
-     * @deny (get) User 'user123' cannot read the profile of 'user456'.
-     * @allow (update) User 'user123' can update their own profile.
-     * @deny (update) User 'user123' cannot update the profile of 'user456'.
-     * @allow (delete) User 'user123' can delete their own profile.
-     * @deny (delete) User 'user123' cannot delete the profile of 'user456'.
-     * @principle Enforces document ownership for all operations on user profiles.
+     * @allow (get, update, delete) User with ID 'lHwjFouEjMgD9hgraRBcx320eB03' can access /users/lHwjFouEjMgD9hgraRBcx320eB03.
+     * @allow (create) User with ID 'lHwjFouEjMgD9hgraRBcx320eB03' can create /users/lHwjFouEjMgD9hgraRBcx320eB03
+     * @deny (get, update, delete) User with ID 'otherUserId' cannot access /users/lHwjFouEjMgD9hgraRBcx320eB03.
+     * @principle Enforces document ownership for user profiles.
      */
     match /users/{userId} {
-      // Read rules
+      function isOwner(userId) {
+        return request.auth != null && request.auth.uid == userId;
+      }
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
       allow get: if isOwner(userId);
       allow list: if false;
-
-      // Write rules
       allow create: if isOwner(userId) && request.resource.data.id == userId;
       allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Grants access to pet profile data based on ownership.
+     * @description Controls access to pet profiles. Only the owner of the user profile can manage their pets.
      * @path /users/{userId}/pets/{petId}
-     * @allow (create) User with ID 'user123' can create a pet profile under their user ID.
-     * @deny (create) User with ID 'user123' cannot create a pet profile under 'user456'.
-     * @allow (get) User 'user123' can read their own pet profile.
-     * @deny (get) User 'user123' cannot read the pet profile of 'user456'.
-     * @allow (update) User 'user123' can update their own pet profile.
-     * @deny (update) User 'user123' cannot update the pet profile of 'user456'.
-     * @allow (delete) User 'user123' can delete their own pet profile.
-     * @deny (delete) User 'user123' cannot delete the pet profile of 'user456'.
-     * @principle Enforces document ownership for all operations on pet profiles.
+     * @allow (create, get, list, update, delete) User with ID 'lHwjFouEjMgD9hgraRBcx320eB03' can manage pets under /users/lHwjFouEjMgD9hgraRBcx320eB03.
+     * @deny (create, get, list, update, delete) User with ID 'otherUserId' cannot manage pets under /users/lHwjFouEjMgD9hgraRBcx320eB03.
+     * @principle Enforces document ownership for pet profiles.
      */
     match /users/{userId}/pets/{petId} {
-      // Read rules
+      function isOwner(userId) {
+        return request.auth != null && request.auth.uid == userId;
+      }
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
-
-      // Write rules
       allow create: if isOwner(userId) && request.resource.data.userId == userId;
       allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Grants access to meal plan data based on pet ownership.
+     * @description Controls access to meal plans. Only the owner of the pet profile can manage meal plans.
      * @path /users/{userId}/pets/{petId}/mealPlans/{mealPlanId}
-     * @allow (create) User with ID 'user123' can create a meal plan under their pet profile.
-     * @deny (create) User with ID 'user123' cannot create a meal plan under 'user456'.
-     * @allow (get) User 'user123' can read their own pet's meal plan.
-     * @deny (get) User 'user123' cannot read the meal plan of 'user456'.
-     * @allow (update) User 'user123' can update their own pet's meal plan.
-     * @deny (update) User 'user123' cannot update the meal plan of 'user456'.
-     * @allow (delete) User 'user123' can delete their own pet's meal plan.
-     * @deny (delete) User 'user123' cannot delete the meal plan of 'user456'.
-     * @principle Enforces document ownership for all operations on meal plans.
+     * @allow (create, get, list, update, delete) User with ID 'lHwjFouEjMgD9hgraRBcx320eB03' can manage meal plans under /users/lHwjFouEjMgD9hgraRBcx320eB03/pets/{petId}.
+     * @deny (create, get, list, update, delete) User with ID 'otherUserId' cannot manage meal plans under /users/lHwjFouEjMgD9hgraRBcx320eB03/pets/{petId}.
+     * @principle Enforces document ownership for meal plans.
      */
     match /users/{userId}/pets/{petId}/mealPlans/{mealPlanId} {
-      // Read rules
+      function isOwner(userId) {
+        return request.auth != null && request.auth.uid == userId;
+      }
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
-
-      // Write rules
       allow create: if isOwner(userId);
       allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Grants access to supplement recommendation data based on pet ownership.
+     * @description Controls access to supplement recommendations. Only the owner of the pet profile can manage supplement recommendations.
      * @path /users/{userId}/pets/{petId}/supplementRecommendations/{supplementRecommendationId}
-     * @allow (create) User with ID 'user123' can create a supplement recommendation under their pet profile.
-     * @deny (create) User with ID 'user123' cannot create a supplement recommendation under 'user456'.
-     * @allow (get) User 'user123' can read their own pet's supplement recommendation.
-     * @deny (get) User 'user123' cannot read the supplement recommendation of 'user456'.
-     * @allow (update) User 'user123' can update their own pet's supplement recommendation.
-     * @deny (update) User 'user123' cannot update the supplement recommendation of 'user456'.
-     * @allow (delete) User 'user123' can delete their own pet's supplement recommendation.
-     * @deny (delete) User 'user123' cannot delete the supplement recommendation of 'user456'.
-     * @principle Enforces document ownership for all operations on supplement recommendations.
+     * @allow (create, get, list, update, delete) User with ID 'lHwjFouEjMgD9hgraRBcx320eB03' can manage supplement recommendations under /users/lHwjFouEjMgD9hgraRBcx320eB03/pets/{petId}.
+     * @deny (create, get, list, update, delete) User with ID 'otherUserId' cannot manage supplement recommendations under /users/lHwjFouEjMgD9hgraRBcx320eB03/pets/{petId}.
+     * @principle Enforces document ownership for supplement recommendations.
      */
     match /users/{userId}/pets/{petId}/supplementRecommendations/{supplementRecommendationId} {
-      // Read rules
+      function isOwner(userId) {
+        return request.auth != null && request.auth.uid == userId;
+      }
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
-
-      // Write rules
       allow create: if isOwner(userId);
       allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Grants access to activity record data based on pet ownership.
+     * @description Controls access to activity records. Only the owner of the pet profile can manage activity records.
      * @path /users/{userId}/pets/{petId}/activityRecords/{activityRecordId}
-     * @allow (create) User with ID 'user123' can create an activity record under their pet profile.
-     * @deny (create) User with ID 'user123' cannot create an activity record under 'user456'.
-     * @allow (get) User 'user123' can read their own pet's activity record.
-     * @deny (get) User 'user123' cannot read the activity record of 'user456'.
-     * @allow (update) User 'user123' can update their own pet's activity record.
-     * @deny (update) User 'user123' cannot update the activity record of 'user456'.
-     * @allow (delete) User 'user123' can delete their own pet's activity record.
-     * @deny (delete) User 'user123' cannot delete the activity record of 'user456'.
-     * @principle Enforces document ownership for all operations on activity records.
+     * @allow (create, get, list, update, delete) User with ID 'lHwjFouEjMgD9hgraRBcx320eB03' can manage activity records under /users/lHwjFouEjMgD9hgraRBcx320eB03/pets/{petId}.
+     * @deny (create, get, list, update, delete) User with ID 'otherUserId' cannot manage activity records under /users/lHwjFouEjMgD9hgraRBcx320eB03/pets/{petId}.
+     * @principle Enforces document ownership for activity records.
      */
     match /users/{userId}/pets/{petId}/activityRecords/{activityRecordId} {
-      // Read rules
+      function isOwner(userId) {
+        return request.auth != null && request.auth.uid == userId;
+      }
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
-
-      // Write rules
       allow create: if isOwner(userId);
       allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
