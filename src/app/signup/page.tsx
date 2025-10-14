@@ -36,9 +36,9 @@ export default function SignupPage() {
             await createUserWithEmailAndPassword(auth, email, password);
              toast({
                 title: "Account Created!",
-                description: "Redirecting to your dashboard...",
+                description: "Redirecting to create your pet's profile...",
             });
-            router.push("/dashboard");
+            router.push("/dashboard/profile/edit");
         } catch (error: any) {
             console.error("Signup error:", error);
             let errorMessage = "An unknown error occurred during sign-up.";
