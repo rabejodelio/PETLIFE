@@ -48,7 +48,7 @@ export default function OnboardingPage() {
 
   const onSubmit = async (data: PetProfileFormValues) => {
     try {
-        await saveProfile({ ...data, isPro: profile?.isPro || false });
+        await saveProfile(data);
         toast({
         title: "Profile saved!",
         description: "Let's get started on your pet's wellness journey.",
