@@ -59,7 +59,7 @@ export default function EditProfilePage() {
         title: "Profile saved!",
         description: "Your pet's information has been updated.",
         });
-        router.push('/dashboard/profile');
+        router.push('/dashboard');
     } catch(error) {
         console.error("Failed to save profile:", error);
         toast({
