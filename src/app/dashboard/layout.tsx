@@ -40,7 +40,7 @@ import { ProSubscriptionDialog } from '@/components/pro-subscription-dialog';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Label } from '@/components/ui/label';
-import { useAuth, useUser, useFirestore } from '@/firebase';
+import { useAuth, useUser, useFirestore, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import { doc, setDoc, getDoc, onSnapshot, updateDoc } from 'firebase/firestore';
 import type { PetProfile, ActivityHistory, UserDoc } from '@/lib/types';
@@ -356,26 +356,24 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
 
     const userDocRef = doc(firestore, 'users', user.uid);
+    const dataToUpdate = { isPro: true };
 
-    try {
-        await updateDoc(userDocRef, { isPro: true });
-        
-        // After successful write, update local state to match
-        setUserDoc(prevDoc => ({ ...(prevDoc as UserDoc), isPro: true }));
-        
-        toast({
-            title: 'Félicitations !',
-            description: "Vous êtes maintenant un membre Pro.",
+    updateDoc(userDocRef, dataToUpdate)
+        .then(() => {
+            setUserDoc(prevDoc => ({ ...(prevDoc as UserDoc), isPro: true }));
+            toast({
+                title: 'Félicitations !',
+                description: "Vous êtes maintenant un membre Pro.",
+            });
+        })
+        .catch((serverError) => {
+            const permissionError = new FirestorePermissionError({
+                path: userDocRef.path,
+                operation: 'update',
+                requestResourceData: dataToUpdate,
+            });
+            errorEmitter.emit('permission-error', permissionError);
         });
-
-    } catch (error) {
-        console.error("Promo code update failed:", error);
-        toast({
-            variant: 'destructive',
-            title: 'Erreur',
-            description: 'la mise à jour du profil a échoué. Veuillez réessayer.',
-        });
-    }
   };
 
 
