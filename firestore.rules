@@ -7,37 +7,40 @@
  *
  * Data Structure:
  * The data is structured hierarchically under /users/{userId}, with pets, meal plans,
- * supplement recommendations, and activity records stored as subcollections. This structure
- * enables simple, path-based authorization.
+ * supplement recommendations, and activity records as subcollections. This structure
+ * ensures clear ownership and avoids the need for complex queries in the rules.
  *
  * Key Security Decisions:
- * - All data is private and requires authentication.
- * - Users can only access their own data.
- * - No public listing of users or pets is allowed.
+ * - Users can only create, read, update, and delete their own user documents.
+ * - Users can only create, read, update, and delete pets and associated data (meal plans,
+ *   supplement recommendations, activity records) that belong to them.
+ * - Listing of user documents is disallowed to prevent unauthorized data discovery.
  *
  * Denormalization for Authorization:
- * The rules leverage the hierarchical data model to avoid the need for `get()` calls
- * and ensure atomic operations. Each document is secured based on its location within
- * the /users/{userId} path, which implicitly establishes ownership.
+ *  The data model enforces that all documents are located under a path that represents
+ *  ownership.  Authorization is determined by validating that the `request.auth.uid`
+ *  matches the `userId` in the path.
+ *
+ *  There is no denormalization for this security rule set.
+ *
+ * Structural Segregation:
+ *  Private user and pet data are stored under the /users/{userId} path, ensuring that
+ *  only the owner can access the data.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Controls access to user profiles. Only the user themselves can read and write their profile.
+     * @description Enforces user-ownership for user profiles.
      * @path /users/{userId}
-     * @allow (create) - Authenticated user with ID matching the path can create their profile.
-     * @allow (get, list, update, delete) - Authenticated user with ID matching the path can read, update, and delete their profile.
-     * @deny (create) - Authenticated user with ID not matching the path cannot create a profile.
-     * @deny (update, delete) - Authenticated user with ID not matching the path cannot update or delete a profile.
-     * @principle Enforces document ownership for all operations.
+     * @allow (create) User with matching userId can create their profile.
+     * @allow (get, update, delete) User with matching userId can read, update, and delete their profile.
+     * @deny (create) User cannot create a profile with a different userId.
+     * @deny (get, update, delete) User cannot read, update, or delete another user's profile.
+     * @principle Enforces document ownership for writes.
      */
     match /users/{userId} {
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
       function isOwner(userId) {
         return request.auth.uid == userId;
       }
@@ -48,55 +51,46 @@ service cloud.firestore {
 
       allow get: if isOwner(userId);
       allow list: if false;
-      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.id == userId;
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
       allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Controls access to pet profiles. Only the owner of the pet (user) can read and write pet profiles.
+     * @description Enforces user-ownership for pet profiles.
      * @path /users/{userId}/pets/{petId}
-     * @allow (create) - Authenticated user who is the owner can create a pet profile.
-     * @allow (get, list, update, delete) - Authenticated user who is the owner can read, update, and delete pet profiles.
-     * @deny (create) - Authenticated user who is not the owner cannot create a pet profile.
-     * @deny (update, delete) - Authenticated user who is not the owner cannot update or delete a pet profile.
+     * @allow (create) User with matching userId can create a pet profile under their user ID.
+     * @allow (get, update, delete) User with matching userId can read, update, and delete their pet profiles.
+     * @deny (create) User cannot create a pet profile under a different user ID.
+     * @deny (get, update, delete) User cannot read, update, or delete another user's pet profiles.
      * @principle Enforces document ownership for writes.
      */
     match /users/{userId}/pets/{petId} {
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
       function isOwner(userId) {
         return request.auth.uid == userId;
       }
 
-       function isExistingOwner(userId) {
+      function isExistingOwner(userId) {
         return isOwner(userId) && resource != null;
       }
 
-
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
-      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.userId == userId;
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
       allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Controls access to meal plans. Only the owner of the pet (user) can read and write meal plans.
+     * @description Enforces user-ownership for meal plans.
      * @path /users/{userId}/pets/{petId}/mealPlans/{mealPlanId}
-     * @allow (create) - Authenticated user who is the pet owner can create a meal plan.
-     * @allow (get, list, update, delete) - Authenticated user who is the pet owner can read, update, and delete meal plans.
-     * @deny (create) - Authenticated user who is not the pet owner cannot create a meal plan.
-     * @deny (update, delete) - Authenticated user who is not the pet owner cannot update or delete a meal plan.
+     * @allow (create) User with matching userId can create a meal plan under their pet profile.
+     * @allow (get, update, delete) User with matching userId can read, update, and delete their meal plans.
+     * @deny (create) User cannot create a meal plan under a different user ID or pet ID.
+     * @deny (get, update, delete) User cannot read, update, or delete another user's meal plans.
      * @principle Enforces document ownership for writes.
      */
     match /users/{userId}/pets/{petId}/mealPlans/{mealPlanId} {
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
       function isOwner(userId) {
         return request.auth.uid == userId;
       }
@@ -107,25 +101,21 @@ service cloud.firestore {
 
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
-      allow create: if isSignedIn() && isOwner(userId) && get(/databases/$(database)/documents/users/$(userId)/pets/$(petId)).data.userId == userId && request.resource.data.petId == petId;
-      allow update: if isExistingOwner(userId) && get(/databases/$(database)/documents/users/$(userId)/pets/$(petId)).data.userId == userId && request.resource.data.petId == petId;
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Controls access to supplement recommendations. Only the owner of the pet (user) can read and write supplement recommendations.
+     * @description Enforces user-ownership for supplement recommendations.
      * @path /users/{userId}/pets/{petId}/supplementRecommendations/{supplementRecommendationId}
-     * @allow (create) - Authenticated user who is the pet owner can create a supplement recommendation.
-     * @allow (get, list, update, delete) - Authenticated user who is the pet owner can read, update, and delete supplement recommendations.
-     * @deny (create) - Authenticated user who is not the pet owner cannot create a supplement recommendation.
-     * @deny (update, delete) - Authenticated user who is not the pet owner cannot update or delete a supplement recommendation.
+     * @allow (create) User with matching userId can create a supplement recommendation under their pet profile.
+     * @allow (get, update, delete) User with matching userId can read, update, and delete their supplement recommendations.
+     * @deny (create) User cannot create a supplement recommendation under a different user ID or pet ID.
+     * @deny (get, update, delete) User cannot read, update, or delete another user's supplement recommendations.
      * @principle Enforces document ownership for writes.
      */
     match /users/{userId}/pets/{petId}/supplementRecommendations/{supplementRecommendationId} {
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
       function isOwner(userId) {
         return request.auth.uid == userId;
       }
@@ -134,28 +124,23 @@ service cloud.firestore {
         return isOwner(userId) && resource != null;
       }
 
-
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
-      allow create: if isSignedIn() && isOwner(userId) && get(/databases/$(database)/documents/users/$(userId)/pets/$(petId)).data.userId == userId && request.resource.data.petId == petId;
-      allow update: if isExistingOwner(userId) && get(/databases/$(database)/documents/users/$(userId)/pets/$(petId)).data.userId == userId && request.resource.data.petId == petId;
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Controls access to activity records. Only the owner of the pet (user) can read and write activity records.
+     * @description Enforces user-ownership for activity records.
      * @path /users/{userId}/pets/{petId}/activityRecords/{activityRecordId}
-     * @allow (create) - Authenticated user who is the pet owner can create an activity record.
-     * @allow (get, list, update, delete) - Authenticated user who is the pet owner can read, update, and delete activity records.
-     * @deny (create) - Authenticated user who is not the pet owner cannot create an activity record.
-     * @deny (update, delete) - Authenticated user who is not the pet owner cannot update or delete an activity record.
+     * @allow (create) User with matching userId can create an activity record under their pet profile.
+     * @allow (get, update, delete) User with matching userId can read, update, and delete their activity records.
+     * @deny (create) User cannot create an activity record under a different user ID or pet ID.
+     * @deny (get, update, delete) User cannot read, update, or delete another user's activity records.
      * @principle Enforces document ownership for writes.
      */
     match /users/{userId}/pets/{petId}/activityRecords/{activityRecordId} {
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
       function isOwner(userId) {
         return request.auth.uid == userId;
       }
@@ -166,8 +151,8 @@ service cloud.firestore {
 
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
-      allow create: if isSignedIn() && isOwner(userId) && get(/databases/$(database)/documents/users/$(userId)/pets/$(petId)).data.userId == userId && request.resource.data.petId == petId;
-      allow update: if isExistingOwner(userId) && get(/databases/$(database)/documents/users/$(userId)/pets/$(petId)).data.userId == userId && request.resource.data.petId == petId;
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
     }
   }
