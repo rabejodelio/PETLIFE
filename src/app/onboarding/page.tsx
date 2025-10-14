@@ -28,7 +28,7 @@ export default function OnboardingPage() {
 
   const form = useForm<PetProfileFormValues>({
     resolver: zodResolver(petProfileSchema),
-    defaultValues: profile || {
+    defaultValues: {
       name: '',
       species: 'dog',
       breed: '',
@@ -39,16 +39,16 @@ export default function OnboardingPage() {
     },
   });
 
-  useEffect(() => {
-    // If the user is not logged in and we're done loading, redirect to login.
+   useEffect(() => {
     if (!isUserLoading && !user) {
       router.push('/login');
     }
-    // When the profile is loaded, reset the form with its data.
-    if (profile) {
-      form.reset(profile);
+    // If a profile already exists, redirect to dashboard. 
+    // This page is for creation only.
+    if (!loading && profile) {
+      router.push('/dashboard');
     }
-  }, [profile, user, isUserLoading, form, router]);
+  }, [profile, user, isUserLoading, loading, router]);
 
   const onSubmit = async (data: PetProfileFormValues) => {
     try {
@@ -81,7 +81,7 @@ export default function OnboardingPage() {
         <Card className="max-w-2xl w-full">
             <CardHeader>
                 <CardTitle className="font-headline text-2xl">
-                  {profile ? "Edit Your Pet's Profile" : "Create Your Pet's Profile"}
+                  Create Your Pet's Profile
                 </CardTitle>
                 <CardDescription>
                     Let's get to know your furry friend to personalize their experience.

@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
+import { Logo } from '@/components/logo';
 
 export default function DashboardPage() {
     const { profile, loading } = usePetProfile();
@@ -23,12 +24,16 @@ export default function DashboardPage() {
     useEffect(() => {
         // Only redirect when loading is finished and there's no profile.
         if (!loading && !profile) {
-            router.push('/dashboard/onboarding');
+            router.push('/onboarding');
         }
     }, [loading, profile, router]);
 
     if (loading) {
-        return <div>Loading...</div>;
+        return (
+            <div className="flex h-screen w-full items-center justify-center">
+              <Logo />
+            </div>
+          );
     }
 
     if (!profile) {
