@@ -7,9 +7,12 @@ import { usePetProfile } from '@/hooks/use-pet-provider';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 export default function DashboardPage() {
     const { profile, loading } = usePetProfile();
+    const router = useRouter();
 
     const healthGoalMap = {
         lose_weight: 'Lose Weight',
@@ -17,28 +20,21 @@ export default function DashboardPage() {
         improve_joints: 'Improve Joints',
     };
 
+    useEffect(() => {
+        // Only redirect when loading is finished and there's no profile.
+        if (!loading && !profile) {
+            router.push('/onboarding');
+        }
+    }, [loading, profile, router]);
+
     if (loading) {
         return <div>Loading...</div>;
     }
 
     if (!profile) {
-        return (
-            <div className="flex flex-col items-center justify-center h-[50vh] text-center">
-                <Card className="max-w-md p-8">
-                    <CardHeader>
-                        <CardTitle className="font-headline text-2xl">Welcome to PetLife!</CardTitle>
-                        <CardDescription>
-                            It looks like you haven't created a pet profile yet. Let's create one to get started.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <Button asChild>
-                            <Link href="/onboarding">Create Pet Profile</Link>
-                        </Button>
-                    </CardContent>
-                </Card>
-            </div>
-        );
+        // This will be briefly visible before the useEffect above redirects.
+        // Or it can be a fallback while waiting for redirection.
+        return null;
     }
 
     return (
