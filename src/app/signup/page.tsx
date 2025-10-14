@@ -6,28 +6,20 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useAuth, useUser } from "@/firebase";
+import { useAuth } from "@/firebase";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { Logo } from "@/components/logo";
 
 export default function SignupPage() {
     const router = useRouter();
     const auth = useAuth();
-    const { user, isUserLoading } = useUser();
     const { toast } = useToast();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-
-    useEffect(() => {
-        // Redirect if user is signed in
-        if (!isUserLoading && user) {
-            router.push("/onboarding");
-        }
-    }, [user, isUserLoading, router]);
 
     const handleSignup = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -42,11 +34,11 @@ export default function SignupPage() {
 
         try {
             await createUserWithEmailAndPassword(auth, email, password);
-            // The useEffect will handle the redirect on successful user state change.
              toast({
                 title: "Account Created!",
                 description: "Let's create a profile for your pet.",
             });
+            router.push("/onboarding");
         } catch (error: any) {
             console.error("Signup error:", error);
             let errorMessage = "An unknown error occurred during sign-up.";
