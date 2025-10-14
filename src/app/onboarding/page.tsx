@@ -14,17 +14,18 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import { useEffect } from 'react';
 
 type PetProfileFormValues = z.infer<typeof petProfileSchema>;
 
 export default function OnboardingPage() {
-  const { saveProfile, profile } = usePetProfile();
+  const { saveProfile, profile, loading } = usePetProfile();
   const router = useRouter();
   const { toast } = useToast();
 
   const form = useForm<PetProfileFormValues>({
     resolver: zodResolver(petProfileSchema),
-    defaultValues: profile || {
+    defaultValues: {
       name: '',
       species: undefined,
       breed: '',
@@ -36,13 +37,31 @@ export default function OnboardingPage() {
     },
   });
 
-  const onSubmit = (data: PetProfileFormValues) => {
-    saveProfile({ ...data, isPro: profile?.isPro || false });
-    toast({
-      title: "Profile saved!",
-      description: "Let's get started on your pet's wellness journey.",
-    })
-    router.push('/dashboard');
+  // When the profile loads (either from an existing user or after being saved),
+  // update the form with the latest data.
+  useEffect(() => {
+    if (profile) {
+      form.reset(profile);
+    }
+  }, [profile, form]);
+
+
+  const onSubmit = async (data: PetProfileFormValues) => {
+    try {
+        await saveProfile({ ...data, isPro: profile?.isPro || false });
+        toast({
+        title: "Profile saved!",
+        description: "Let's get started on your pet's wellness journey.",
+        });
+        router.push('/dashboard');
+    } catch(error) {
+        console.error("Failed to save profile:", error);
+        toast({
+            variant: "destructive",
+            title: "Save Failed",
+            description: "Could not save the pet profile. Please try again.",
+        })
+    }
   };
 
   return (
@@ -80,7 +99,7 @@ export default function OnboardingPage() {
                                         <FormControl>
                                             <RadioGroup
                                                 onValueChange={field.onChange}
-                                                defaultValue={field.value}
+                                                value={field.value}
                                                 className="flex items-center space-x-4 pt-2"
                                             >
                                                 <FormItem className="flex items-center space-x-2">
@@ -122,7 +141,7 @@ export default function OnboardingPage() {
                                         <FormItem>
                                             <FormLabel>Age (years)</FormLabel>
                                             <FormControl>
-                                                <Input type="number" placeholder="e.g., 3" {...field} />
+                                                <Input type="number" placeholder="e.g., 3" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -135,7 +154,7 @@ export default function OnboardingPage() {
                                         <FormItem>
                                             <FormLabel>Weight (kg)</FormLabel>
                                             <FormControl>
-                                                <Input type="number" placeholder="e.g., 12" {...field} />
+                                                <Input type="number" placeholder="e.g., 12" {...field} onChange={e => field.onChange(parseFloat(e.target.value) || 0)} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -148,7 +167,7 @@ export default function OnboardingPage() {
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Primary Health Goal</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <Select onValueChange={field.onChange} value={field.value}>
                                             <FormControl>
                                                 <SelectTrigger>
                                                     <SelectValue placeholder="Select a goal" />
@@ -182,7 +201,9 @@ export default function OnboardingPage() {
                                 )}
                             />
                         </div>
-                        <Button type="submit" className="w-full">Save Profile</Button>
+                        <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
+                            {form.formState.isSubmitting ? 'Saving...' : 'Save Profile'}
+                        </Button>
                     </form>
                 </Form>
             </CardContent>
