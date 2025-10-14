@@ -23,7 +23,7 @@ export default function DashboardPage() {
     useEffect(() => {
         // Only redirect when loading is finished and there's no profile.
         if (!loading && !profile) {
-            router.push('/onboarding');
+            router.push('/dashboard/onboarding');
         }
     }, [loading, profile, router]);
 

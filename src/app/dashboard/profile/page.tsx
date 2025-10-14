@@ -66,7 +66,7 @@ export default function ProfilePage() {
                 description="View and manage your pet's details."
             >
                 <Button variant="outline" asChild>
-                    <Link href="/onboarding">
+                    <Link href="/dashboard/onboarding">
                         <Pencil className="mr-2 h-4 w-4" /> Edit Profile
                     </Link>
                 </Button>
