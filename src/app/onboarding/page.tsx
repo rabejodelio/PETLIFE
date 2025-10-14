@@ -15,17 +15,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { useEffect } from 'react';
+import { useUser } from '@/firebase';
+import { Logo } from '@/components/logo';
 
 type PetProfileFormValues = z.infer<typeof petProfileSchema>;
 
 export default function OnboardingPage() {
-  const { saveProfile, profile } = usePetProfile();
+  const { saveProfile, profile, loading } = usePetProfile();
+  const { user, isUserLoading } = useUser();
   const router = useRouter();
   const { toast } = useToast();
 
   const form = useForm<PetProfileFormValues>({
     resolver: zodResolver(petProfileSchema),
-    defaultValues: {
+    defaultValues: profile || {
       name: '',
       species: 'dog',
       breed: '',
@@ -37,11 +40,15 @@ export default function OnboardingPage() {
   });
 
   useEffect(() => {
+    // If the user is not logged in and we're done loading, redirect to login.
+    if (!isUserLoading && !user) {
+      router.push('/login');
+    }
+    // When the profile is loaded, reset the form with its data.
     if (profile) {
       form.reset(profile);
     }
-  }, [profile, form]);
-
+  }, [profile, user, isUserLoading, form, router]);
 
   const onSubmit = async (data: PetProfileFormValues) => {
     try {
@@ -61,11 +68,21 @@ export default function OnboardingPage() {
     }
   };
 
+  if (isUserLoading || loading) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        <Logo />
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
         <Card className="max-w-2xl w-full">
             <CardHeader>
-                <CardTitle className="font-headline text-2xl">Create Your Pet's Profile</CardTitle>
+                <CardTitle className="font-headline text-2xl">
+                  {profile ? "Edit Your Pet's Profile" : "Create Your Pet's Profile"}
+                </CardTitle>
                 <CardDescription>
                     Let's get to know your furry friend to personalize their experience.
                 </CardDescription>
@@ -199,7 +216,7 @@ export default function OnboardingPage() {
                             />
                         </div>
                         <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
-                            {form.formState.isSubmitting ? 'Saving...' : 'Save Profile'}
+                            {form.formState.isSubmitting ? 'Saving...' : 'Save and Continue'}
                         </Button>
                     </form>
                 </Form>
