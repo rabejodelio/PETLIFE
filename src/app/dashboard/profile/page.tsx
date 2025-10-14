@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
+import { Skeleton } from "@/components/ui/skeleton";
 
 
 export default function ProfilePage() {
@@ -52,7 +53,24 @@ export default function ProfilePage() {
 
 
     if (loading) {
-        return <div>Loading profile...</div>;
+        return (
+             <div className="space-y-6">
+                <Skeleton className="h-10 w-1/3" />
+                <Skeleton className="h-8 w-2/3" />
+                <Card>
+                    <CardHeader className="flex-row items-center gap-6">
+                        <Skeleton className="h-24 w-24 rounded-full" />
+                        <div className="space-y-2">
+                           <Skeleton className="h-8 w-48" />
+                           <Skeleton className="h-6 w-32" />
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                       <Skeleton className="h-32 w-full" />
+                    </CardContent>
+                </Card>
+            </div>
+        );
     }
 
     if (!profile) {

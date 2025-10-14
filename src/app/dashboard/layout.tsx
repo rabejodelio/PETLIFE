@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, createContext } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -18,6 +18,7 @@ import {
   Sparkles,
   Lock,
   Users,
+  Pencil
 } from 'lucide-react';
 import {
   SidebarProvider,
@@ -42,7 +43,8 @@ import { Label } from '@/components/ui/label';
 import { useAuth, useUser, useFirestore, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import { doc, setDoc, getDoc, onSnapshot, updateDoc } from 'firebase/firestore';
-import type { UserDoc } from '@/lib/types';
+import type { UserDoc, PetProfile } from '@/lib/types';
+import { PetProfileContext } from '@/hooks/use-pet-provider';
 
 
 const PRO_CODE = "petlife7296";
@@ -121,6 +123,7 @@ function DashboardLayoutContent({
   const navItems = [
     { href: '/', label: 'Home', icon: Home, pro: false },
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, pro: false },
+    { href: '/dashboard/profile', label: 'Pet Profile', icon: User, pro: false },
     { href: '/dashboard/meal-plan', label: 'Meal Plan', icon: Salad, pro: false },
     { href: '/dashboard/supplements', label: 'Supplements', icon: Pill, pro: true },
     { href: '/dashboard/activity', label: 'Activity', icon: PawPrint, pro: true },
@@ -239,33 +242,104 @@ function DashboardLayoutContent({
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
+  const router = useRouter();
   const [userDoc, setUserDoc] = useState<UserDoc | null>(null);
+  const [petProfile, setPetProfile] = useState<PetProfile | null>(null);
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const [promoCode, setPromoCode] = useState('');
 
   useEffect(() => {
-    if (!user || !firestore) {
-      return;
+    if (isUserLoading) return;
+    if (!user) {
+        router.push('/login');
+        return;
     }
     
+    if (!firestore) return;
+
+    setLoading(true);
+    
     const userDocRef = doc(firestore, 'users', user.uid);
+    const petDocRef = doc(firestore, 'users', user.uid, 'pets', 'main-pet');
 
     const unsubUser = onSnapshot(userDocRef, (docSnap) => {
         if (docSnap.exists()) {
             setUserDoc(docSnap.data() as UserDoc);
         } else if (user.email) {
             const newUserDoc: UserDoc = { email: user.email, isPro: false };
-            setDoc(userDocRef, newUserDoc); // Create user doc if it doesn't exist
+            setDoc(userDocRef, newUserDoc);
             setUserDoc(newUserDoc);
         }
     }, (error) => {
         console.error("Error loading user document from Firestore:", error);
     });
 
+    const unsubPet = onSnapshot(petDocRef, (docSnap) => {
+        if (docSnap.exists()) {
+            setPetProfile(docSnap.data() as PetProfile);
+        } else {
+            setPetProfile(null);
+        }
+        setLoading(false);
+    }, (error) => {
+        console.error("Error fetching pet profile:", error);
+        setPetProfile(null);
+        setLoading(false);
+    });
+
     return () => {
       unsubUser();
+      unsubPet();
     };
-  }, [user, firestore, isUserLoading]);
+  }, [user, firestore, isUserLoading, router]);
+
+  const saveProfile = async (newProfileData: Partial<PetProfile>): Promise<void> => {
+    if (!user || !firestore) {
+      throw new Error("User not authenticated or Firestore not available.");
+    }
+    
+    const currentProfile: PetProfile = petProfile || {
+      name: '',
+      species: 'dog',
+      breed: '',
+      age: 0,
+      weight: 0,
+      healthGoal: 'maintain_weight',
+      isPro: userDoc?.isPro || false,
+      avatarUrl: '',
+      allergies: '',
+    };
+  
+    const updatedProfile = { ...currentProfile, ...newProfileData };
+  
+    try {
+      const petDocRef = doc(firestore, 'users', user.uid, 'pets', 'main-pet');
+      await setDoc(petDocRef, updatedProfile, { merge: true });
+      setPetProfile(updatedProfile); // Optimistic update
+    } catch (error) {
+      console.error("Firestore write failed:", error);
+      toast({
+        variant: "destructive",
+        title: "Save Failed",
+        description: "Could not save the pet profile to the database.",
+      });
+      throw error; 
+    }
+  };
+
+
+  const clearProfile = () => setPetProfile(null);
+
+  const petProfileContextValue = {
+    profile: petProfile,
+    loading: loading,
+    saveProfile,
+    clearProfile,
+    activityHistory: {}, // Placeholder
+    setActivityHistory: () => {}, // Placeholder
+    clearActivityHistory: () => {}, // Placeholder
+  };
 
   const handlePromoCode = async (): Promise<void> => {
     if (!user || !firestore) {
@@ -296,7 +370,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const isPro = userDoc?.isPro || false;
 
-  if (isUserLoading) {
+  if (isUserLoading || loading) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <Logo />
@@ -305,6 +379,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }
 
   return (
+    <PetProfileContext.Provider value={petProfileContextValue}>
       <DashboardLayoutContent
         handlePromoCode={handlePromoCode}
         promoCode={promoCode}
@@ -313,5 +388,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       >
         {children}
       </DashboardLayoutContent>
+    </PetProfileContext.Provider>
   );
 }

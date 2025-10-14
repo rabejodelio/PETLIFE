@@ -1,6 +1,6 @@
 'use client';
 
-import { Scale, Heart, PawPrint } from 'lucide-react';
+import { Scale, Heart, PawPrint, Pencil } from 'lucide-react';
 import { PageHeader } from '@/components/page-header';
 import { StatCard } from '@/components/dashboard/stat-card';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,18 +8,35 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Logo } from '@/components/logo';
 import { useUser } from '@/firebase';
+import { usePetProfile } from '@/hooks/use-pet-provider';
 
 export default function DashboardPage() {
     const { user, isUserLoading } = useUser();
+    const { profile, loading: profileLoading } = usePetProfile();
 
-    if (isUserLoading) {
+    if (isUserLoading || profileLoading) {
         return (
             <div className="flex h-screen w-full items-center justify-center">
               <Logo />
             </div>
           );
     }
-
+    
+    if (!profile) {
+        return (
+            <div className="text-center py-12">
+                <PageHeader
+                    title={`Welcome, ${user?.email || '...'}`}
+                    description="You don't have a pet profile yet. Let's create one!"
+                />
+                <Button asChild>
+                    <Link href="/dashboard/profile/edit">
+                        <Pencil className="mr-2 h-4 w-4" /> Create Pet Profile
+                    </Link>
+                </Button>
+            </div>
+        );
+    }
 
     return (
         <div>
@@ -31,13 +48,13 @@ export default function DashboardPage() {
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-6">
                 <StatCard
                     title="Current Weight"
-                    value={`- kg`}
+                    value={`${profile.weight} kg`}
                     icon={<Scale className="h-5 w-5" />}
                     description="Last updated today"
                 />
                 <StatCard
                     title="Primary Goal"
-                    value={"-"}
+                    value={profile.healthGoal.replace('_', ' ')}
                     icon={<Heart className="h-5 w-5" />}
                     description="Focusing on a healthy life"
                 />
@@ -57,7 +74,7 @@ export default function DashboardPage() {
                     </CardHeader>
                     <CardContent>
                         <ul className="space-y-2 text-sm list-disc list-inside">
-                            <li>Create a pet profile to get AI insights.</li>
+                           <li>Based on the profile, here are some insights for {profile.name}.</li>
                         </ul>
                     </CardContent>
                 </Card>
