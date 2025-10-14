@@ -36,7 +36,7 @@ export default function SignupPage() {
             await createUserWithEmailAndPassword(auth, email, password);
              toast({
                 title: "Account Created!",
-                description: "Let's create a profile for your pet.",
+                description: "Redirecting to your dashboard...",
             });
             router.push("/dashboard");
         } catch (error: any) {

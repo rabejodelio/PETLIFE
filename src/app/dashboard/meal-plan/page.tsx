@@ -1,38 +1,18 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Utensils, ChevronDown } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { cn } from '@/lib/utils';
-
 
 export default function MealPlanPage() {
-    const [loading, setLoading] = useState(false);
-    const [mealPlan, setMealPlan] = useState<string | null>(null);
-    const [supplementRecommendation, setSupplementRecommendation] = useState<string | null>(null);
-    const [error, setError] = useState<string | null>(null);
-    const ingredientRef = useRef<HTMLTextAreaElement>(null);
     const [isGenerating, setIsGenerating] = useState(false);
-    const [isRecommendationOpen, setIsRecommendationOpen] = useState(false);
+    const [error, setError] = useState<string | null>('La fonctionnalité de profil d\'animal a été supprimée. Veuillez d\'abord créer un profil d\'animal.');
 
-    const handleGenerate = async (firstLoad = false) => {
-        setError('Pet profile functionality has been removed. Please create a pet profile first.');
-    };
-    
-    const parsedMealPlan = mealPlan
-        ?.split(/Day\s*\d+:/)
-        .filter(s => s.trim() !== '')
-        .map((plan, index) => ({
-            day: `Day ${index + 1}`,
-            plan: plan.trim()
-        }));
-
+    const parsedMealPlan = null;
 
     return (
         <div>
@@ -40,7 +20,7 @@ export default function MealPlanPage() {
                 title="Your 7-Day Meal Plan"
                 description={`A tailored nutrition plan for your pet to help achieve their health goals.`}
             >
-                <Button onClick={() => handleGenerate(false)} disabled={isGenerating}>
+                <Button disabled>
                     {isGenerating ? 'Generating...' : 'Regenerate Plan'}
                 </Button>
             </PageHeader>
@@ -57,16 +37,16 @@ export default function MealPlanPage() {
                             <Label htmlFor="ingredient-prefs">Current Brands / Ingredients</Label>
                             <Textarea 
                                 id="ingredient-prefs" 
-                                ref={ingredientRef}
                                 placeholder="e.g., Hill's Science Diet Adult, cooked sweet potato, salmon oil"
                                 defaultValue="Any high-quality food"
+                                disabled
                             />
                         </div>
                     </CardContent>
                 </Card>
             </div>
 
-            {(isGenerating && !mealPlan) && (
+            {(isGenerating && !parsedMealPlan) && (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                     {Array.from({ length: 7 }).map((_, i) => (
                         <Card key={i} className="shadow-md">
@@ -86,69 +66,12 @@ export default function MealPlanPage() {
              {error && (
                  <Card className="bg-destructive/10 border-destructive">
                     <CardHeader>
-                        <CardTitle className="text-destructive">Error Generating Plan</CardTitle>
+                        <CardTitle className="text-destructive">Fonctionnalité non disponible</CardTitle>
 
                         <CardDescription className="text-destructive/80">{error}</CardDescription>
                     </CardHeader>
                 </Card>
             )}
-            {!isGenerating && mealPlan && (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                    {parsedMealPlan?.map((dayPlan, index) => {
-                       const breakfastMatch = dayPlan.plan.match(/Breakfast:(.*?)(Dinner:|$)/is);
-                       const dinnerMatch = dayPlan.plan.match(/Dinner:(.*)/is);
-                       
-                       const breakfast = breakfastMatch ? breakfastMatch[1].trim() : 'Not specified';
-                       const dinner = dinnerMatch ? dinnerMatch[1].trim() : 'Not specified';
-
-                        return (
-                        <Card key={index} className="shadow-md">
-                            <CardHeader>
-                                <CardTitle className="font-headline">{dayPlan.day}</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-3">
-                                <div className="flex items-start gap-3">
-                                    <span className="text-sm font-semibold text-muted-foreground mt-1">AM</span>
-                                    <p>{breakfast}</p>
-                                </div>
-                                <div className="flex items-start gap-3">
-                                    <span className="text-sm font-semibold text-muted-foreground mt-1">PM</span>
-                                    <p>{dinner}</p>
-                                </div>
-                            </CardContent>
-                        </Card>
-                        );
-                    })}
-                </div>
-            )}
-            <Collapsible open={isRecommendationOpen} onOpenChange={setIsRecommendationOpen} className="mt-6">
-                 <Card className="bg-accent/50 border-accent">
-                    <CollapsibleTrigger asChild>
-                        <div className="flex justify-between items-center p-6 cursor-pointer">
-                            <div className="flex items-center gap-4">
-                                <Utensils className="w-8 h-8 text-accent-foreground" />
-                                <div>
-                                    <CardTitle className="font-headline">Supplement Recommendation</CardTitle>
-                                    <CardDescription className="text-accent-foreground/80">Click to view</CardDescription>
-                                </div>
-                            </div>
-                            <Button variant="ghost" size="sm" className="w-9 p-0">
-                                <ChevronDown className={cn("h-6 w-6 transition-transform", isRecommendationOpen && "rotate-180")} />
-                                <span className="sr-only">Toggle</span>
-                            </Button>
-                        </div>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                        <CardContent className="pt-0">
-                             {isGenerating && !supplementRecommendation ? <Skeleton className="h-5 w-3/4 mt-1" /> : 
-                                <p className="text-accent-foreground/90">
-                                    {supplementRecommendation || 'Generate a plan to see supplement recommendations.'}
-                                </p>
-                             }
-                        </CardContent>
-                    </CollapsibleContent>
-                </Card>
-            </Collapsible>
         </div>
     );
 }

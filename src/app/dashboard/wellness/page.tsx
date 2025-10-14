@@ -2,35 +2,18 @@
 
 import { useEffect, useState } from 'react';
 import { PageHeader } from '@/components/page-header';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { getWellnessTipsAction } from './actions';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Lightbulb } from 'lucide-react';
-import { z } from 'zod';
-
-const WellnessTipSchema = z.object({
-  title: z.string().describe('The title of the wellness tip.'),
-  description: z.string().describe('The detailed description of the tip, providing actionable advice.'),
-});
-export type WellnessTip = z.infer<typeof WellnessTipSchema>;
-
-export const WellnessTipsOutputSchema = z.object({
-  tips: z
-    .array(WellnessTipSchema)
-    .min(4)
-    .max(6)
-    .describe('A list of 4 to 6 wellness tips for the specified pet species.'),
-});
 
 export default function WellnessPage() {
-    const [tips, setTips] = useState<WellnessTip[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     const fetchTips = async () => {
         setLoading(true);
-        setError('Pet profile functionality has been removed. Please create a pet profile first.');
+        setError('La fonctionnalité de profil d\'animal a été supprimée. Veuillez d\'abord créer un profil d\'animal.');
         setLoading(false);
     };
 
@@ -44,7 +27,7 @@ export default function WellnessPage() {
                 title="Wellness & Enrichment"
                 description={`AI-powered tips and techniques for a happy, stress-free pet.`}
             >
-                <Button onClick={fetchTips} disabled={loading}>
+                <Button onClick={fetchTips} disabled>
                     {loading ? 'Generating...' : 'Get New Tips'}
                 </Button>
             </PageHeader>
@@ -66,25 +49,13 @@ export default function WellnessPage() {
             ) : error ? (
                 <Card className="bg-destructive/10 border-destructive">
                     <CardHeader>
-                        <CardTitle className="text-destructive">Error</CardTitle>
+                        <CardTitle className="text-destructive">Fonctionnalité non disponible</CardTitle>
                         <CardDescription className="text-destructive/80">{error}</CardDescription>
                     </CardHeader>
                 </Card>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {tips.map((tip, index) => (
-                        <Card key={index} className="shadow-md">
-                             <CardHeader className="flex-row items-start gap-4">
-                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent flex-shrink-0">
-                                    <Lightbulb className="h-5 w-5 text-accent-foreground" />
-                                </div>
-                                <div>
-                                    <CardTitle className="font-headline text-xl mb-1">{tip.title}</CardTitle>
-                                    <CardDescription>{tip.description}</CardDescription>
-                                </div>
-                            </CardHeader>
-                        </Card>
-                    ))}
+                   <p className="text-sm text-muted-foreground p-4">Aucun conseil de bien-être à afficher.</p>
                 </div>
             )}
         </div>
