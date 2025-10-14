@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
-import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
+import { createUserWithEmailAndPassword } from "firebase/auth";
 import { Logo } from "@/components/logo";
 
 export default function SignupPage() {
@@ -33,14 +33,13 @@ export default function SignupPage() {
         }
 
         try {
-            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-            await sendEmailVerification(userCredential.user);
+            await createUserWithEmailAndPassword(auth, email, password);
             
             toast({
                 title: "Account Created!",
-                description: "We've sent a verification link to your email. Please check it before logging in.",
+                description: "You can now create your pet's profile.",
             });
-            router.push("/login");
+            router.push("/dashboard/profile/edit");
 
         } catch (error: any) {
             console.error("Signup error:", error);
