@@ -25,7 +25,7 @@ export default function OnboardingPage() {
 
   const form = useForm<PetProfileFormValues>({
     resolver: zodResolver(petProfileSchema),
-    defaultValues: profile || {
+    defaultValues: {
       name: '',
       species: 'dog',
       breed: '',
@@ -33,8 +33,6 @@ export default function OnboardingPage() {
       weight: 0,
       allergies: '',
       healthGoal: 'maintain_weight',
-      isPro: false,
-      avatarUrl: '',
     },
   });
 

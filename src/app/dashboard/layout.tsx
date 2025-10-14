@@ -325,26 +325,31 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       throw new Error("User not authenticated or Firestore not available.");
     }
     
+    const currentProfile: PetProfile = profile || {
+      name: '',
+      species: 'dog',
+      breed: '',
+      age: 0,
+      weight: 0,
+      healthGoal: 'maintain_weight',
+      isPro: false,
+      avatarUrl: '',
+      allergies: '',
+    };
+  
+    const updatedProfile = { ...currentProfile, ...newProfileData };
+  
     try {
-      const currentProfile: PetProfile = profile || {
-        name: '',
-        species: 'dog',
-        breed: '',
-        age: 0,
-        weight: 0,
-        healthGoal: 'maintain_weight',
-        isPro: false,
-        avatarUrl: '',
-        allergies: '',
-      };
-
-      const updatedProfile = { ...currentProfile, ...newProfileData };
       const petDocRef = doc(firestore, 'users', user.uid, 'pets', 'main-pet');
       await setDoc(petDocRef, updatedProfile, { merge: true });
-      setProfile(updatedProfile);
-
+      setProfile(updatedProfile); // Optimistic update
     } catch (error) {
       console.error("Firestore write failed:", error);
+      toast({
+        variant: "destructive",
+        title: "Save Failed",
+        description: "Could not save the pet profile to the database.",
+      });
       throw error; 
     }
   };
