@@ -82,7 +82,7 @@ export default function SignupPage() {
                         <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
                     </div>
                     {error && <p className="text-sm text-destructive">{error}</p>}
-                    <Button type="submit" className="w-full" disabled={isLoading || (!isUserLoading && !!user)}>
+                    <Button type="submit" className="w-full" disabled={isLoading}>
                         {isLoading ? "Creating Account..." : "Create Account"}
                     </Button>
                 </form>
