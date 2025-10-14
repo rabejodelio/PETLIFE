@@ -10,6 +10,7 @@ import { useAuth, useUser } from "@/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import { createUserWithEmailAndPassword } from "firebase/auth";
+import { Logo } from "@/components/logo";
 
 export default function SignupPage() {
     const router = useRouter();
@@ -66,33 +67,42 @@ export default function SignupPage() {
     };
 
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle className="font-headline text-2xl">Create an Account</CardTitle>
-                <CardDescription>Start your journey to a healthier pet today.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <form onSubmit={handleSignup} className="space-y-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="email">Email</Label>
-                        <Input id="email" type="email" placeholder="you@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="password">Password</Label>
-                        <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
-                    </div>
-                    {error && <p className="text-sm text-destructive">{error}</p>}
-                    <Button type="submit" className="w-full" disabled={isLoading}>
-                        {isLoading ? "Creating Account..." : "Create Account"}
-                    </Button>
-                </form>
-                <div className="mt-4 text-center text-sm">
-                    Already have an account?{" "}
-                    <Link href="/login" className="underline text-primary">
-                        Log in
+        <div className="flex flex-col min-h-screen items-center justify-center bg-gray-50 p-4">
+            <div className="w-full max-w-md">
+                <div className="mb-8 flex justify-center">
+                    <Link href="/">
+                        <Logo />
                     </Link>
                 </div>
-            </CardContent>
-        </Card>
+                <Card className="bg-white p-8 rounded-lg shadow-md">
+                    <CardHeader>
+                        <CardTitle className="font-headline text-2xl">Create an Account</CardTitle>
+                        <CardDescription>Start your journey to a healthier pet today.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <form onSubmit={handleSignup} className="space-y-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="email">Email</Label>
+                                <Input id="email" type="email" placeholder="you@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="password">Password</Label>
+                                <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+                            </div>
+                            {error && <p className="text-sm text-destructive">{error}</p>}
+                            <Button type="submit" className="w-full" disabled={isLoading}>
+                                {isLoading ? "Creating Account..." : "Create Account"}
+                            </Button>
+                        </form>
+                        <div className="mt-4 text-center text-sm">
+                            Already have an account?{" "}
+                            <Link href="/login" className="underline text-primary">
+                                Log in
+                            </Link>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+        </div>
     );
 }
