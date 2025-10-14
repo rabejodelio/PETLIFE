@@ -3,22 +3,16 @@
 import { Scale, Heart, PawPrint } from 'lucide-react';
 import { PageHeader } from '@/components/page-header';
 import { StatCard } from '@/components/dashboard/stat-card';
-import { usePetProfile } from '@/hooks/use-pet-provider';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Logo } from '@/components/logo';
+import { useUser } from '@/firebase';
 
 export default function DashboardPage() {
-    const { profile, loading } = usePetProfile();
+    const { user, isUserLoading } = useUser();
 
-    const healthGoalMap = {
-        lose_weight: 'Lose Weight',
-        maintain_weight: 'Maintain Weight',
-        improve_joints: 'Improve Joints',
-    };
-
-    if (loading) {
+    if (isUserLoading) {
         return (
             <div className="flex h-screen w-full items-center justify-center">
               <Logo />
@@ -26,52 +20,32 @@ export default function DashboardPage() {
           );
     }
 
-    if (!profile) {
-        return (
-            <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
-                <Card className="max-w-lg">
-                    <CardHeader>
-                        <CardTitle className="font-headline text-2xl">Welcome to PetLife!</CardTitle>
-                        <CardDescription>It looks like you don't have a pet profile yet. Let's create one!</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="mb-4 text-sm text-muted-foreground">
-                            Creating a profile helps us tailor meal plans, activities, and wellness tips specifically for your furry friend.
-                        </p>
-                        <Button asChild>
-                            <Link href="/dashboard/profile/edit">Create Pet Profile</Link>
-                        </Button>
-                    </CardContent>
-                </Card>
-            </div>
-        );
-    }
 
     return (
         <div>
             <PageHeader
-                title={`Welcome Back, ${profile?.name || '...'}`}
+                title={`Welcome Back, ${user?.email || '...'}`}
                 description="Here's a summary of your pet's health and activity."
             />
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-6">
                 <StatCard
                     title="Current Weight"
-                    value={`${profile?.weight || 0} kg`}
+                    value={`- kg`}
                     icon={<Scale className="h-5 w-5" />}
                     description="Last updated today"
                 />
                 <StatCard
                     title="Primary Goal"
-                    value={healthGoalMap[profile?.healthGoal || 'maintain_weight']}
+                    value={"-"}
                     icon={<Heart className="h-5 w-5" />}
                     description="Focusing on a healthy life"
                 />
                 <StatCard
                     title="Avg. Daily Activity"
-                    value="74 mins"
+                    value="- mins"
                     icon={<PawPrint className="h-5 w-5" />}
-                    description="+14 mins from last week"
+                    description="-"
                 />
             </div>
 
@@ -79,12 +53,11 @@ export default function DashboardPage() {
                  <Card className="shadow-md">
                     <CardHeader>
                         <CardTitle className="font-headline">Quick Insights</CardTitle>
-                        <CardDescription>AI-powered observations about {profile?.name}.</CardDescription>
+                        <CardDescription>AI-powered observations about your pet.</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <ul className="space-y-2 text-sm list-disc list-inside">
-                            <li>Jax's activity levels on Wednesday were a bit low. Try an extra evening walk.</li>
-                            <li>Consider introducing a puzzle feeder to make meal times more engaging.</li>
+                            <li>Create a pet profile to get AI insights.</li>
                         </ul>
                     </CardContent>
                 </Card>

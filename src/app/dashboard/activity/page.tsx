@@ -3,7 +3,6 @@
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { usePetProfile } from '@/hooks/use-pet-provider';
 import { Lightbulb, Calendar as CalendarIcon, CheckCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { getRecommendations } from './actions';
@@ -28,11 +27,11 @@ const sampleSchedule = [
 ];
 
 export default function ActivityPage() {
-    const { profile, saveProfile, activityHistory, setActivityHistory } = usePetProfile();
     const [recommendations, setRecommendations] = useState<string[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const { toast } = useToast();
+    const [activityHistory, setActivityHistory] = useState<ActivityHistory>({});
     
     const [showSchedule, setShowSchedule] = useState(false);
     const [isCalendarOpen, setIsCalendarOpen] = useState(false);
@@ -43,23 +42,9 @@ export default function ActivityPage() {
     const [historyDate, setHistoryDate] = useState<Date | undefined>(new Date());
 
     const fetchRecommendations = async () => {
-        if (profile) {
-            setLoading(true);
-            setError(null);
-            const result = await getRecommendations({
-                species: profile.species as 'dog' | 'cat',
-                breed: profile.breed,
-                age: profile.age,
-                healthGoal: profile.healthGoal as 'lose_weight' | 'maintain_weight' | 'improve_joints',
-            });
-
-            if (result.success && result.data) {
-                setRecommendations(result.data.recommendations);
-            } else {
-                setError(result.error || 'An unknown error occurred.');
-            }
-            setLoading(false);
-        }
+        setLoading(true);
+        setError('Pet profile functionality has been removed. Please create a pet profile first.');
+        setLoading(false);
     };
 
     const handleDateSelect = (date: Date | undefined) => {
@@ -104,10 +89,8 @@ export default function ActivityPage() {
 
 
     useEffect(() => {
-        if(profile) {
-            fetchRecommendations();
-        }
-    }, [profile]);
+        fetchRecommendations();
+    }, []);
     
     useEffect(() => {
         const completedCount = completedDays.filter(Boolean).length;
@@ -130,7 +113,7 @@ export default function ActivityPage() {
                         <Lightbulb className="w-6 h-6 text-yellow-400 flex-shrink-0 mt-1" />
                         <div>
                             <CardTitle className="font-headline">Quick Recommendations</CardTitle>
-                            <CardDescription>AI-powered suggestions to help {profile?.name} reach their goal.</CardDescription>
+                            <CardDescription>AI-powered suggestions to help your pet reach their goal.</CardDescription>
                         </div>
                     </CardHeader>
                     <CardContent>
@@ -179,7 +162,7 @@ export default function ActivityPage() {
                      <Card>
                         <CardHeader>
                             <CardTitle className="font-headline">Your 7-Day Activity Plan</CardTitle>
-                            <CardDescription>A week of engaging activities for {profile?.name} starting {scheduleStartDate && format(scheduleStartDate, 'PPP')}.</CardDescription>
+                            <CardDescription>A week of engaging activities for your pet starting {scheduleStartDate && format(scheduleStartDate, 'PPP')}.</CardDescription>
                         </CardHeader>
                         <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             {sampleSchedule.map((dayPlan, index) => (

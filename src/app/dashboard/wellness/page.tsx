@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { usePetProfile } from '@/hooks/use-pet-provider';
 import { getWellnessTipsAction } from './actions';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Lightbulb } from 'lucide-react';
@@ -25,36 +24,25 @@ export const WellnessTipsOutputSchema = z.object({
 });
 
 export default function WellnessPage() {
-    const { profile } = usePetProfile();
     const [tips, setTips] = useState<WellnessTip[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     const fetchTips = async () => {
-        if (profile) {
-            setLoading(true);
-            setError(null);
-            const result = await getWellnessTipsAction({ species: profile.species });
-            if (result.success && result.data) {
-                setTips(result.data.tips);
-            } else {
-                setError(result.error || 'Failed to fetch wellness tips.');
-            }
-            setLoading(false);
-        }
+        setLoading(true);
+        setError('Pet profile functionality has been removed. Please create a pet profile first.');
+        setLoading(false);
     };
 
     useEffect(() => {
-        if (profile) {
-            fetchTips();
-        }
-    }, [profile]);
+        fetchTips();
+    }, []);
 
     return (
         <div>
             <PageHeader
                 title="Wellness & Enrichment"
-                description={`AI-powered tips and techniques for a happy, stress-free ${profile?.species || 'pet'}.`}
+                description={`AI-powered tips and techniques for a happy, stress-free pet.`}
             >
                 <Button onClick={fetchTips} disabled={loading}>
                     {loading ? 'Generating...' : 'Get New Tips'}

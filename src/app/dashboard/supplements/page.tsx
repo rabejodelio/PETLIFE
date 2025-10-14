@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { Pill, Lightbulb, ChevronDown } from 'lucide-react';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { usePetProfile } from '@/hooks/use-pet-provider';
 import { getRecommendations } from './actions';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
@@ -14,51 +13,25 @@ import type { SupplementRecommendationOutput } from '@/ai/flows/ai-supplement-re
 type Recommendation = SupplementRecommendationOutput['recommendations'][0];
 
 export default function SupplementsPage() {
-    const { profile } = usePetProfile();
     const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     const fetchRecommendations = async () => {
-        if (profile) {
-            setLoading(true);
-            setError(null);
-            
-            const healthNeedsMap = {
-                lose_weight: 'Weight management and joint support for overweight pets',
-                maintain_weight: 'General wellness and preventative care',
-                improve_joints: 'Joint health, mobility support, and inflammation reduction',
-            };
-
-            const input = {
-                species: profile.species,
-                age: profile.age,
-                breed: profile.breed,
-                weight: profile.weight,
-                allergies: profile.allergies || 'none',
-                healthNeeds: healthNeedsMap[profile.healthGoal],
-            };
-
-            const result = await getRecommendations(input);
-
-            if (result.success && result.data) {
-                setRecommendations(result.data.recommendations);
-            } else {
-                setError(result.error || 'An unknown error occurred.');
-            }
-            setLoading(false);
-        }
+        setLoading(true);
+        setError('Pet profile functionality has been removed. Please create a pet profile first.');
+        setLoading(false);
     };
 
     useEffect(() => {
         fetchRecommendations();
-    }, [profile]);
+    }, []);
 
     return (
         <div>
             <PageHeader
                 title="Supplement Recommendations"
-                description={`AI-powered suggestions for ${profile?.name}'s specific needs.`}
+                description={`AI-powered suggestions for your pet's specific needs.`}
             >
                 <Button onClick={fetchRecommendations} disabled={loading}>
                     {loading ? 'Generating...' : 'Regenerate'}
@@ -67,7 +40,7 @@ export default function SupplementsPage() {
 
             <Card>
                 <CardHeader>
-                    <CardTitle className="font-headline">Recommended for {profile?.name}</CardTitle>
+                    <CardTitle className="font-headline">Recommended for your pet</CardTitle>
                     <CardDescription>Based on age, breed, and health goals. Click on each one to learn more.</CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -123,7 +96,7 @@ export default function SupplementsPage() {
                     <div>
                         <CardTitle className="font-headline">Why these recommendations?</CardTitle>
                         <CardDescription className="text-accent-foreground/80">
-                           Our AI selected these supplements to support {profile?.name}'s goal of {profile?.healthGoal === 'lose_weight' ? 'weight loss' : 'joint improvement'}. Given {profile?.name} is a {profile?.breed}, they are prone to joint issues, and these selections provide proactive support.
+                           Our AI selects supplements to support your pet's goals.
                         </CardDescription>
                     </div>
                 </CardHeader>
