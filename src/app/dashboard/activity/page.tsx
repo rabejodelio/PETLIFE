@@ -8,18 +8,39 @@ import { useEffect, useState } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePetProfile } from '@/hooks/use-pet-provider';
 import Link from 'next/link';
+import { getRecommendations } from './actions';
+import type { ActivityRecommendationOutput } from '@/ai/flows/ai-activity-recommendation';
+
 
 export default function ActivityPage() {
     const { profile, loading: profileLoading } = usePetProfile();
     const [loading, setLoading] = useState(false);
+    const [recommendations, setRecommendations] = useState<ActivityRecommendationOutput['recommendations'] | null>(null);
     const [error, setError] = useState<string | null>(null);
 
     const fetchRecommendations = async () => {
         if (!profile) return;
         setLoading(true);
         setError(null);
-        // Placeholder for fetching logic
-        setLoading(false);
+        setRecommendations(null);
+
+        try {
+            const result = await getRecommendations({
+                species: profile.species,
+                breed: profile.breed,
+                age: profile.age,
+                healthGoal: profile.healthGoal
+            });
+            if (result.success && result.data) {
+                setRecommendations(result.data.recommendations);
+            } else {
+                setError(result.error || "An unknown error occurred.");
+            }
+        } catch (e) {
+            setError(e instanceof Error ? e.message : 'Failed to fetch recommendations.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     useEffect(() => {
@@ -92,11 +113,21 @@ export default function ActivityPage() {
                                 </CardHeader>
                             </Card>
                         )}
-                         {!loading && !error && (
-                            <p className="text-sm text-muted-foreground">No recommendations to show.</p>
+                         {!loading && !error && recommendations && (
+                            <ul className="space-y-2 list-disc list-inside text-sm">
+                                {recommendations.map((rec, index) => (
+                                    <li key={index}>{rec}</li>
+                                ))}
+                            </ul>
+                         )}
+                         {!loading && !error && !recommendations && (
+                             <p className="text-sm text-muted-foreground">No recommendations to show.</p>
                          )}
                     </CardContent>
-                    <CardFooter>
+                    <CardFooter className="gap-2">
+                        <Button onClick={fetchRecommendations} disabled={loading}>
+                            {loading ? 'Refreshing...' : 'Refresh'}
+                        </Button>
                         <Button disabled>Schedule Activities</Button>
                     </CardFooter>
                 </Card>

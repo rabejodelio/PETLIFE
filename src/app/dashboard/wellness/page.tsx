@@ -8,18 +8,34 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Lightbulb, Pencil } from 'lucide-react';
 import { usePetProfile } from '@/hooks/use-pet-provider';
 import Link from 'next/link';
+import { getWellnessTipsAction } from './actions';
+import type { WellnessTipsOutput } from './actions';
+
 
 export default function WellnessPage() {
     const { profile, loading: profileLoading } = usePetProfile();
     const [loading, setLoading] = useState(false);
+    const [tips, setTips] = useState<WellnessTipsOutput['tips'] | null>(null);
     const [error, setError] = useState<string | null>(null);
 
     const fetchTips = async () => {
         if (!profile) return;
         setLoading(true);
         setError(null);
-        // Placeholder for fetching logic
-        setLoading(false);
+        setTips(null);
+
+        try {
+            const result = await getWellnessTipsAction({ species: profile.species });
+            if (result.success && result.data) {
+                setTips(result.data.tips);
+            } else {
+                setError(result.error || 'Failed to fetch tips.');
+            }
+        } catch (e) {
+            setError(e instanceof Error ? e.message : 'An unknown error occurred.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     useEffect(() => {
@@ -97,10 +113,24 @@ export default function WellnessPage() {
                         <CardDescription className="text-destructive/80">{error}</CardDescription>
                     </CardHeader>
                 </Card>
-            ) : (
+            ) : tips ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                   <p className="text-sm text-muted-foreground p-4">No wellness tips to show.</p>
+                   {tips.map((tip, index) => (
+                       <Card key={index}>
+                            <CardHeader className="flex-row items-start gap-4">
+                                <div className="p-2 bg-yellow-100 rounded-full">
+                                    <Lightbulb className="h-5 w-5 text-yellow-500" />
+                                </div>
+                                <div>
+                                    <CardTitle className="font-headline text-lg">{tip.title}</CardTitle>
+                                    <CardDescription className="text-sm">{tip.description}</CardDescription>
+                                </div>
+                            </CardHeader>
+                       </Card>
+                   ))}
                 </div>
+            ) : (
+                <p className="text-sm text-muted-foreground p-4">No wellness tips to show.</p>
             )}
         </div>
     );

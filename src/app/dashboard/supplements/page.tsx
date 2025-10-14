@@ -5,22 +5,44 @@ import { Pencil, Pill } from 'lucide-react';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Accordion, AccordionItem } from '@/components/ui/accordion';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { usePetProfile } from '@/hooks/use-pet-provider';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { getRecommendations } from './actions';
+import type { SupplementRecommendationOutput } from '@/ai/flows/ai-supplement-recommendations';
 
 export default function SupplementsPage() {
     const { profile, loading: profileLoading } = usePetProfile();
     const [loading, setLoading] = useState(false);
+    const [recommendations, setRecommendations] = useState<SupplementRecommendationOutput['recommendations'] | null>(null);
     const [error, setError] = useState<string | null>(null);
 
     const fetchRecommendations = async () => {
         if (!profile) return;
         setLoading(true);
         setError(null);
-        // Placeholder for fetching logic
-        setLoading(false);
+        setRecommendations(null);
+
+        try {
+            const result = await getRecommendations({
+                species: profile.species,
+                age: profile.age,
+                breed: profile.breed,
+                weight: profile.weight,
+                allergies: profile.allergies || 'None',
+                healthNeeds: profile.healthGoal
+            });
+            if (result.success && result.data) {
+                setRecommendations(result.data.recommendations);
+            } else {
+                setError(result.error || "An unknown error occurred.");
+            }
+        } catch (e) {
+            setError(e instanceof Error ? e.message : 'Failed to fetch recommendations.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     useEffect(() => {
@@ -67,7 +89,11 @@ export default function SupplementsPage() {
             <PageHeader
                 title="Supplement Recommendations"
                 description={`AI-powered suggestions for ${profile.name}'s specific needs.`}
-            />
+            >
+                 <Button onClick={fetchRecommendations} disabled={loading}>
+                    {loading ? 'Refreshing...' : 'Refresh'}
+                </Button>
+            </PageHeader>
 
             <Card>
                 <CardHeader>
@@ -99,13 +125,26 @@ export default function SupplementsPage() {
                             </CardHeader>
                         </Card>
                     )}
-                    {!loading && !error && (
+                    {!loading && !error && recommendations && (
                         <Accordion type="single" collapsible className="w-full">
-                            <AccordionItem value="item-1">
-                                <p className="text-sm text-muted-foreground p-4">No recommendations to show.</p>
-                            </AccordionItem>
+                            {recommendations.map((rec, index) => (
+                                <AccordionItem value={`item-${index}`} key={index}>
+                                    <AccordionTrigger>
+                                        <div className="flex items-center gap-3">
+                                            <Pill className="h-5 w-5 text-primary" />
+                                            <span className="font-medium">{rec.name}</span>
+                                        </div>
+                                    </AccordionTrigger>
+                                    <AccordionContent>
+                                        <p className="text-muted-foreground">{rec.explanation}</p>
+                                    </AccordionContent>
+                                </AccordionItem>
+                            ))}
                         </Accordion>
                     )}
+                     {!loading && !error && !recommendations && (
+                        <p className="text-sm text-muted-foreground p-4">No recommendations to show.</p>
+                     )}
                 </CardContent>
             </Card>
         </div>

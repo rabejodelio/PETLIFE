@@ -243,8 +243,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const router = useRouter();
-  const [userDoc, setUserDoc] = useState<UserDoc | null>(null);
   const [petProfile, setPetProfile] = useState<PetProfile | null>(null);
+  const [isPro, setIsPro] = useState(false);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const [promoCode, setPromoCode] = useState('');
@@ -258,39 +258,44 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     
     if (!firestore) return;
 
-    setLoading(true);
-    
     const userDocRef = doc(firestore, 'users', user.uid);
-    const petDocRef = doc(firestore, 'users', user.uid, 'pets', 'main-pet');
 
-    const unsubUser = onSnapshot(userDocRef, (docSnap) => {
-        if (docSnap.exists()) {
-            setUserDoc(docSnap.data() as UserDoc);
-        } else if (user.email) {
-            const newUserDoc: UserDoc = { email: user.email, isPro: false };
-            setDoc(userDocRef, newUserDoc);
-            setUserDoc(newUserDoc);
+    const unsubUser = onSnapshot(userDocRef, async (userDocSnap) => {
+        setLoading(true);
+        let userDocData: UserDoc;
+        
+        if (userDocSnap.exists()) {
+            userDocData = userDocSnap.data() as UserDoc;
+        } else {
+            userDocData = { email: user.email!, isPro: false };
+            await setDoc(userDocRef, userDocData);
         }
+        setIsPro(userDocData.isPro || false);
+        
+        const petDocRef = doc(firestore, 'users', user.uid, 'pets', 'main-pet');
+        try {
+            const petDocSnap = await getDoc(petDocRef);
+            if (petDocSnap.exists()) {
+                setPetProfile(petDocSnap.data() as PetProfile);
+            } else {
+                setPetProfile(null);
+            }
+        } catch (error) {
+            console.error("Error fetching pet profile:", error);
+            setPetProfile(null);
+        } finally {
+            setLoading(false);
+        }
+
     }, (error) => {
         console.error("Error loading user document from Firestore:", error);
-    });
-
-    const unsubPet = onSnapshot(petDocRef, (docSnap) => {
-        if (docSnap.exists()) {
-            setPetProfile(docSnap.data() as PetProfile);
-        } else {
-            setPetProfile(null);
-        }
-        setLoading(false);
-    }, (error) => {
-        console.error("Error fetching pet profile:", error);
+        setIsPro(false);
         setPetProfile(null);
         setLoading(false);
     });
 
     return () => {
       unsubUser();
-      unsubPet();
     };
   }, [user, firestore, isUserLoading, router]);
 
@@ -299,6 +304,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       throw new Error("User not authenticated or Firestore not available.");
     }
     
+    // Ensure a complete profile object with defaults for required fields
     const currentProfile: PetProfile = petProfile || {
       name: '',
       species: 'dog',
@@ -306,12 +312,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       age: 0,
       weight: 0,
       healthGoal: 'maintain_weight',
-      isPro: userDoc?.isPro || false,
+      isPro: isPro,
       avatarUrl: '',
       allergies: '',
     };
   
-    const updatedProfile = { ...currentProfile, ...newProfileData };
+    const updatedProfile = { ...currentProfile, ...newProfileData, isPro: isPro };
   
     try {
       const petDocRef = doc(firestore, 'users', user.uid, 'pets', 'main-pet');
@@ -352,7 +358,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
     updateDoc(userDocRef, dataToUpdate)
         .then(() => {
-            // The onSnapshot listener for the user doc will update the state
             toast({
                 title: 'Félicitations !',
                 description: "Vous êtes maintenant un membre Pro.",
@@ -367,8 +372,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             errorEmitter.emit('permission-error', permissionError);
         });
   };
-
-  const isPro = userDoc?.isPro || false;
 
   if (isUserLoading || loading) {
     return (
