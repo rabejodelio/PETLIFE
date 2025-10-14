@@ -326,12 +326,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
     
     try {
-      const currentProfile = profile || {
-        name: 'My Pet',
+      const currentProfile: PetProfile = profile || {
+        name: '',
         species: 'dog',
-        breed: 'Unknown',
-        age: 1,
-        weight: 10,
+        breed: '',
+        age: 0,
+        weight: 0,
         healthGoal: 'maintain_weight',
         isPro: false,
         avatarUrl: '',

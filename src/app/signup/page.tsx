@@ -25,13 +25,9 @@ export default function SignupPage() {
     useEffect(() => {
         // Redirect if user is signed in
         if (!isUserLoading && user) {
-            toast({
-                title: "Account Created!",
-                description: "Let's create a profile for your pet.",
-            });
             router.push("/onboarding");
         }
-    }, [user, isUserLoading, router, toast]);
+    }, [user, isUserLoading, router]);
 
     const handleSignup = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -47,6 +43,10 @@ export default function SignupPage() {
         try {
             await createUserWithEmailAndPassword(auth, email, password);
             // The useEffect will handle the redirect on successful user state change.
+             toast({
+                title: "Account Created!",
+                description: "Let's create a profile for your pet.",
+            });
         } catch (error: any) {
             console.error("Signup error:", error);
             let errorMessage = "An unknown error occurred during sign-up.";

@@ -19,26 +19,25 @@ import { useEffect } from 'react';
 type PetProfileFormValues = z.infer<typeof petProfileSchema>;
 
 export default function OnboardingPage() {
-  const { saveProfile, profile, loading } = usePetProfile();
+  const { saveProfile, profile } = usePetProfile();
   const router = useRouter();
   const { toast } = useToast();
 
   const form = useForm<PetProfileFormValues>({
     resolver: zodResolver(petProfileSchema),
-    defaultValues: {
+    defaultValues: profile || {
       name: '',
-      species: undefined,
+      species: 'dog',
       breed: '',
       age: 0,
       weight: 0,
       allergies: '',
-      healthGoal: undefined,
+      healthGoal: 'maintain_weight',
       isPro: false,
+      avatarUrl: '',
     },
   });
 
-  // When the profile loads (either from an existing user or after being saved),
-  // update the form with the latest data.
   useEffect(() => {
     if (profile) {
       form.reset(profile);
