@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import Image from 'next/image';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -11,36 +10,9 @@ import { Label } from '@/components/ui/label';
 import { usePetProfile } from '@/hooks/use-pet-provider';
 import Link from 'next/link';
 import { Pencil, Sparkles, AlertTriangle } from 'lucide-react';
-import { generateMealPlanAction, type MealPlanInput } from './actions';
-import type { MealPlanOutput } from '@/ai/ai-meal-planning';
+import { generateMealPlanAction, type MealPlanInput, type MealPlanOutput } from './actions';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Separator } from '@/components/ui/separator';
-
-function MealCard({ title, recipe, imageUrl, isLoading }: { title: string, recipe: string, imageUrl: string, isLoading: boolean }) {
-    return (
-        <Card className="shadow-md overflow-hidden">
-            <CardHeader>
-                <CardTitle className="font-headline text-xl">{title}</CardTitle>
-            </CardHeader>
-            <CardContent>
-                {isLoading ? (
-                    <div className="space-y-4">
-                        <Skeleton className="h-48 w-full" />
-                        <Skeleton className="h-6 w-3/4" />
-                        <Skeleton className="h-4 w-full" />
-                        <Skeleton className="h-4 w-5/6" />
-                    </div>
-                ) : (
-                    <div className="space-y-4">
-                        <div className="relative aspect-video w-full rounded-md overflow-hidden">
-                            <Image src={imageUrl} alt={`Image of ${title}`} layout="fill" objectFit="cover" />
-                        </div>
-                        <p className="text-sm text-muted-foreground whitespace-pre-wrap">{recipe}</p>
-                    </div>
-                )}
-            </CardContent>
-        </Card>
-    );
-}
 
 export default function MealPlanPage() {
     const { profile, loading: profileLoading } = usePetProfile();
@@ -121,7 +93,7 @@ export default function MealPlanPage() {
     return (
         <div>
             <PageHeader
-                title="Your Daily Meal Plan"
+                title="Your 7-Day Meal Plan"
                 description={`A tailored nutrition plan for ${profile.name}.`}
             >
                 <Button onClick={handleGeneratePlan} disabled={isGenerating}>
@@ -132,12 +104,19 @@ export default function MealPlanPage() {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-2 space-y-8">
-                    {isGenerating ? (
-                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                             <MealCard title="Breakfast" recipe="" imageUrl="" isLoading={true} />
-                             <MealCard title="Dinner" recipe="" imageUrl="" isLoading={true} />
-                         </div>
-                    ) : error ? (
+                    {isGenerating && (
+                         <Card>
+                            <CardHeader>
+                                <Skeleton className="h-7 w-48" />
+                            </CardHeader>
+                             <CardContent className="space-y-4">
+                                <Skeleton className="h-6 w-full" />
+                                <Skeleton className="h-6 w-5/6" />
+                                <Skeleton className="h-6 w-full" />
+                             </CardContent>
+                         </Card>
+                    )}
+                    {error && (
                         <Card className="bg-destructive/10 border-destructive">
                            <CardHeader className="flex-row items-center gap-4">
                                 <AlertTriangle className="h-6 w-6 text-destructive" />
@@ -147,13 +126,25 @@ export default function MealPlanPage() {
                                 <CardDescription className="text-destructive/80">{error}</CardDescription>
                             </CardContent>
                        </Card>
-                    ) : mealPlan ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <MealCard title={`Breakfast: ${mealPlan.breakfast.title}`} recipe={mealPlan.breakfast.recipe} imageUrl={mealPlan.breakfast.image} isLoading={false} />
-                            <MealCard title={`Dinner: ${mealPlan.dinner.title}`} recipe={mealPlan.dinner.recipe} imageUrl={mealPlan.dinner.image} isLoading={false} />
-                        </div>
-                    ) : (
-                        <p className="text-muted-foreground text-center">Click "Regenerate Plan" to get started.</p>
+                    )}
+                    {mealPlan && !isGenerating && !error &&(
+                        <Accordion type="single" collapsible className="w-full" defaultValue="item-0">
+                            {mealPlan.weeklyPlan.map((dailyPlan, index) => (
+                                <AccordionItem value={`item-${index}`} key={index}>
+                                    <AccordionTrigger className="font-headline text-lg">{dailyPlan.day}</AccordionTrigger>
+                                    <AccordionContent className="space-y-6">
+                                        <div className="pl-4">
+                                            <h3 className="font-semibold text-md mb-2">{dailyPlan.breakfast.title} (Breakfast)</h3>
+                                            <p className="text-sm text-muted-foreground whitespace-pre-wrap">{dailyPlan.breakfast.recipe}</p>
+                                        </div>
+                                         <div className="pl-4">
+                                            <h3 className="font-semibold text-md mb-2">{dailyPlan.dinner.title} (Dinner)</h3>
+                                            <p className="text-sm text-muted-foreground whitespace-pre-wrap">{dailyPlan.dinner.recipe}</p>
+                                        </div>
+                                    </AccordionContent>
+                                </AccordionItem>
+                            ))}
+                        </Accordion>
                     )}
                 </div>
 
