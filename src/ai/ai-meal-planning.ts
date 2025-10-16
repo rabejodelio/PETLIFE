@@ -57,7 +57,7 @@ const mealPlanPrompt = ai.definePrompt({
   - Current Food/Ingredient Preferences: {{{ingredientPreferences}}}
 
   **Instructions:**
-  1.  **Generate a 7-Day Plan**: Create a meal plan for a full week. Start each day with "Day X:", for example, "Day 1:", "Day 2:", etc.
+  1.  **Generate a Varied 7-Day Plan**: Create a meal plan for a full week. Start each day with "Day X:", for example, "Day 1:", "Day 2:", etc. **Crucially, provide a different recipe for each day to ensure a varied diet.**
   2.  **Detailed Recipes**: For each "Breakfast:" and "Dinner:", provide a complete homemade recipe. Do not suggest commercial products. Each recipe must include:
       - **Ingredients**: List all ingredients with precise quantities (e.g., in grams, cups).
       - **Preparation**: Provide clear, step-by-step instructions on how to prepare the meal (e.g., "Finely chop the carrots," "Cook the chicken until no longer pink").
