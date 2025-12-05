@@ -1,12 +1,12 @@
 'use server';
 
-import { getWellnessTipsFlow, WellnessTipsInput, WellnessTipsOutput } from "@/ai/flows/ai-wellness-tips";
+import { getWellnessTips, WellnessTipsInput, WellnessTipsOutput } from "@/ai/flows/ai-wellness-tips";
 
 export { type WellnessTipsInput, type WellnessTipsOutput };
 
 export async function getWellnessTipsAction(input: WellnessTipsInput): Promise<{ success: boolean; data?: WellnessTipsOutput; error?: string }> {
     try {
-        const result = await getWellnessTipsFlow(input);
+        const result = await getWellnessTips(input);
         return { success: true, data: result };
     } catch (e) {
         const error = e instanceof Error ? e.message : 'An unknown error occurred';

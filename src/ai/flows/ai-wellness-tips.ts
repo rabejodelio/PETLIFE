@@ -43,7 +43,11 @@ const wellnessTipsPrompt = ai.definePrompt({
     Return a list of tips.`,
 });
 
-export const getWellnessTipsFlow = ai.defineFlow(
+export async function getWellnessTips(input: WellnessTipsInput): Promise<WellnessTipsOutput> {
+    return wellnessTipsFlow(input);
+}
+
+const wellnessTipsFlow = ai.defineFlow(
     {
         name: 'wellnessTipsFlow',
         inputSchema: WellnessTipsInputSchema,
