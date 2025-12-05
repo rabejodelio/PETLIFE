@@ -3,31 +3,15 @@
  * @fileOverview Provides AI-driven wellness tips for pets.
  *
  * - getWellnessTips - A function that generates wellness tips based on pet species.
- * - WellnessTipsInput - The input type for the getWellnessTips function.
- * - WellnessTipsOutput - The return type for the getWellnessTips function.
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
-
-export const WellnessTipsInputSchema = z.object({
-  species: z.enum(['dog', 'cat']).describe('The species of the pet (dog or cat).'),
-});
-export type WellnessTipsInput = z.infer<typeof WellnessTipsInputSchema>;
-
-const WellnessTipSchema = z.object({
-  title: z.string().describe('The title of the wellness tip.'),
-  description: z.string().describe('The detailed description of the tip, providing actionable advice.'),
-});
-
-export const WellnessTipsOutputSchema = z.object({
-  tips: z
-    .array(WellnessTipSchema)
-    .min(4)
-    .max(6)
-    .describe('A list of 4 to 6 wellness tips for the specified pet species.'),
-});
-export type WellnessTipsOutput = z.infer<typeof WellnessTipsOutputSchema>;
+import { 
+    WellnessTipsInputSchema, 
+    WellnessTipsOutputSchema, 
+    type WellnessTipsInput, 
+    type WellnessTipsOutput 
+} from './schemas';
 
 
 const wellnessTipsPrompt = ai.definePrompt({
@@ -53,7 +37,10 @@ const wellnessTipsFlow = ai.defineFlow(
     },
     async input => {
         const {output} = await wellnessTipsPrompt(input);
-        return output!;
+        if (!output) {
+            throw new Error('Failed to generate wellness tips.');
+        }
+        return output;
     }
 );
 

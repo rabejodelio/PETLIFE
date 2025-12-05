@@ -1,6 +1,7 @@
 'use server';
 
-import { getWellnessTips, WellnessTipsInput, WellnessTipsOutput } from "@/ai/flows/ai-wellness-tips";
+import { getWellnessTips } from "@/ai/flows/ai-wellness-tips";
+import type { WellnessTipsInput, WellnessTipsOutput } from "@/ai/flows/schemas";
 
 export { type WellnessTipsInput, type WellnessTipsOutput };
 
