@@ -138,7 +138,7 @@ function DashboardLayoutContent({
     <SidebarProvider>
       <ProSubscriptionDialog open={isProDialogOpen} onOpenChange={setIsProDialogOpen} />
       <Sidebar>
-        <SidebarHeader>
+        <SidebarHeader className="hidden md:flex">
             <div className="flex items-center justify-between">
               <Logo />
               <SidebarTrigger />
@@ -230,6 +230,10 @@ function DashboardLayoutContent({
         </SidebarFooter>
       </Sidebar>
       <SidebarInset>
+         <header className="md:hidden flex items-center justify-between p-4 border-b">
+            <Logo />
+            <SidebarTrigger />
+        </header>
         <div className="p-4 sm:p-6 lg:p-8">
             {user ? children : <div>Loading...</div>}
         </div>
