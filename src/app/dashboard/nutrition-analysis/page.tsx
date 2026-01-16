@@ -12,7 +12,6 @@ import { getNutritionAnalysisAction, extractTextFromImageAction } from './action
 import type { NutritionAnalysisOutput } from './actions';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { useIsMobile } from '@/hooks/use-mobile';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
@@ -24,7 +23,6 @@ export default function NutritionAnalysisPage() {
     const [ingredients, setIngredients] = useState('');
 
     // Camera state
-    const isMobile = useIsMobile();
     const { toast } = useToast();
     const [isCameraOpen, setIsCameraOpen] = useState(false);
     const [isScanning, setIsScanning] = useState(false);
@@ -48,7 +46,7 @@ export default function NutritionAnalysisPage() {
                     toast({
                         variant: 'destructive',
                         title: 'Camera Access Denied',
-                        description: 'Please enable camera permissions in your browser settings.',
+                        description: 'Please enable camera permissions in your browser settings, or your device may not have a camera.',
                     });
                     setIsCameraOpen(false);
                 }
@@ -213,12 +211,10 @@ export default function NutritionAnalysisPage() {
                                     onChange={(e) => setIngredients(e.target.value)}
                                 />
                             </div>
-                            {isMobile && (
-                                <Button onClick={() => setIsCameraOpen(true)} variant="outline" className="w-full">
-                                    <Camera className="mr-2 h-4 w-4" />
-                                    Scanner avec l'appareil photo
-                                </Button>
-                            )}
+                            <Button onClick={() => setIsCameraOpen(true)} variant="outline" className="w-full">
+                                <Camera className="mr-2 h-4 w-4" />
+                                Scanner avec l'appareil photo
+                            </Button>
                             <Button onClick={handleGenerateAnalysis} disabled={isGenerating || !ingredients} className="w-full">
                                 <Sparkles className="mr-2 h-4 w-4" />
                                 {isGenerating ? 'Analyse en cours...' : 'Analyser les ingrédients'}
