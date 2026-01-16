@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useEffect, useState, createContext } from 'react';
@@ -269,47 +268,42 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         router.push('/login');
         return;
     }
-    
     if (!firestore) return;
 
+    // Listener for the user document (for isPro status)
     const userDocRef = doc(firestore, 'users', user.uid);
-
     const unsubUser = onSnapshot(userDocRef, async (userDocSnap) => {
-        setLoading(true);
-        let userDocData: UserDoc;
-        
         if (userDocSnap.exists()) {
-            userDocData = userDocSnap.data() as UserDoc;
+            const userDocData = userDocSnap.data() as UserDoc;
+            setIsPro(userDocData.isPro || false);
         } else {
-            userDocData = { email: user.email!, isPro: false };
-            await setDoc(userDocRef, userDocData);
+            // If user doc doesn't exist, create it.
+            await setDoc(userDocRef, { email: user.email!, isPro: false });
+            setIsPro(false);
         }
-        setIsPro(userDocData.isPro || false);
-        
-        const petDocRef = doc(firestore, 'users', user.uid, 'pets', 'main-pet');
-        try {
-            const petDocSnap = await getDoc(petDocRef);
-            if (petDocSnap.exists()) {
-                setPetProfile(petDocSnap.data() as PetProfile);
-            } else {
-                setPetProfile(null);
-            }
-        } catch (error) {
-            console.error("Error fetching pet profile:", error);
-            setPetProfile(null);
-        } finally {
-            setLoading(false);
-        }
-
     }, (error) => {
-        console.error("Error loading user document from Firestore:", error);
+        console.error("Error subscribing to user document:", error);
         setIsPro(false);
+    });
+
+    // Listener for the pet profile document
+    const petDocRef = doc(firestore, 'users', user.uid, 'pets', 'main-pet');
+    const unsubPet = onSnapshot(petDocRef, (petDocSnap) => {
+        if (petDocSnap.exists()) {
+            setPetProfile(petDocSnap.data() as PetProfile);
+        } else {
+            setPetProfile(null);
+        }
+        setLoading(false); // Combined loading is finished when pet profile is loaded/checked
+    }, (error) => {
+        console.error("Error subscribing to pet profile:", error);
         setPetProfile(null);
         setLoading(false);
     });
 
     return () => {
       unsubUser();
+      unsubPet();
     };
   }, [user, firestore, isUserLoading, router]);
 
@@ -318,7 +312,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       throw new Error("User not authenticated or Firestore not available.");
     }
     
-    // Ensure a complete profile object with defaults for required fields
     const currentProfile: PetProfile = petProfile || {
       name: '',
       species: 'dog',
@@ -338,7 +331,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     try {
       const petDocRef = doc(firestore, 'users', user.uid, 'pets', 'main-pet');
       await setDoc(petDocRef, updatedProfile, { merge: true });
-      setPetProfile(updatedProfile); // Optimistic update
+      // The onSnapshot listener will automatically update the state, so optimistic update is optional
+      // but can make the UI feel faster.
+      setPetProfile(updatedProfile); 
     } catch (error) {
       console.error("Firestore write failed:", error);
       toast({
@@ -355,7 +350,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const petProfileContextValue = {
     profile: petProfile,
-    loading: loading,
+    loading: isUserLoading || loading,
     saveProfile,
     clearProfile,
   };
