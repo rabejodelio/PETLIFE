@@ -1,6 +1,7 @@
 'use server';
 
-import { getNutritionAnalysis, type NutritionAnalysisInput, type NutritionAnalysisOutput } from "@/ai/flows/ai-nutrition-analysis";
+import { getNutritionAnalysis } from "@/ai/flows/ai-nutrition-analysis";
+import type { NutritionAnalysisInput, NutritionAnalysisOutput } from "@/ai/flows/schemas";
 
 export { type NutritionAnalysisInput, type NutritionAnalysisOutput };
 

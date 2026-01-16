@@ -19,3 +19,17 @@ export const WellnessTipsOutputSchema = z.object({
     .describe('A list of 4 to 6 wellness tips for the specified pet species.'),
 });
 export type WellnessTipsOutput = z.infer<typeof WellnessTipsOutputSchema>;
+
+
+// Nutrition Analysis Schemas
+export const NutritionAnalysisInputSchema = z.object({
+  ingredientsText: z.string().describe("The list of ingredients from the pet food label."),
+  age: z.number().describe("The pet's age in years."),
+  species: z.enum(['dog', 'cat']).describe("The species of the pet (dog or cat)."),
+});
+export type NutritionAnalysisInput = z.infer<typeof NutritionAnalysisInputSchema>;
+
+export const NutritionAnalysisOutputSchema = z.object({
+  analysis: z.string().describe('A detailed nutritional analysis based on FEDIAF guidelines.'),
+});
+export type NutritionAnalysisOutput = z.infer<typeof NutritionAnalysisOutputSchema>;

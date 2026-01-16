@@ -8,19 +8,12 @@
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
-
-export const NutritionAnalysisInputSchema = z.object({
-  ingredientsText: z.string().describe("The list of ingredients from the pet food label."),
-  age: z.number().describe("The pet's age in years."),
-  species: z.enum(['dog', 'cat']).describe("The species of the pet (dog or cat)."),
-});
-export type NutritionAnalysisInput = z.infer<typeof NutritionAnalysisInputSchema>;
-
-export const NutritionAnalysisOutputSchema = z.object({
-  analysis: z.string().describe('A detailed nutritional analysis based on FEDIAF guidelines.'),
-});
-export type NutritionAnalysisOutput = z.infer<typeof NutritionAnalysisOutputSchema>;
+import { 
+    NutritionAnalysisInputSchema, 
+    NutritionAnalysisOutputSchema,
+    type NutritionAnalysisInput,
+    type NutritionAnalysisOutput
+} from './schemas';
 
 export async function getNutritionAnalysis(input: NutritionAnalysisInput): Promise<NutritionAnalysisOutput> {
   return nutritionAnalysisFlow(input);
