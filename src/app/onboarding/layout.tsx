@@ -54,6 +54,8 @@ export default function OnboardingLayout({ children }: { children: React.ReactNo
     const currentProfile: PetProfile = profile || {
       name: '',
       species: 'dog',
+      sex: 'female',
+      sterilized: false,
       breed: '',
       age: 0,
       weight: 0,

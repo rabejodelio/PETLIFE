@@ -7,11 +7,12 @@ import { useRouter } from 'next/navigation';
 import { usePetProfile } from '@/hooks/use-pet-provider';
 import { petProfileSchema } from '@/lib/schemas';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { useEffect } from 'react';
@@ -31,6 +32,8 @@ export default function EditProfilePage() {
     defaultValues: profile || {
       name: '',
       species: 'dog',
+      sex: 'female',
+      sterilized: false,
       breed: '',
       age: 0,
       weight: 0,
@@ -98,7 +101,7 @@ export default function EditProfilePage() {
                                     </FormItem>
                                 )}
                             />
-                            <FormField
+                             <FormField
                                 control={form.control}
                                 name="species"
                                 render={({ field }) => (
@@ -121,6 +124,36 @@ export default function EditProfilePage() {
                                                         <RadioGroupItem value="cat" id="cat" />
                                                     </FormControl>
                                                     <FormLabel htmlFor="cat" className="font-normal">Cat</FormLabel>
+                                                </FormItem>
+                                            </RadioGroup>
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="sex"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Sex</FormLabel>
+                                        <FormControl>
+                                            <RadioGroup
+                                                onValueChange={field.onChange}
+                                                value={field.value}
+                                                className="flex items-center space-x-4 pt-2"
+                                            >
+                                                <FormItem className="flex items-center space-x-2">
+                                                    <FormControl>
+                                                        <RadioGroupItem value="male" id="male" />
+                                                    </FormControl>
+                                                    <FormLabel htmlFor="male" className="font-normal">Male</FormLabel>
+                                                </FormItem>
+                                                <FormItem className="flex items-center space-x-2">
+                                                    <FormControl>
+                                                        <RadioGroupItem value="female" id="female" />
+                                                    </FormControl>
+                                                    <FormLabel htmlFor="female" className="font-normal">Female</FormLabel>
                                                 </FormItem>
                                             </RadioGroup>
                                         </FormControl>
@@ -195,7 +228,7 @@ export default function EditProfilePage() {
                                 control={form.control}
                                 name="allergies"
                                 render={({ field }) => (
-                                    <FormItem>
+                                    <FormItem className="md:col-span-2">
                                         <FormLabel>Known Allergies (optional)</FormLabel>
                                         <FormControl>
                                             <Textarea
@@ -205,6 +238,26 @@ export default function EditProfilePage() {
                                             />
                                         </FormControl>
                                         <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="sterilized"
+                                render={({ field }) => (
+                                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm md:col-span-2">
+                                        <div className="space-y-0.5">
+                                            <FormLabel>Sterilization Status</FormLabel>
+                                            <FormDescription>
+                                                Is your pet sterilized (spayed/neutered)?
+                                            </FormDescription>
+                                        </div>
+                                        <FormControl>
+                                            <Switch
+                                                checked={field.value}
+                                                onCheckedChange={field.onChange}
+                                            />
+                                        </FormControl>
                                     </FormItem>
                                 )}
                             />

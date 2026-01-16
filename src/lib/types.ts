@@ -10,8 +10,6 @@ export type Activity = {
     completed: boolean;
 };
 
-export type ActivityHistory = Record<string, Activity[]>;
-
 // This is the shape of the denormalized user document
 export interface UserDoc extends DocumentData {
     email: string;

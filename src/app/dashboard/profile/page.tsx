@@ -131,6 +131,10 @@ export default function ProfilePage() {
                             <p className="capitalize">{profile.species}</p>
                         </div>
                         <div className="space-y-1">
+                            <h4 className="font-semibold text-muted-foreground">Sex</h4>
+                            <p className="capitalize">{profile.sex}</p>
+                        </div>
+                        <div className="space-y-1">
                             <h4 className="font-semibold text-muted-foreground">Age</h4>
                             <p>{profile.age} years</p>
                         </div>
@@ -138,7 +142,11 @@ export default function ProfilePage() {
                             <h4 className="font-semibold text-muted-foreground">Weight</h4>
                             <p>{profile.weight} kg</p>
                         </div>
-                        <div className="space-y-1 col-span-2 md:col-span-1">
+                        <div className="space-y-1">
+                            <h4 className="font-semibold text-muted-foreground">Sterilization</h4>
+                            <p>{profile.sterilized ? 'Sterilized' : 'Not Sterilized'}</p>
+                        </div>
+                        <div className="space-y-1">
                             <h4 className="font-semibold text-muted-foreground">Health Goal</h4>
                             <p>{healthGoalMap[profile.healthGoal]}</p>
                         </div>

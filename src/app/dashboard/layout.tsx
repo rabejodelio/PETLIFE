@@ -22,7 +22,8 @@ import {
   TrendingUp,
   BrainCircuit,
   FlaskConical,
-  Wind
+  Wind,
+  ShieldCheck,
 } from 'lucide-react';
 import {
   SidebarProvider,
@@ -136,6 +137,7 @@ function DashboardLayoutContent({
     { href: '/dashboard/cognitive-aging', label: 'Cognitive Aging', icon: BrainCircuit, pro: true },
     { href: '/dashboard/nutrition-analysis', label: 'Nutrition Analysis', icon: FlaskConical, pro: true },
     { href: '/dashboard/enrichment-plan', label: 'Enrichment Plan', icon: Wind, pro: true },
+    { href: '/dashboard/prevention-assistant', label: 'Prevention', icon: ShieldCheck, pro: true },
     { href: '/dashboard/users', label: 'Users', icon: Users, pro: false, admin: true },
   ];
 
@@ -320,6 +322,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const currentProfile: PetProfile = petProfile || {
       name: '',
       species: 'dog',
+      sex: 'female',
+      sterilized: false,
       breed: '',
       age: 0,
       weight: 0,
