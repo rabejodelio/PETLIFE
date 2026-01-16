@@ -10,3 +10,4 @@ import '@/ai/flows/ai-longevity-score.ts';
 import '@/ai/flows/ai-cognitive-stimulation.ts';
 import '@/ai/flows/ai-nutrition-analysis.ts';
 import '@/ai/flows/ai-text-from-image.ts';
+import '@/ai/flows/ai-enrichment-plan.ts';

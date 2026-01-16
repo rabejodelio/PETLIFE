@@ -33,3 +33,18 @@ export const NutritionAnalysisOutputSchema = z.object({
   analysis: z.string().describe('A detailed nutritional analysis based on FEDIAF guidelines.'),
 });
 export type NutritionAnalysisOutput = z.infer<typeof NutritionAnalysisOutputSchema>;
+
+// Enrichment Plan Schemas
+export const EnrichmentPlanInputSchema = z.object({
+  housingType: z.enum(['apartment', 'house']).describe('The type of housing the pet lives in.'),
+  breed: z.string().describe('The breed of the pet.'),
+  age: z.number().describe('The age of the pet in years.'),
+  animalName: z.string().describe('The name of the pet.'),
+  species: z.enum(['dog', 'cat']).describe('The species of the pet.'),
+});
+export type EnrichmentPlanInput = z.infer<typeof EnrichmentPlanInputSchema>;
+
+export const EnrichmentPlanOutputSchema = z.object({
+  plan: z.string().describe('A single, actionable enrichment activity suggestion to reduce stress and boredom.'),
+});
+export type EnrichmentPlanOutput = z.infer<typeof EnrichmentPlanOutputSchema>;
