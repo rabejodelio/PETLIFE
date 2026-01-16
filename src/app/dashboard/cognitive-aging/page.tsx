@@ -116,7 +116,7 @@ export default function CognitiveAgingPage() {
                                     </div>
                                 ))}
                             </div>
-                             {score > 2 && (
+                             {score > 0 && (
                                 <Button onClick={handleGenerateProgram} disabled={isGenerating} className="w-full mt-4">
                                     <Sparkles className="mr-2 h-4 w-4" />
                                     {isGenerating ? 'Génération en cours...' : 'Générer un Programme de Stimulation'}
@@ -155,7 +155,7 @@ export default function CognitiveAgingPage() {
                              )}
                              {!program && !isGenerating && !error && (
                                 <p className="text-sm text-muted-foreground text-center pt-10">
-                                    Cochez plus de 2 signes pour générer un programme personnalisé par IA.
+                                    Cochez au moins un signe pour générer un programme personnalisé par IA.
                                 </p>
                              )}
                         </CardContent>
