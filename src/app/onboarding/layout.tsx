@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth, useUser, useFirestore } from '@/firebase';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
-import type { PetProfile, ActivityHistory } from '@/lib/types';
+import type { PetProfile } from '@/lib/types';
 import { PetProfileContext } from '@/hooks/use-pet-provider';
 import { useToast } from '@/hooks/use-toast';
 import { Logo } from '@/components/logo';
@@ -15,10 +15,8 @@ export default function OnboardingLayout({ children }: { children: React.ReactNo
   const firestore = useFirestore();
   const [profile, setProfile] = useState<PetProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activityHistory, setActivityHistory] = useState<ActivityHistory>({});
   const { toast } = useToast();
   
-  const getActivityHistoryKey = (userId: string) => `petlife-activity-history-${userId}`;
 
   useEffect(() => {
     if (!user || !firestore) {
@@ -47,20 +45,6 @@ export default function OnboardingLayout({ children }: { children: React.ReactNo
 
   }, [user, firestore, isUserLoading]);
 
-  useEffect(() => {
-    if (user) {
-      const key = getActivityHistoryKey(user.uid);
-      try {
-        const storedHistory = localStorage.getItem(key);
-        setActivityHistory(storedHistory ? JSON.parse(storedHistory) : {});
-      } catch (e) {
-        console.error("Impossible de lire l'historique d'activité :", e);
-        setActivityHistory({});
-      }
-    } else {
-      setActivityHistory({});
-    }
-  }, [user]);
 
   const saveProfile = async (newProfileData: Partial<PetProfile>): Promise<void> => {
     if (!user || !firestore) {
@@ -99,28 +83,12 @@ export default function OnboardingLayout({ children }: { children: React.ReactNo
 
   const clearProfile = () => setProfile(null);
 
-  const saveActivityHistory = (newHistory: ActivityHistory) => {
-    if (user) {
-      setActivityHistory(newHistory);
-      localStorage.setItem(getActivityHistoryKey(user.uid), JSON.stringify(newHistory));
-    }
-  };
-
-  const clearActivityHistory = () => {
-    if (user) {
-      setActivityHistory({});
-      localStorage.removeItem(getActivityHistoryKey(user.uid));
-    }
-  };
 
   const contextValue = {
     profile,
     loading: loading || isUserLoading,
-    activityHistory,
     saveProfile,
     clearProfile,
-    setActivityHistory: saveActivityHistory,
-    clearActivityHistory,
   };
 
   if (isUserLoading || loading) {

@@ -1,19 +1,15 @@
-
 'use client';
 
 import React, { createContext, useContext, type ReactNode } from 'react';
-import type { PetProfile, ActivityHistory } from '@/lib/types';
+import type { PetProfile } from '@/lib/types';
 
 // 1. Définition du type pour le contexte
 // C'est la "forme" des données que notre contexte va fournir.
 interface PetProfileContextType {
   profile: PetProfile | null;
   loading: boolean;
-  activityHistory: ActivityHistory;
   saveProfile: (newProfileData: Partial<PetProfile>) => Promise<void>;
   clearProfile: () => void;
-  setActivityHistory: (newHistory: ActivityHistory) => void;
-  clearActivityHistory: () => void;
 }
 
 // 2. Création du Contexte

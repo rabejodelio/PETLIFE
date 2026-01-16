@@ -348,9 +348,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     loading: loading,
     saveProfile,
     clearProfile,
-    activityHistory: {}, // Placeholder
-    setActivityHistory: () => {}, // Placeholder
-    clearActivityHistory: () => {}, // Placeholder
   };
 
   const handlePromoCode = async (): Promise<void> => {
