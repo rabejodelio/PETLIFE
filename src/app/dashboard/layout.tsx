@@ -19,7 +19,8 @@ import {
   Lock,
   Users,
   Pencil,
-  TrendingUp
+  TrendingUp,
+  BrainCircuit
 } from 'lucide-react';
 import {
   SidebarProvider,
@@ -130,6 +131,7 @@ function DashboardLayoutContent({
     { href: '/dashboard/activity', label: 'Activity', icon: PawPrint, pro: true },
     { href: '/dashboard/wellness', label: 'Wellness', icon: Heart, pro: true },
     { href: '/dashboard/longevity-score', label: 'Score de Longévité', icon: TrendingUp, pro: true },
+    { href: '/dashboard/cognitive-aging', label: 'Cognitive Aging', icon: BrainCircuit, pro: true },
     { href: '/dashboard/users', label: 'Users', icon: Users, pro: false, admin: true },
   ];
 
