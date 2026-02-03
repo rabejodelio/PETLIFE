@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { Pencil, Sparkles, FileText, Scale } from 'lucide-react';
 import { getLongevityScoreAction } from './actions';
 import type { LongevityScoreOutput } from '@/ai/flows/ai-longevity-score';
+import ReactMarkdown from 'react-markdown';
 
 export default function LongevityScorePage() {
     const { profile, loading: profileLoading } = usePetProfile();
@@ -127,8 +128,8 @@ export default function LongevityScorePage() {
                                 <p className="text-destructive pt-4">{error}</p>
                              )}
                              {analysis && !isGenerating && (
-                                <div className="text-sm text-muted-foreground whitespace-pre-wrap">
-                                    {analysis.analysis}
+                                <div className="prose prose-sm dark:prose-invert max-w-none">
+                                    <ReactMarkdown>{analysis.analysis}</ReactMarkdown>
                                 </div>
                              )}
                              {!analysis && !isGenerating && !error && (

@@ -12,6 +12,7 @@ import Link from 'next/link';
 import { Pencil, Sparkles, BrainCircuit, FileText } from 'lucide-react';
 import { generateProgramAction } from './actions';
 import type { CognitiveStimulationOutput } from '@/ai/flows/ai-cognitive-stimulation';
+import ReactMarkdown from 'react-markdown';
 
 const seniorChecklist = {
   signs: [
@@ -149,8 +150,8 @@ export default function CognitiveAgingPage() {
                                 <p className="text-destructive pt-4">{error}</p>
                              )}
                              {program && !isGenerating && (
-                                <div className="text-sm text-muted-foreground whitespace-pre-wrap prose prose-sm max-w-none">
-                                    {program.program}
+                                <div className="prose prose-sm dark:prose-invert max-w-none">
+                                    <ReactMarkdown>{program.program}</ReactMarkdown>
                                 </div>
                              )}
                              {!program && !isGenerating && !error && (
