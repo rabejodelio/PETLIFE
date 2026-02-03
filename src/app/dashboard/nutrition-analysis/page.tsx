@@ -14,6 +14,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import ReactMarkdown from 'react-markdown';
 
 export default function NutritionAnalysisPage() {
     const { profile, loading: profileLoading } = usePetProfile();
@@ -246,8 +247,8 @@ export default function NutritionAnalysisPage() {
                                 <p className="text-destructive pt-4">{error}</p>
                              )}
                              {analysis && !isGenerating && (
-                                <div className="text-sm text-muted-foreground whitespace-pre-wrap prose prose-sm max-w-none">
-                                    {analysis.analysis}
+                                <div className="prose prose-sm dark:prose-invert max-w-none">
+                                    <ReactMarkdown>{analysis.analysis}</ReactMarkdown>
                                 </div>
                              )}
                              {!analysis && !isGenerating && !error && (
