@@ -130,7 +130,6 @@ function DashboardLayoutContent({
     { href: '/dashboard/profile', label: 'Pet Profile', icon: User, pro: false },
     { href: '/dashboard/meal-plan', label: 'Meal Plan', icon: Salad, pro: false },
     { href: '/dashboard/supplements', label: 'Supplements', icon: Pill, pro: true },
-    { href: '/dashboard/activity', label: 'Activity', icon: PawPrint, pro: true },
     { href: '/dashboard/wellness', label: 'Wellness', icon: Heart, pro: true },
     { href: '/dashboard/longevity-score', label: 'Score de Longévité', icon: TrendingUp, pro: true },
     { href: '/dashboard/cognitive-aging', label: 'Cognitive Aging', icon: BrainCircuit, pro: true },
