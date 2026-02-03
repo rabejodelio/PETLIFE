@@ -131,7 +131,7 @@ function DashboardLayoutContent({
     { href: '/dashboard/meal-plan', label: 'Meal Plan', icon: Salad, pro: false },
     { href: '/dashboard/supplements', label: 'Supplements', icon: Pill, pro: true },
     { href: '/dashboard/wellness', label: 'Wellness', icon: Heart, pro: true },
-    { href: '/dashboard/longevity-score', label: 'Score de Longévité', icon: TrendingUp, pro: true },
+    { href: '/dashboard/longevity-score', label: 'Score Longévité', icon: TrendingUp, pro: true },
     { href: '/dashboard/cognitive-aging', label: 'Cognitive Aging', icon: BrainCircuit, pro: true },
     { href: '/dashboard/nutrition-analysis', label: 'Nutrition Analysis', icon: FlaskConical, pro: true },
     { href: '/dashboard/enrichment-plan', label: 'Enrichment Plan', icon: Wind, pro: true },
@@ -330,9 +330,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     try {
       const petDocRef = doc(firestore, 'users', user.uid, 'pets', 'main-pet');
       await setDoc(petDocRef, updatedProfile, { merge: true });
-      // The onSnapshot listener will automatically update the state, so optimistic update is optional
-      // but can make the UI feel faster.
-      setPetProfile(updatedProfile); 
     } catch (error) {
       console.error("Firestore write failed:", error);
       toast({

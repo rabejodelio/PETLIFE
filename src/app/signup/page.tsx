@@ -39,7 +39,7 @@ export default function SignupPage() {
                 title: "Account Created!",
                 description: "You can now create your pet's profile.",
             });
-            router.push("/dashboard/profile/edit");
+            router.push("/dashboard/profile");
 
         } catch (error: any) {
             console.error("Signup error:", error);
