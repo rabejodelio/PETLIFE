@@ -92,8 +92,6 @@ export default function ProfilePage() {
         title: "Profile saved!",
         description: "Your pet's information has been updated.",
       });
-      // Optionally, redirect or give other feedback
-      router.push('/dashboard');
     } catch (error) {
       console.error("Failed to save profile:", error);
       toast({
