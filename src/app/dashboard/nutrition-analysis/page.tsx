@@ -187,8 +187,8 @@ export default function NutritionAnalysisPage() {
     return (
         <div>
             <PageHeader
-                title="Analyseur de Nutrition de Précision"
-                description="Évaluez les ingrédients de la nourriture de votre animal avec l'IA."
+                title="Precision Nutrition Analyzer"
+                description="Evaluate your pet's food ingredients."
             />
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -197,16 +197,16 @@ export default function NutritionAnalysisPage() {
                         <CardHeader>
                             <CardTitle className="font-headline flex items-center gap-2">
                                 <FlaskConical className="w-5 h-5" />
-                                Ingrédients
+                                Ingredients
                             </CardTitle>
-                            <CardDescription>Collez la liste d'ingrédients ou scannez-la.</CardDescription>
+                            <CardDescription>Paste the ingredient list or scan it.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="grid w-full gap-1.5">
-                                <Label htmlFor="ingredients-text">Liste d'ingrédients</Label>
+                                <Label htmlFor="ingredients-text">Ingredient List</Label>
                                 <Textarea
                                     id="ingredients-text"
-                                    placeholder="Ex: Poulet, riz, graisse de poulet, pulpe de betterave..."
+                                    placeholder="e.g., Chicken, rice, chicken fat, beet pulp..."
                                     className="resize-none min-h-[150px]"
                                     value={ingredients}
                                     onChange={(e) => setIngredients(e.target.value)}
@@ -214,11 +214,11 @@ export default function NutritionAnalysisPage() {
                             </div>
                             <Button onClick={() => setIsCameraOpen(true)} variant="outline" className="w-full">
                                 <Camera className="mr-2 h-4 w-4" />
-                                Scanner avec l'appareil photo
+                                Scan with Camera
                             </Button>
                             <Button onClick={handleGenerateAnalysis} disabled={isGenerating || !ingredients} className="w-full">
                                 <Sparkles className="mr-2 h-4 w-4" />
-                                {isGenerating ? 'Analyse en cours...' : 'Analyser les ingrédients'}
+                                {isGenerating ? 'Analyzing...' : 'Analyze Ingredients'}
                             </Button>
                         </CardContent>
                     </Card>
@@ -228,10 +228,10 @@ export default function NutritionAnalysisPage() {
                          <CardHeader>
                             <CardTitle className="font-headline flex items-center gap-2">
                                 <FileText className="w-5 h-5" />
-                                 Analyse de l'IA
+                                 Analysis
                             </CardTitle>
                             <CardDescription>
-                                Analyse nutritionnelle basée sur les directives FEDIAF.
+                                Nutritional analysis based on FEDIAF guidelines.
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -253,7 +253,7 @@ export default function NutritionAnalysisPage() {
                              )}
                              {!analysis && !isGenerating && !error && (
                                 <p className="text-sm text-muted-foreground text-center pt-10">
-                                    Entrez une liste d'ingrédients et cliquez sur "Analyser" pour obtenir un rapport nutritionnel par IA.
+                                    Enter an ingredient list and click 'Analyze' to get a nutritional report.
                                 </p>
                              )}
                         </CardContent>
