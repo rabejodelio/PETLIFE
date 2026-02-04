@@ -1,12 +1,12 @@
 
 'use server';
 
-// Clés de PRODUCTION pour l'API PayPal.
+// PRODUCTION keys for PayPal API.
 const PAYPAL_CLIENT_ID = 'AVIdbqPDhsyPeIQ_OocwT6TPGCPe4unkE3SVRLmaitVU26e3OM6riELntVqe0AepevnGv1Qwj_ERVBf1';
 const PAYPAL_SECRET = 'EPDVudbtFZlFHrHmicMPtn13CNTe8jvShUhUg5G0yMDazRM3ZMF4Xa95MWdHWVi-QwS57tdYg2uyx7KI';
-const PAYPAL_API_BASE = 'https://api-m.paypal.com'; // URL de PRODUCTION
+const PAYPAL_API_BASE = 'https://api-m.paypal.com'; // PRODUCTION URL
 
-// Fonction pour obtenir un jeton d'accès OAuth2 auprès de PayPal.
+// Function to get an OAuth2 access token from PayPal.
 async function getPayPalAccessToken() {
   const auth = Buffer.from(`${PAYPAL_CLIENT_ID}:${PAYPAL_SECRET}`).toString('base64');
   
@@ -17,7 +17,7 @@ async function getPayPalAccessToken() {
       'Content-Type': 'application/x-www-form-urlencoded',
     },
     body: 'grant_type=client_credentials',
-    cache: 'no-cache', // Empêche la mise en cache de la requête de jeton.
+    cache: 'no-cache', // Prevents caching of the token request.
   });
 
   if (!response.ok) {
@@ -29,20 +29,20 @@ async function getPayPalAccessToken() {
   return data.access_token;
 }
 
-// Action serveur pour créer une commande PayPal.
+// Server action to create a PayPal order.
 export async function createPayPalOrder(): Promise<{ success: boolean; link?: string; error?: string }> {
   try {
     const accessToken = await getPayPalAccessToken();
 
     const orderPayload = {
-      intent: 'CAPTURE', // 'CAPTURE' pour un paiement unique.
+      intent: 'CAPTURE', // 'CAPTURE' for a one-time payment.
       purchase_units: [
         {
           amount: {
             currency_code: 'EUR',
-            value: '10.00', // Le montant de l'abonnement
+            value: '10.00', // The subscription amount
           },
-          description: 'Abonnement PetLife Pro',
+          description: 'PetLife Pro Subscription',
         },
       ],
       application_context: {
@@ -60,7 +60,7 @@ export async function createPayPalOrder(): Promise<{ success: boolean; link?: st
         'Authorization': `Bearer ${accessToken}`,
       },
       body: JSON.stringify(orderPayload),
-      cache: 'no-cache', // Empêche la mise en cache de la requête de création de commande.
+      cache: 'no-cache', // Prevents caching of the order creation request.
     });
 
     if (!response.ok) {

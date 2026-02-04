@@ -23,6 +23,7 @@ import {
   FlaskConical,
   Wind,
   ShieldCheck,
+  Globe,
 } from 'lucide-react';
 import {
   SidebarProvider,
@@ -49,6 +50,13 @@ import { signOut } from 'firebase/auth';
 import { doc, setDoc, getDoc, onSnapshot, updateDoc } from 'firebase/firestore';
 import type { UserDoc, PetProfile } from '@/lib/types';
 import { PetProfileContext } from '@/hooks/use-pet-provider';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 
 const PRO_CODE = "petlife7296";
@@ -84,8 +92,8 @@ function DashboardLayoutContent({
   const handleProSuccess = async () => {
     // This function can be updated to set a user's pro status in Firestore
     toast({
-      title: 'Félicitations !',
-      description: "Vous êtes maintenant un membre Pro.",
+      title: 'Congratulations!',
+      description: "You are now a Pro member.",
     });
   };
 
@@ -97,8 +105,8 @@ function DashboardLayoutContent({
     } else if (paymentStatus === 'cancel') {
         toast({
             variant: 'destructive',
-            title: 'Paiement annulé',
-            description: 'Votre transaction a été annulée.',
+            title: 'Payment Canceled',
+            description: 'Your transaction has been canceled.',
         });
         router.replace('/dashboard');
     }
@@ -118,8 +126,8 @@ function DashboardLayoutContent({
     } else {
       toast({
         variant: 'destructive',
-        title: 'Code invalide',
-        description: 'Le code que vous avez entré n\'est pas valide.',
+        title: 'Invalid Code',
+        description: 'The code you entered is not valid.',
       });
     }
   };
@@ -154,6 +162,25 @@ function DashboardLayoutContent({
         </SidebarHeader>
         <SidebarContent className="p-2">
           <SidebarMenu>
+            <SidebarGroup>
+              <SidebarMenu>
+                <div className="flex items-center gap-2 px-2">
+                  <Globe className="w-4 h-4" />
+                  <Select defaultValue="en">
+                    <SelectTrigger className="border-none focus:ring-0 text-xs">
+                      <SelectValue placeholder="Language" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="en">English</SelectItem>
+                      <SelectItem value="fr">Français</SelectItem>
+                      <SelectItem value="de">Deutsch</SelectItem>
+                      <SelectItem value="es">Español</SelectItem>
+                      <SelectItem value="it">Italiano</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </SidebarMenu>
+            </SidebarGroup>
             {navItems.filter(item => !(item.admin && !isAdmin)).map((item) => {
               const isLocked = item.pro && !isPro;
               
@@ -188,7 +215,7 @@ function DashboardLayoutContent({
                     <SidebarMenuItem>
                         <SidebarMenuButton onClick={() => setIsProDialogOpen(true)} variant="outline" className="w-full justify-center bg-gradient-to-r from-yellow-400 to-orange-500 text-white border-none hover:from-yellow-500 hover:to-orange-600 hover:text-white">
                             <Sparkles />
-                            <span>Passer Pro</span>
+                            <span>Go Pro</span>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                     <SidebarMenuItem className='px-2'>
@@ -198,17 +225,17 @@ function DashboardLayoutContent({
                             </div>
                             <div className="relative flex justify-center text-xs uppercase">
                                 <span className="bg-sidebar px-2 text-muted-foreground">
-                                OU
+                                OR
                                 </span>
                             </div>
                         </div>
                     </SidebarMenuItem>
                     <SidebarMenuItem className='px-2'>
                         <div className='flex flex-col space-y-2'>
-                            <Label htmlFor="promo-code" className='text-left text-xs px-1 text-muted-foreground'>Code promotionnel</Label>
+                            <Label htmlFor="promo-code" className='text-left text-xs px-1 text-muted-foreground'>Promo Code</Label>
                             <div className='flex gap-2 w-full'>
-                                <Input id="promo-code" placeholder="Entrez votre code" value={promoCode} onChange={(e) => setPromoCode(e.target.value)} className="flex-grow bg-background/50 h-9" />
-                                <Button type="button" variant="secondary" onClick={onApplyPromoCode} className="h-9">Appliquer</Button>
+                                <Input id="promo-code" placeholder="Enter your code" value={promoCode} onChange={(e) => setPromoCode(e.target.value)} className="flex-grow bg-background/50 h-9" />
+                                <Button type="button" variant="secondary" onClick={onApplyPromoCode} className="h-9">Apply</Button>
                             </div>
                         </div>
                     </SidebarMenuItem>
@@ -353,7 +380,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const handlePromoCode = async (): Promise<void> => {
     if (!user || !firestore) {
-        toast({ variant: 'destructive', title: 'Erreur', description: 'Utilisateur non authentifié.' });
+        toast({ variant: 'destructive', title: 'Error', description: 'User not authenticated.' });
         return;
     }
 
@@ -363,8 +390,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     updateDoc(userDocRef, dataToUpdate)
         .then(() => {
             toast({
-                title: 'Félicitations !',
-                description: "Vous êtes maintenant un membre Pro.",
+                title: 'Congratulations!',
+                description: "You are now a Pro member.",
             });
         })
         .catch((serverError) => {

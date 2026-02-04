@@ -36,8 +36,8 @@ export function ProSubscriptionDialog({ open, onOpenChange }: ProSubscriptionDia
     } else {
         toast({
             variant: 'destructive',
-            title: 'Erreur de paiement',
-            description: result.error || 'Impossible de créer le lien de paiement PayPal.',
+            title: 'Payment Error',
+            description: result.error || 'Could not create PayPal payment link.',
         });
     }
 
@@ -53,28 +53,28 @@ export function ProSubscriptionDialog({ open, onOpenChange }: ProSubscriptionDia
               <Sparkles className="w-8 h-8 text-white" />
             </div>
           </div>
-          <DialogTitle className="text-center text-2xl font-headline">Passez à PetLife Pro</DialogTitle>
+          <DialogTitle className="text-center text-2xl font-headline">Upgrade to PetLife Pro</DialogTitle>
           <DialogDescription className="text-center">
-            Débloquez des fonctionnalités exclusives pour prendre soin de votre animal.
+            Unlock exclusive features to take care of your pet.
           </DialogDescription>
         </DialogHeader>
         <div className="py-4 space-y-4">
             <div className="text-center">
                 <span className="text-4xl font-bold">10€</span>
-                <span className="text-muted-foreground">/mois</span>
+                <span className="text-muted-foreground">/month</span>
             </div>
           <ul className="space-y-2 text-sm text-muted-foreground">
             <li className="flex items-center gap-2">
               <CheckCircle className="w-4 h-4 text-primary" />
-              <span>Analyses et recommandations IA illimitées</span>
+              <span>Unlimited analysis and recommendations</span>
             </li>
             <li className="flex items-center gap-2">
               <CheckCircle className="w-4 h-4 text-primary" />
-              <span>Suivi de santé avancé</span>
+              <span>Advanced health tracking</span>
             </li>
             <li className="flex items-center gap-2">
               <CheckCircle className="w-4 h-4 text-primary" />
-              <span>Support prioritaire</span>
+              <span>Priority support</span>
             </li>
           </ul>
         </div>
@@ -85,7 +85,7 @@ export function ProSubscriptionDialog({ open, onOpenChange }: ProSubscriptionDia
                 onClick={handleSubscribe} 
                 disabled={isLoading}
               >
-                {isLoading ? 'Création de la commande...' : 'S\'abonner avec PayPal'}
+                {isLoading ? 'Creating order...' : 'Subscribe with PayPal'}
               </Button>
         </DialogFooter>
       </DialogContent>
