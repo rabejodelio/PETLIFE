@@ -85,7 +85,7 @@ export default function WellnessPage() {
         <div>
             <PageHeader
                 title="Wellness & Enrichment"
-                description={`AI-powered tips and techniques for a happy, stress-free pet.`}
+                description={`Tips and techniques for a happy, stress-free pet.`}
             >
                 <Button onClick={fetchTips} disabled={loading}>
                     {loading ? 'Generating...' : 'Get New Tips'}

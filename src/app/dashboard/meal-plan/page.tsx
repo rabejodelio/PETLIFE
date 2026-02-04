@@ -82,7 +82,7 @@ export default function MealPlanPage() {
                 <h2 className="text-xl font-semibold">No Pet Profile Found</h2>
                 <p className="text-muted-foreground mt-2 mb-4">Create a pet profile to generate a meal plan.</p>
                 <Button asChild>
-                    <Link href="/dashboard/profile/edit">
+                    <Link href="/dashboard/profile">
                         <Pencil className="mr-2 h-4 w-4" /> Create Profile
                     </Link>
                 </Button>
@@ -98,7 +98,7 @@ export default function MealPlanPage() {
             >
                 <Button onClick={handleGeneratePlan} disabled={isGenerating}>
                     <Sparkles className="mr-2 h-4 w-4" />
-                    {isGenerating ? 'Generating...' : 'Regenerate Plan'}
+                    {isGenerating ? 'Generating...' : 'update plan'}
                 </Button>
             </PageHeader>
 

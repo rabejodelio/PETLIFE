@@ -88,7 +88,7 @@ export default function SupplementsPage() {
         <div>
             <PageHeader
                 title="Supplement Recommendations"
-                description={`AI-powered suggestions for ${profile.name}'s specific needs.`}
+                description={`Suggestions for ${profile.name}'s specific needs.`}
             >
                  <Button onClick={fetchRecommendations} disabled={loading}>
                     {loading ? 'Refreshing...' : 'Refresh'}
