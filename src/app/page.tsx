@@ -18,7 +18,7 @@ export default function LandingPage() {
               A long, healthy life for your best friend.
             </h2>
             <p className="text-lg text-gray-600">
-              PetLife uses AI to create personalized meal plans, recommend supplements, and help you track your pet's health for a vibrant, longer life.
+              PetLife creates personalized meal plans, recommends supplements, and helps you track your pet's health for a vibrant, longer life.
             </p>
             <div className="flex gap-4 justify-center">
               <Button asChild size="lg">
