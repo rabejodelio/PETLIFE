@@ -120,7 +120,7 @@ export default function CognitiveAgingPage() {
                              {score > 0 && (
                                 <Button onClick={handleGenerateProgram} disabled={isGenerating} className="w-full mt-4">
                                     <Sparkles className="mr-2 h-4 w-4" />
-                                    {isGenerating ? 'Generating...' : 'another simulation program'}
+                                    {isGenerating ? 'Generating...' : 'simulation program'}
                                 </Button>
                              )}
                         </CardContent>
