@@ -37,9 +37,9 @@ const enrichmentPlanPrompt = ai.definePrompt({
   
   Scientific Rule: For all pets, suggest "scent work" (e.g., food searches) to lower cortisol. For cats, also suggest activities related to "vertical worlds" to reduce anxiety.
 
-  Example Output: "Créez un parcours de recherche de 10 min aujourd'hui. Cela réduit le cortisol de {{{animalName}}} et stimule son système immunitaire."
+  Example Output: "Create a 10-minute scent trail today. This reduces {{{animalName}}}'s cortisol and boosts their immune system."
   
-  Your output must be in French.
+  Your output must be in English.
   Your output should be a single sentence in the 'plan' field.`,
 });
 

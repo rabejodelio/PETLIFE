@@ -23,7 +23,7 @@ const nutritionAnalysisPrompt = ai.definePrompt({
   name: 'nutritionAnalysisPrompt',
   input: {schema: NutritionAnalysisInputSchema},
   output: {schema: NutritionAnalysisOutputSchema},
-  prompt: `Analyse cette liste d'ingrédients : {{{ingredientsText}}}. En te basant sur le guide nutritionnel FEDIAF, vérifie si le taux de minéraux est adapté pour un {{{species}}} de {{{age}}} ans. Si le {{{species}}} est senior, assure-toi que l'apport en protéines est de haute qualité pour maintenir la masse musculaire sans surcharger la fonction rénale.`,
+  prompt: `Analyze this list of ingredients: {{{ingredientsText}}}. Based on the FEDIAF nutritional guide, check if the mineral content is suitable for a {{{species}}} that is {{{age}}} years old. If the {{{species}}} is a senior, ensure the protein intake is of high quality to maintain muscle mass without overloading kidney function.`,
 });
 
 const nutritionAnalysisFlow = ai.defineFlow(

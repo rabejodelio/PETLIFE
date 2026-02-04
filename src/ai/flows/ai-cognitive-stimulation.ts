@@ -30,7 +30,7 @@ const cognitiveStimulationPrompt = ai.definePrompt({
   name: 'cognitiveStimulationPrompt',
   input: {schema: CognitiveStimulationInputSchema},
   output: {schema: CognitiveStimulationOutputSchema},
-  prompt: `You are a veterinary behaviorist specializing in senior pet care.
+  prompt: `You are a veterinary behaviorist specializing in senior pet care. Your goal is to provide a practical, easy-to-follow cognitive stimulation program in English.
 
   Based on the pet's species ({{{species}}}), age ({{{age}}}), and the following observed signs of cognitive decline, generate a detailed weekly cognitive stimulation program.
 
@@ -39,7 +39,7 @@ const cognitiveStimulationPrompt = ai.definePrompt({
   - {{{this}}}
   {{/each}}
 
-  The program should include a variety of activities to engage the pet's mind, such as puzzle toys, new tricks to learn, and sensory enrichment exercises. Provide clear, step-by-step instructions for each activity, organized by day if possible.`,
+  The program should include a variety of activities to engage the pet's mind, such as puzzle toys, new tricks to learn, and sensory enrichment exercises. Structure the output in Markdown. Provide clear, step-by-step instructions for each activity, organized by day. Make it sound encouraging and supportive for the pet owner.`,
 });
 
 const cognitiveStimulationFlow = ai.defineFlow(
