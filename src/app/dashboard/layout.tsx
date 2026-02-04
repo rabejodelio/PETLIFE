@@ -23,7 +23,6 @@ import {
   FlaskConical,
   Wind,
   ShieldCheck,
-  Globe,
 } from 'lucide-react';
 import {
   SidebarProvider,
@@ -37,6 +36,7 @@ import {
   SidebarInset,
   SidebarTrigger,
   SidebarGroup,
+  useSidebar,
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -50,13 +50,6 @@ import { signOut } from 'firebase/auth';
 import { doc, setDoc, getDoc, onSnapshot, updateDoc } from 'firebase/firestore';
 import type { UserDoc, PetProfile } from '@/lib/types';
 import { PetProfileContext } from '@/hooks/use-pet-provider';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 
 
 const PRO_CODE = "petlife7296";
@@ -81,6 +74,7 @@ function DashboardLayoutContent({
   const [isProDialogOpen, setIsProDialogOpen] = useState(false);
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
+  const { setOpenMobile } = useSidebar();
 
 
   useEffect(() => {
@@ -151,7 +145,7 @@ function DashboardLayoutContent({
   const isAdmin = user?.email === 'admin@petlife.com';
 
   return (
-    <SidebarProvider>
+    <>
       <ProSubscriptionDialog open={isProDialogOpen} onOpenChange={setIsProDialogOpen} />
       <Sidebar>
         <SidebarHeader className="hidden md:flex">
@@ -162,25 +156,6 @@ function DashboardLayoutContent({
         </SidebarHeader>
         <SidebarContent className="p-2">
           <SidebarMenu>
-            <SidebarGroup>
-              <SidebarMenu>
-                <div className="flex items-center gap-2 px-2">
-                  <Globe className="w-4 h-4" />
-                  <Select defaultValue="en">
-                    <SelectTrigger className="border-none focus:ring-0 text-xs">
-                      <SelectValue placeholder="Language" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="en">English</SelectItem>
-                      <SelectItem value="fr">Français</SelectItem>
-                      <SelectItem value="de">Deutsch</SelectItem>
-                      <SelectItem value="es">Español</SelectItem>
-                      <SelectItem value="it">Italiano</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </SidebarMenu>
-            </SidebarGroup>
             {navItems.filter(item => !(item.admin && !isAdmin)).map((item) => {
               const isLocked = item.pro && !isPro;
               
@@ -192,6 +167,8 @@ function DashboardLayoutContent({
                     if (isLocked) {
                       e.preventDefault();
                       setIsProDialogOpen(true);
+                    } else {
+                      setOpenMobile(false); // Close mobile sidebar on click
                     }
                   }}
                 >
@@ -273,7 +250,7 @@ function DashboardLayoutContent({
             {user ? children : <div>Loading...</div>}
         </div>
       </SidebarInset>
-    </SidebarProvider>
+    </>
   );
 }
 
@@ -414,14 +391,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <PetProfileContext.Provider value={petProfileContextValue}>
-      <DashboardLayoutContent
-        handlePromoCode={handlePromoCode}
-        promoCode={promoCode}
-        setPromoCode={setPromoCode}
-        isPro={isPro}
-      >
-        {children}
-      </DashboardLayoutContent>
+      <SidebarProvider>
+        <DashboardLayoutContent
+          handlePromoCode={handlePromoCode}
+          promoCode={promoCode}
+          setPromoCode={setPromoCode}
+          isPro={isPro}
+        >
+          {children}
+        </DashboardLayoutContent>
+      </SidebarProvider>
     </PetProfileContext.Provider>
   );
 }
