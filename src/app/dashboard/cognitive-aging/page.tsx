@@ -16,10 +16,10 @@ import ReactMarkdown from 'react-markdown';
 
 const seniorChecklist = {
   signs: [
-    "Désorientation dans la maison",
-    "Changement du cycle sommeil/éveil",
-    "Baisse des interactions sociales",
-    "Oubli des commandes de base"
+    "Disorientation in the house",
+    "Changes in sleep/wake cycle",
+    "Decreased social interaction",
+    "Forgetting basic commands"
   ]
 };
 
@@ -88,8 +88,8 @@ export default function CognitiveAgingPage() {
     return (
         <div>
             <PageHeader
-                title="Détecteur de Signes de Vieillissement Cognitif"
-                description="Évaluez les signes de vieillissement cérébral de votre animal."
+                title="Cognitive Aging Sign Detector"
+                description="Assess the signs of cognitive aging in your pet."
             />
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -98,9 +98,9 @@ export default function CognitiveAgingPage() {
                         <CardHeader>
                             <CardTitle className="font-headline flex items-center gap-2">
                                 <BrainCircuit className="w-5 h-5" />
-                                Checklist des Signes
+                                Signs Checklist
                             </CardTitle>
-                             <CardDescription>Cochez les signes que vous observez.</CardDescription>
+                             <CardDescription>Check the signs you observe in your pet.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="space-y-3">
@@ -120,7 +120,7 @@ export default function CognitiveAgingPage() {
                              {score > 0 && (
                                 <Button onClick={handleGenerateProgram} disabled={isGenerating} className="w-full mt-4">
                                     <Sparkles className="mr-2 h-4 w-4" />
-                                    {isGenerating ? 'Génération en cours...' : 'Générer un Programme de Stimulation'}
+                                    {isGenerating ? 'Generating...' : 'Generate Stimulation Program'}
                                 </Button>
                              )}
                         </CardContent>
@@ -131,10 +131,10 @@ export default function CognitiveAgingPage() {
                          <CardHeader>
                             <CardTitle className="font-headline flex items-center gap-2">
                                 <FileText className="w-5 h-5" />
-                                Programme de Stimulation Cognitive
+                                Cognitive Stimulation Program
                             </CardTitle>
                             <CardDescription>
-                                Un programme d'activités pour garder l'esprit de votre animal vif.
+                                A program of activities to keep your pet's mind sharp.
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -156,7 +156,7 @@ export default function CognitiveAgingPage() {
                              )}
                              {!program && !isGenerating && !error && (
                                 <p className="text-sm text-muted-foreground text-center pt-10">
-                                    Cochez au moins un signe pour générer un programme personnalisé par IA.
+                                    Check at least one sign to generate a personalized program.
                                 </p>
                              )}
                         </CardContent>
