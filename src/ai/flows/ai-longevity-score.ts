@@ -29,7 +29,7 @@ const longevityScorePrompt = ai.definePrompt({
   name: 'longevityScorePrompt',
   input: {schema: LongevityScoreInputSchema},
   output: {schema: LongevityScoreOutputSchema},
-  prompt: `Agis en tant qu'expert en nutrition vétérinaire WSAVA. L'utilisateur rapporte un poids de {{{currentWeight}}} kg pour un {{{breed}}}. Basé sur les standards de la race et l'indice BCS, calcule l'écart par rapport au poids optimal. Si l'écart est > 10%, génère un plan de restriction calorique immédiat pour réduire les risques de maladies chroniques identifiées dans les rapports de mortalité. Fournis une analyse détaillée et structurée.`,
+  prompt: `Act as a WSAVA veterinary nutrition expert. The user reports a weight of {{{currentWeight}}} kg for a {{{breed}}}. Based on breed standards and the BCS index, calculate the deviation from the optimal weight. If the deviation is >10%, generate an immediate caloric restriction plan to reduce the risk of chronic diseases identified in mortality reports. Provide a detailed and structured analysis.`,
 });
 
 const longevityScoreFlow = ai.defineFlow(

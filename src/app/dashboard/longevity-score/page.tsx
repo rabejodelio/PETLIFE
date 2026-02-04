@@ -75,8 +75,8 @@ export default function LongevityScorePage() {
     return (
         <div>
             <PageHeader
-                title="Calculateur de Score de Longévité"
-                description="Évaluez le 'Body Condition Score' (BCS) de votre animal et obtenez une analyse par IA."
+                title="Longevity Score Calculator"
+                description="Assess your pet's 'Body Condition Score' (BCS) and get a detailed analysis."
             />
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -85,21 +85,21 @@ export default function LongevityScorePage() {
                         <CardHeader>
                             <CardTitle className="font-headline flex items-center gap-2">
                                 <Scale className="w-5 h-5" />
-                                Statut Actuel
+                                Current Status
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div>
-                                <p className="text-sm font-medium text-muted-foreground">Race</p>
+                                <p className="text-sm font-medium text-muted-foreground">Breed</p>
                                 <p className="font-semibold">{profile.breed}</p>
                             </div>
                              <div>
-                                <p className="text-sm font-medium text-muted-foreground">Poids Actuel</p>
+                                <p className="text-sm font-medium text-muted-foreground">Current Weight</p>
                                 <p className="font-semibold">{profile.weight} kg</p>
                             </div>
                             <Button onClick={handleGenerateScore} disabled={isGenerating} className="w-full">
                                 <Sparkles className="mr-2 h-4 w-4" />
-                                {isGenerating ? 'Analyse en cours...' : 'Calculer le Score'}
+                                {isGenerating ? 'Analyzing...' : 'Calculate Score'}
                             </Button>
                         </CardContent>
                     </Card>
@@ -109,10 +109,10 @@ export default function LongevityScorePage() {
                          <CardHeader>
                             <CardTitle className="font-headline flex items-center gap-2">
                                 <FileText className="w-5 h-5" />
-                                 Analyse de l'IA
+                                 Analysis
                             </CardTitle>
                             <CardDescription>
-                                Analyse basée sur les standards de nutrition vétérinaire WSAVA.
+                                Analysis based on WSAVA veterinary nutrition standards.
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -134,7 +134,7 @@ export default function LongevityScorePage() {
                              )}
                              {!analysis && !isGenerating && !error && (
                                 <p className="text-sm text-muted-foreground text-center pt-10">
-                                    Cliquez sur "Calculer le Score" pour obtenir l'analyse de longévité de votre animal.
+                                    Click "Calculate Score" to get your pet's longevity analysis.
                                 </p>
                              )}
                         </CardContent>
