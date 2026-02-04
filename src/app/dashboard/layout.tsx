@@ -131,7 +131,7 @@ function DashboardLayoutContent({
     { href: '/dashboard/meal-plan', label: 'Meal Plan', icon: Salad, pro: false },
     { href: '/dashboard/supplements', label: 'Supplements', icon: Pill, pro: true },
     { href: '/dashboard/wellness', label: 'Wellness', icon: Heart, pro: true },
-    { href: '/dashboard/longevity-score', label: 'Score Longévité', icon: TrendingUp, pro: true },
+    { href: '/dashboard/longevity-score', label: 'Longevity score', icon: TrendingUp, pro: true },
     { href: '/dashboard/cognitive-aging', label: 'Cognitive Aging', icon: BrainCircuit, pro: true },
     { href: '/dashboard/nutrition-analysis', label: 'Nutrition Analysis', icon: FlaskConical, pro: true },
     { href: '/dashboard/enrichment-plan', label: 'Enrichment Plan', icon: Wind, pro: true },
