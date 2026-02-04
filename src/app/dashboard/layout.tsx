@@ -145,7 +145,7 @@ function DashboardLayoutContent({
   const isAdmin = user?.email === 'admin@petlife.com';
 
   return (
-    <SidebarProvider>
+    <>
       <ProSubscriptionDialog open={isProDialogOpen} onOpenChange={setIsProDialogOpen} />
       <Sidebar>
         <SidebarHeader className="hidden md:flex">
@@ -250,7 +250,7 @@ function DashboardLayoutContent({
             {user ? children : <div>Loading...</div>}
         </div>
       </SidebarInset>
-    </SidebarProvider>
+    </>
   );
 }
 
@@ -391,14 +391,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <PetProfileContext.Provider value={petProfileContextValue}>
-      <DashboardLayoutContent
-        handlePromoCode={handlePromoCode}
-        promoCode={promoCode}
-        setPromoCode={setPromoCode}
-        isPro={isPro}
-      >
-        {children}
-      </DashboardLayoutContent>
+      <SidebarProvider>
+        <DashboardLayoutContent
+          handlePromoCode={handlePromoCode}
+          promoCode={promoCode}
+          setPromoCode={setPromoCode}
+          isPro={isPro}
+        >
+          {children}
+        </DashboardLayoutContent>
+      </SidebarProvider>
     </PetProfileContext.Provider>
   );
 }
