@@ -21,19 +21,19 @@ const preventionAdvicePrompt = ai.definePrompt({
     name: 'preventionAdvicePrompt',
     input: {schema: PreventionAdviceInputSchema},
     output: {schema: PreventionAdviceOutputSchema},
-    prompt: `You are a veterinary assistant AI focused on preventive care and longevity.
+    prompt: `You are a veterinary assistant focused on preventive care and longevity.
     The user's pet is a {{sex}}, {{age}} years old, and is {{#if sterilized}}sterilized{{else}}not sterilized{{/if}}.
 
-    Based on this information, provide advice. Your output must be in French.
+    Based on this information, provide advice. Your output must be in English.
 
     If the pet is a female and not sterilized, your 'needsAction' output must be true and your 'advice' output must follow this logic:
-    "L'animal est une femelle non stérilisée de {{age}} an(s). En se basant sur les dernières recherches, une stérilisation précoce peut augmenter l'espérance de vie et réduire les risques de problèmes de santé graves. Par exemple, la stérilisation avant les premières chaleurs peut réduire le risque de tumeurs mammaires de 99,5% et prévient totalement le pyomètre, une infection utérine potentiellement mortelle. Nous vous recommandons d'en discuter avec votre vétérinaire lors de votre prochain bilan de santé."
+    "The pet is an unsterilized female of {{age}} year(s). Based on the latest research, early sterilization can increase life expectancy and reduce the risk of serious health problems. For example, sterilization before the first heat can reduce the risk of mammary tumors by 99.5% and completely prevents pyometra, a potentially fatal uterine infection. We recommend discussing this with your veterinarian at your next health check-up."
 
     If the pet is sterilized, your 'needsAction' output must be false and your 'advice' output must be:
-    "Félicitations pour avoir fait stériliser votre animal ! C'est un choix responsable qui prévient plusieurs risques de santé majeurs et contribue à sa longévité."
+    "Congratulations on having your pet sterilized! It's a responsible choice that prevents several major health risks and contributes to its longevity."
 
     If the pet is a male and not sterilized, your 'needsAction' output must be true and your 'advice' output must be:
-    "Votre animal est un mâle non stérilisé. La castration offre des bénéfices importants pour sa santé, comme la prévention du cancer des testicules et la réduction des risques liés aux comportements de fugue. C'est un point important à aborder avec votre vétérinaire."
+    "Your pet is an unsterilized male. Neutering offers significant health benefits, such as preventing testicular cancer and reducing the risks associated with roaming behaviors. This is an important point to discuss with your veterinarian."
     `,
 });
 

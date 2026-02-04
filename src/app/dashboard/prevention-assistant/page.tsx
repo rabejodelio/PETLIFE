@@ -26,7 +26,7 @@ export default function PreventionAssistantPage() {
 
                 // Ensure all required fields are present
                 if (profile.sex === undefined || profile.sterilized === undefined) {
-                    setError("Le sexe ou le statut de stérilisation de votre animal ne sont pas définis. Veuillez mettre à jour le profil.");
+                    setError("Your pet's sex or sterilization status is not set. Please update the profile.");
                     setIsLoading(false);
                     return;
                 }
@@ -40,10 +40,10 @@ export default function PreventionAssistantPage() {
                     if (actionResult.success && actionResult.data) {
                         setResult(actionResult.data);
                     } else {
-                        setError(actionResult.error || "Une erreur inconnue est survenue.");
+                        setError(actionResult.error || "An unknown error occurred.");
                     }
                 } catch (e) {
-                    setError(e instanceof Error ? e.message : 'Échec de la récupération des conseils.');
+                    setError(e instanceof Error ? e.message : 'Failed to fetch advice.');
                 } finally {
                     setIsLoading(false);
                 }
@@ -74,11 +74,11 @@ export default function PreventionAssistantPage() {
     if (!profile) {
         return (
             <div className="text-center py-12">
-                <h2 className="text-xl font-semibold">Profil d'animal non trouvé</h2>
-                <p className="text-muted-foreground mt-2 mb-4">Créez un profil pour accéder à l'assistant de prévention.</p>
+                <h2 className="text-xl font-semibold">No Pet Profile Found</h2>
+                <p className="text-muted-foreground mt-2 mb-4">Create a profile to access the prevention assistant.</p>
                 <Button asChild>
                     <Link href="/dashboard/profile/edit">
-                        <Pencil className="mr-2 h-4 w-4" /> Créer un profil
+                        <Pencil className="mr-2 h-4 w-4" /> Create Profile
                     </Link>
                 </Button>
             </div>
@@ -88,8 +88,8 @@ export default function PreventionAssistantPage() {
     return (
         <div>
             <PageHeader
-                title="Assistant de Prévention"
-                description="Conseils IA pour la santé à long terme de votre animal."
+                title="Prevention Assistant"
+                description="Advice for your pet's long-term health."
             />
 
             <Card className={result?.needsAction ? 'border-amber-500' : ''}>
@@ -100,9 +100,9 @@ export default function PreventionAssistantPage() {
                         <ShieldCheck className="w-6 h-6 text-primary flex-shrink-0 mt-1" />
                     )}
                     <div>
-                        <CardTitle className="font-headline">Conseil de Prévention pour {profile.name}</CardTitle>
+                        <CardTitle className="font-headline">Prevention Advice for {profile.name}</CardTitle>
                         <CardDescription>
-                            Basé sur son profil, voici une recommandation pour sa santé.
+                            Based on their profile, here is a health recommendation.
                         </CardDescription>
                     </div>
                 </CardHeader>
@@ -125,11 +125,11 @@ export default function PreventionAssistantPage() {
                 </CardContent>
             </Card>
             
-             {error?.includes("sexe ou le statut de stérilisation") && (
+             {error?.includes("sex or sterilization status") && (
                  <div className="mt-4 text-center">
                     <Button asChild>
                          <Link href="/dashboard/profile/edit">
-                            <Pencil className="mr-2 h-4 w-4" /> Mettre à jour le profil
+                            <Pencil className="mr-2 h-4 w-4" /> Update Profile
                         </Link>
                     </Button>
                  </div>

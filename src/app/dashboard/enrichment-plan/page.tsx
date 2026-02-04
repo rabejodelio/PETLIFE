@@ -80,8 +80,8 @@ export default function EnrichmentPlanPage() {
     return (
         <div>
             <PageHeader
-                title="Planificateur d'Enrichissement Anti-Stress"
-                description="Réduisez le stress et l'ennui de votre animal avec des activités ciblées."
+                title="Stress-Relief Enrichment Planner"
+                description="Reduce your pet's stress and boredom with targeted activities."
             />
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -90,9 +90,9 @@ export default function EnrichmentPlanPage() {
                         <CardHeader>
                             <CardTitle className="font-headline flex items-center gap-2">
                                 <Home className="w-5 h-5" />
-                                Environnement
+                                Environment
                             </CardTitle>
-                            <CardDescription>Sélectionnez le type de logement.</CardDescription>
+                            <CardDescription>Select the housing type.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <RadioGroup
@@ -107,7 +107,7 @@ export default function EnrichmentPlanPage() {
                                         className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
                                     >
                                         <Building className="mb-3 h-6 w-6" />
-                                        Appartement
+                                        Apartment
                                     </Label>
                                 </div>
                                 <div>
@@ -117,13 +117,13 @@ export default function EnrichmentPlanPage() {
                                         className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
                                     >
                                         <Home className="mb-3 h-6 w-6" />
-                                        Maison
+                                        House
                                     </Label>
                                 </div>
                             </RadioGroup>
                             <Button onClick={handleGeneratePlan} disabled={isGenerating} className="w-full">
                                 <Sparkles className="mr-2 h-4 w-4" />
-                                {isGenerating ? 'Génération du plan...' : 'Générer un Plan d\'Action'}
+                                {isGenerating ? 'Generating Plan...' : 'Generate Action Plan'}
                             </Button>
                         </CardContent>
                     </Card>
@@ -133,10 +133,10 @@ export default function EnrichmentPlanPage() {
                          <CardHeader>
                             <CardTitle className="font-headline flex items-center gap-2">
                                 <FileText className="w-5 h-5" />
-                                 Recommandation du Jour
+                                 Today's Recommendation
                             </CardTitle>
                             <CardDescription>
-                                Une activité simple pour stimuler votre animal et réduire son stress.
+                                A simple activity to stimulate your pet and reduce stress.
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="flex items-center justify-center">
@@ -156,7 +156,7 @@ export default function EnrichmentPlanPage() {
                              )}
                              {!plan && !isGenerating && !error && (
                                 <p className="text-sm text-muted-foreground text-center pt-10">
-                                    Sélectionnez votre type de logement et cliquez sur "Générer" pour recevoir une activité d'enrichissement personnalisée.
+                                    Select your housing type and click 'Generate' to receive a personalized enrichment activity.
                                 </p>
                              )}
                         </CardContent>
