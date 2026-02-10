@@ -51,7 +51,6 @@ import { signOut } from 'firebase/auth';
 import { doc, setDoc, getDoc, onSnapshot, updateDoc } from 'firebase/firestore';
 import type { UserDoc, PetProfile } from '@/lib/types';
 import { PetProfileContext } from '@/hooks/use-pet-provider';
-import { AppProviders } from '@/providers';
 
 
 const PRO_CODE = "petnice7296";
@@ -408,14 +407,12 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
 }
 
 
-export default function App({ children }: { children: React.ReactNode }) {
+export default function Layout({ children }: { children: React.ReactNode }) {
     return (
-        <AppProviders>
-            <SidebarProvider>
-                <DashboardLayout>
-                    {children}
-                </DashboardLayout>
-            </SidebarProvider>
-        </AppProviders>
+        <SidebarProvider>
+            <DashboardLayout>
+                {children}
+            </DashboardLayout>
+        </SidebarProvider>
     )
 }
