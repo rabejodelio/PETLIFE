@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, createContext } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -23,6 +23,7 @@ import {
   FlaskConical,
   Wind,
   ShieldCheck,
+  Globe,
 } from 'lucide-react';
 import {
   SidebarProvider,
@@ -52,7 +53,7 @@ import type { UserDoc, PetProfile } from '@/lib/types';
 import { PetProfileContext } from '@/hooks/use-pet-provider';
 
 
-const PRO_CODE = "petlife7296";
+const PRO_CODE = "petnice7296";
 
 function DashboardLayoutContent({ 
   children,
@@ -142,7 +143,16 @@ function DashboardLayoutContent({
   ];
 
   // A simple check for an admin user. In a real app, this should be based on custom claims.
-  const isAdmin = user?.email === 'admin@petlife.com';
+  const isAdmin = user?.email === 'admin@petnice.com';
+
+  const handleLinkClick = (e: React.MouseEvent, isLocked: boolean) => {
+    if (isLocked) {
+      e.preventDefault();
+      setIsProDialogOpen(true);
+    } else {
+      setOpenMobile(false);
+    }
+  };
 
   return (
     <>
@@ -163,14 +173,7 @@ function DashboardLayoutContent({
                 <SidebarMenuButton
                   isActive={pathname === item.href}
                   tooltip={item.label}
-                  onClick={(e) => {
-                    if (isLocked) {
-                      e.preventDefault();
-                      setIsProDialogOpen(true);
-                    } else {
-                      setOpenMobile(false); // Close mobile sidebar on click
-                    }
-                  }}
+                  onClick={(e) => handleLinkClick(e, isLocked)}
                 >
                   {isLocked ? <Lock /> : <item.icon />}
                   <span>{item.label}</span>
@@ -255,7 +258,7 @@ function DashboardLayoutContent({
 }
 
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const router = useRouter();
@@ -391,16 +394,25 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <PetProfileContext.Provider value={petProfileContextValue}>
-      <SidebarProvider>
-        <DashboardLayoutContent
-          handlePromoCode={handlePromoCode}
-          promoCode={promoCode}
-          setPromoCode={setPromoCode}
-          isPro={isPro}
-        >
-          {children}
-        </DashboardLayoutContent>
-      </SidebarProvider>
+      <DashboardLayoutContent
+        handlePromoCode={handlePromoCode}
+        promoCode={promoCode}
+        setPromoCode={setPromoCode}
+        isPro={isPro}
+      >
+        {children}
+      </DashboardLayoutContent>
     </PetProfileContext.Provider>
   );
+}
+
+
+export default function Layout({ children }: { children: React.ReactNode }) {
+    return (
+        <SidebarProvider>
+            <DashboardLayout>
+                {children}
+            </DashboardLayout>
+        </SidebarProvider>
+    )
 }

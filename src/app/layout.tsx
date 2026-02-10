@@ -1,10 +1,10 @@
 import type { Metadata } from 'next';
-import { Toaster } from '@/components/ui/toaster';
 import './globals.css';
-import { FirebaseClientProvider } from '@/firebase';
+import { AppProviders } from './providers';
+
 
 export const metadata: Metadata = {
-  title: 'PetLife',
+  title: 'PetNice',
   description: 'A new life for your pet, a new world for you.',
 };
 
@@ -24,10 +24,9 @@ export default function RootLayout({
         />
       </head>
       <body className="font-body antialiased">
-        <FirebaseClientProvider>
+        <AppProviders>
           {children}
-        </FirebaseClientProvider>
-        <Toaster />
+        </AppProviders>
       </body>
     </html>
   );
