@@ -42,13 +42,13 @@ export async function createPayPalOrder(): Promise<{ success: boolean; link?: st
             currency_code: 'EUR',
             value: '10.00', // The subscription amount
           },
-          description: 'PetLife Pro Subscription',
+          description: 'PetNice Pro Subscription',
         },
       ],
       application_context: {
         return_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:9002'}/dashboard?payment=success`,
         cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:9002'}/dashboard?payment=cancel`,
-        brand_name: 'PetLife',
+        brand_name: 'PetNice',
         user_action: 'PAY_NOW',
       },
     };

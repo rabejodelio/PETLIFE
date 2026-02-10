@@ -8,7 +8,7 @@ export default function LandingPage() {
       <header className="container mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center">
         <div className="flex items-center gap-2">
           <PawPrint className="w-8 h-8 text-primary" />
-          <h1 className="text-2xl font-bold font-headline text-primary">PetLife</h1>
+          <h1 className="text-2xl font-bold font-headline text-primary">PetNice</h1>
         </div>
       </header>
       <main className="flex-grow flex items-center">
@@ -18,7 +18,7 @@ export default function LandingPage() {
               A long, healthy life for your best friend.
             </h2>
             <p className="text-lg text-gray-600">
-              PetLife creates personalized meal plans, recommends supplements, and helps you track your pet's health for a vibrant, longer life.
+              PetNice creates personalized meal plans, recommends supplements, and helps you track your pet's health for a vibrant, longer life.
             </p>
             <div className="flex gap-4 justify-center">
               <Button asChild size="lg">

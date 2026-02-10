@@ -53,7 +53,7 @@ export function ProSubscriptionDialog({ open, onOpenChange }: ProSubscriptionDia
               <Sparkles className="w-8 h-8 text-white" />
             </div>
           </div>
-          <DialogTitle className="text-center text-2xl font-headline">Upgrade to PetLife Pro</DialogTitle>
+          <DialogTitle className="text-center text-2xl font-headline">Upgrade to PetNice Pro</DialogTitle>
           <DialogDescription className="text-center">
             Unlock exclusive features to take care of your pet.
           </DialogDescription>
